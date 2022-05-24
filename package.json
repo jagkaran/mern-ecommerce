@@ -4,7 +4,7 @@
   "description": "",
   "main": "backend/server.js",
   "engines": {
-    "node": "14.15.4",
+    "node": "17.1.0",
     "yarn":"1.22.15"
   },
   "scripts": {
