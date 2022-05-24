@@ -17,20 +17,20 @@ Clone the project
 Install Backend dependencies
 
 ```bash
-  npm i
+  yarn
 ```
 
 Install Frontend dependencies
 
 ```bash
   cd frontend
-  npm install
+  yarn
 ```
 
 Start the server
 
 ```bash
-  npm run start
+  yarn start
 ```
 
 ## Environment Variables
