@@ -10,7 +10,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node backend/server.js",
     "dev": "nodemon backend/server.js",
-    "heroku-postbuild": "YARN_PRODUCTION=false && yarn --cwd frontend && ls ./frontend && yarn build ./frontend"
+    "heroku-postbuild": "YARN_PRODUCTION=false && yarn --cwd frontend && ls && yarn run build"
   },
   "author": "",
   "license": "ISC",
