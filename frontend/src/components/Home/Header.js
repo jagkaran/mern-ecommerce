@@ -96,7 +96,21 @@ function Header() {
                 {index === 0 && <InfoIcon />}
                 {index === 1 && <CategoryIcon />}
                 {index === 2 && <SearchIcon />}
-                {index === 3 && <ShoppingCartIcon />}
+                {index === 3 && (
+                  <Badge
+                    anchorOrigin={{
+                      vertical: "top",
+                      horizontal: "right",
+                    }}
+                    badgeContent={cartItems.reduce(
+                      (accum, item) => accum + item.quantity,
+                      0
+                    )}
+                    color="primary"
+                  >
+                    <ShoppingCartIcon />
+                  </Badge>
+                )}
                 {index === 4 && (
                   <IconButton
                     size="small"
