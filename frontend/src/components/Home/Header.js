@@ -27,6 +27,7 @@ import { useAlert } from "react-alert";
 import { logoutUser } from "../../actions/userAction";
 import MenuIcon from "@mui/icons-material/Menu";
 import CategoryIcon from "@mui/icons-material/Category";
+import InfoIcon from "@mui/icons-material/Info";
 
 function Header() {
   const history = useNavigate();
@@ -59,6 +60,10 @@ function Header() {
 
   const mobileArrList = [
     {
+      name: "About Us",
+      url: aboutus,
+    },
+    {
       name: "Products",
       url: products,
     },
@@ -86,12 +91,13 @@ function Header() {
       <List>
         {mobileArrList.map((text, index) => (
           <ListItem key={text.name} disablePadding>
-            <ListItemButton onClick={index === 3 ? handleClick : text.url}>
+            <ListItemButton onClick={index === 4 ? handleClick : text.url}>
               <ListItemIcon>
-                {index === 0 && <CategoryIcon />}
-                {index === 1 && <SearchIcon />}
-                {index === 2 && <ShoppingCartIcon />}
-                {index === 3 && (
+                {index === 0 && <InfoIcon />}
+                {index === 1 && <CategoryIcon />}
+                {index === 2 && <SearchIcon />}
+                {index === 3 && <ShoppingCartIcon />}
+                {index === 4 && (
                   <IconButton
                     size="small"
                     aria-controls={open ? "account-menu" : undefined}
@@ -155,6 +161,9 @@ function Header() {
   }
   function cart() {
     history("/cart", { replace: true });
+  }
+  function aboutus() {
+    history("/aboutus", { replace: true });
   }
   function account() {
     history("/account", { replace: true });
