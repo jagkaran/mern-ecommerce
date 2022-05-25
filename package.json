@@ -8,7 +8,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node backend/server.js",
     "dev": "nodemon backend/server.js",
-    "heroku-postbuild": "YARN_PRODUCTION=false && yarn --cwd frontend && cd frontend && yarn run build"
+    "heroku-postbuild": "YARN_PRODUCTION=false && yarn --cwd frontend && yarn --cwd frontend build"
   },
   "author": "",
   "license": "ISC",
