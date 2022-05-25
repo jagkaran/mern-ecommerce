@@ -4,12 +4,11 @@ import React from "react";
 function MainImage({ src }) {
   return (
     <div>
-      {/* <img src={src} width="100%" /> */}
       <Avatar
         src={src}
         sx={{
-          width: 480,
-          height: 640,
+          width: "auto",
+          height: "auto",
         }}
         variant="square"
       ></Avatar>
