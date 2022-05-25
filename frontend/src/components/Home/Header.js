@@ -37,6 +37,9 @@ function Header() {
   const [anchorEl, setAnchorEl] = React.useState(null);
   const open = Boolean(anchorEl);
   const handleClick = (event) => {
+    if (!isAuthenticated) {
+      login();
+    }
     setAnchorEl(event.currentTarget);
   };
   const handleClose = () => {
@@ -178,6 +181,9 @@ function Header() {
   }
   function aboutus() {
     history("/aboutus", { replace: true });
+  }
+  function login() {
+    history("/signin", { replace: true });
   }
   function account() {
     history("/account", { replace: true });

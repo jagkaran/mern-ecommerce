@@ -1,4 +1,3 @@
-import PerfectScrollbar from "react-perfect-scrollbar";
 import {
   Box,
   Button,
@@ -7,6 +6,7 @@ import {
   CircularProgress,
   Container,
   Grid,
+  Paper,
   Table,
   TableBody,
   TableCell,
@@ -26,6 +26,7 @@ import SeverityPill from "./SeverityPill";
 import Seo from "../Seo";
 import Copyright from "../Copyright";
 import ZeroOrders from "../ZeroOrders";
+import "../Cart/Table.css";
 
 //   10 Digit order number prepended by country code
 export const createOrderNumber = (id, country) => {
@@ -82,7 +83,7 @@ function MyOrders() {
             <Grid item xs={12}>
               <Card>
                 <CardHeader title={`My Orders (${ordersCount})`} />
-                <PerfectScrollbar>
+                <Paper className="container" sx={{ boxShadow: "none" }}>
                   <Box sx={{ minWidth: 800 }}>
                     <Table
                       sx={{
@@ -211,7 +212,7 @@ function MyOrders() {
                       </TableBody>
                     </Table>
                   </Box>
-                </PerfectScrollbar>
+                </Paper>
                 <Box
                   sx={{
                     display: "flex",
