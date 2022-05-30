@@ -4,7 +4,7 @@ This is a MERN stack app created for learning purpose. This app is rolled out in
 
 ## Demo
 
-Insert gif or link to demo
+https://mern-ecommerce-stack.herokuapp.com/
 
 ## Run Locally
 

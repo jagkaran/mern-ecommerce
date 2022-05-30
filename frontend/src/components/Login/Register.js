@@ -19,6 +19,7 @@ import { InputAdornment, IconButton } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import Seo from "../Seo";
+import { useRegisterFormControls } from "../Admin/Hooks/useRegisterForm";
 
 function Register() {
   const [showPassword, setShowPassword] = useState(false);
@@ -26,13 +27,13 @@ function Register() {
   const handleMouseDownPassword = () => setShowPassword(!showPassword);
   const history = useNavigate();
   const alert = useAlert();
-  const [user, setUser] = useState({
-    name: "",
-    email: "",
-    password: "",
-  });
+  // const [user, setUser] = useState({
+  //   name: "",
+  //   email: "",
+  //   password: "",
+  // });
   const dispatch = useDispatch();
-  const { name, email, password } = user;
+  // const { name, email, password } = user;
 
   const [avatar, setAvatar] = useState();
 
@@ -40,20 +41,29 @@ function Register() {
 
   const { error, isAuthenticated } = useSelector((state) => state.user);
 
-  const isEnabled = name.length > 0 && email.length > 0 && password.length > 0;
+  const {
+    handleRegisterInputValue,
+    registerFormIsValid,
+    errors,
+    registerFormvalues,
+  } = useRegisterFormControls();
+
+  // const isEnabled = name.length > 0 && email.length > 0 && password.length > 0;
 
   const registerSubmit = (event) => {
     event.preventDefault();
 
-    const data = {
-      name: name,
-      email: email,
-      password: password,
-      avatar: avatar,
-    };
+    if (registerFormIsValid()) {
+      const data = new FormData();
 
-    dispatch(register(data));
-    history("/account", { replace: true });
+      data.set("name", registerFormvalues.name);
+      data.set("email", registerFormvalues.email);
+      data.set("password", registerFormvalues.password);
+      data.set("avatar", avatar);
+      dispatch(register(data));
+
+      history("/account", { replace: true });
+    }
   };
 
   const registerDataChange = (event) => {
@@ -66,10 +76,16 @@ function Register() {
           setAvatar(reader.result);
         }
       };
-      reader.readAsDataURL(event.target.files[0]);
-    } else {
-      setUser({ ...user, [event.target.name]: event.target.value });
+      const file = event.target.files[0];
+      if (file.size > 760000) {
+        alert.error("Please upload an image smaller than 750 KB");
+        return false;
+      }
+      reader.readAsDataURL(file);
     }
+    // else {
+    //   setUser({ ...user, [event.target.name]: event.target.value });
+    // }
   };
 
   useEffect(() => {
@@ -120,8 +136,12 @@ function Register() {
                   id="name"
                   label="Name"
                   autoFocus
-                  value={name}
-                  onChange={registerDataChange}
+                  value={registerFormvalues.name}
+                  onChange={handleRegisterInputValue}
+                  {...(errors.name && {
+                    error: true,
+                    helperText: errors.name,
+                  })}
                 />
               </Grid>
               <Grid item xs={12}>
@@ -132,8 +152,12 @@ function Register() {
                   label="Email Address"
                   name="email"
                   autoComplete="email"
-                  value={email}
-                  onChange={registerDataChange}
+                  value={registerFormvalues.email}
+                  onChange={handleRegisterInputValue}
+                  {...(errors.email && {
+                    error: true,
+                    helperText: errors.email,
+                  })}
                 />
               </Grid>
               <Grid item xs={12}>
@@ -145,8 +169,12 @@ function Register() {
                   type={showPassword ? "text" : "password"}
                   id="password"
                   autoComplete="new-password"
-                  value={password}
-                  onChange={registerDataChange}
+                  value={registerFormvalues.password}
+                  onChange={handleRegisterInputValue}
+                  {...(errors.password && {
+                    error: true,
+                    helperText: errors.password,
+                  })}
                   InputProps={{
                     // <-- This is where the toggle button is added.
                     endAdornment: (
@@ -190,12 +218,21 @@ function Register() {
                 </Button>
               </Grid>
             </Grid>
+            <Typography
+              variant="caption"
+              display="block"
+              gutterBottom
+              color="red"
+              mt={2}
+            >
+              Image should not be more than 750KB
+            </Typography>
             <Button
               type="submit"
               fullWidth
               variant="contained"
               sx={{ mt: 3, mb: 2, backgroundColor: "secondary.main" }}
-              disabled={!isEnabled}
+              disabled={!registerFormIsValid() || avatar === undefined}
             >
               Sign Up
             </Button>

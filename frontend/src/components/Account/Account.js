@@ -26,6 +26,7 @@ import {
 } from "../../actions/userAction";
 import Seo from "../Seo";
 import Copyright from "../Copyright";
+import { format, parseISO } from "date-fns";
 
 const Account = () => {
   const dispatch = useDispatch();
@@ -59,7 +60,13 @@ const Account = () => {
         setAvatar(reader.result);
       }
     };
-    reader.readAsDataURL(event.target.files[0]);
+
+    const file = event.target.files[0];
+    if (file.size > 760000) {
+      alert.error("Please upload an image smaller than 750 KB");
+      return false;
+    }
+    reader.readAsDataURL(file);
   };
 
   useEffect(() => {
@@ -135,10 +142,24 @@ const Account = () => {
                         {user.name}
                       </Typography>
                       <Typography color="textSecondary" variant="body2">
-                        Joined on: {String(user.createdAt).substring(0, 10)}
+                        Joined on:{" "}
+                        {format(parseISO(user.createdAt), `do MMM yyyy`)}
                       </Typography>
-                      <Typography color="textSecondary" variant="body2">
+                      <Typography
+                        color="textSecondary"
+                        variant="body2"
+                        sx={{ textTransform: "capitalize" }}
+                      >
                         Assigned Role: {user.role}
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        display="block"
+                        gutterBottom
+                        color="red"
+                        mt={2}
+                      >
+                        Image should not be more than 750KB
                       </Typography>
                     </Box>
                   </CardContent>

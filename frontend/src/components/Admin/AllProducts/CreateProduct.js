@@ -122,7 +122,10 @@ function CreateProduct() {
           setImages((old) => [...old, reader.result]);
         }
       };
-
+      if (file.size > 760000) {
+        alert.error("Please upload an image smaller than 750 KB");
+        return false;
+      }
       reader.readAsDataURL(file);
     });
   };
@@ -280,6 +283,7 @@ function CreateProduct() {
                             name="stock"
                             label="Product Stock"
                             id="stock"
+                            type="number"
                             InputLabelProps={{ shrink: true }}
                             value={values.stock}
                             onChange={handleInputValue}
@@ -323,7 +327,7 @@ function CreateProduct() {
                         fullWidth
                         variant="contained"
                         sx={{ mt: 3, mb: 2, backgroundColor: "secondary.main" }}
-                        disabled={!formIsValid()}
+                        disabled={!formIsValid() || images.length === 0}
                       >
                         Create
                       </Button>
