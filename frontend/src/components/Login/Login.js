@@ -19,6 +19,7 @@ import { InputAdornment, IconButton } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import Seo from "../Seo";
+import { useLoginFormControls } from "../Admin/Hooks/useLoginForm";
 
 function Login() {
   const [showPassword, setShowPassword] = useState(false);
@@ -27,19 +28,24 @@ function Login() {
   const dispatch = useDispatch();
   const alert = useAlert();
   const history = useNavigate();
-  const [loginEmail, setLoginEmail] = useState("");
-  const [loginPassword, setLoginPassword] = useState("");
+  // const [loginEmail, setLoginEmail] = useState("");
+  // const [loginPassword, setLoginPassword] = useState("");
   const location = useLocation();
 
   const { loading, error, isAuthenticated } = useSelector(
     (state) => state.user
   );
 
-  const isEnabled = loginEmail.length > 0 && loginPassword.length > 0;
+  const { handleLoginInputValue, loginFormIsValid, errors, loginFormvalues } =
+    useLoginFormControls();
+
+  // const isEnabled = loginEmail.length > 0 && loginPassword.length > 0;
 
   const loginSubmit = (event) => {
     event.preventDefault();
-    dispatch(login(loginEmail, loginPassword));
+    if (loginFormIsValid()) {
+      dispatch(login(loginFormvalues.email, loginFormvalues.password));
+    }
   };
 
   const redirect = location.search ? location.search.split("=")[1] : "account";
@@ -99,8 +105,12 @@ function Login() {
                   name="email"
                   autoComplete="email"
                   autoFocus
-                  value={loginEmail}
-                  onChange={(e) => setLoginEmail(e.target.value)}
+                  value={loginFormvalues.email}
+                  onChange={handleLoginInputValue}
+                  {...(errors.email && {
+                    error: true,
+                    helperText: errors.email,
+                  })}
                 />
                 <TextField
                   margin="normal"
@@ -111,8 +121,12 @@ function Login() {
                   type={showPassword ? "text" : "password"}
                   id="password"
                   autoComplete="current-password"
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
+                  value={loginFormvalues.password}
+                  onChange={handleLoginInputValue}
+                  {...(errors.password && {
+                    error: true,
+                    helperText: errors.password,
+                  })}
                   InputProps={{
                     // <-- This is where the toggle button is added.
                     endAdornment: (
@@ -138,7 +152,7 @@ function Login() {
                   fullWidth
                   variant="contained"
                   sx={{ mt: 3, mb: 2, backgroundColor: "secondary.main" }}
-                  disabled={!isEnabled}
+                  disabled={!loginFormIsValid()}
                 >
                   Sign In
                 </Button>

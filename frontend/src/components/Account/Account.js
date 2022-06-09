@@ -27,6 +27,7 @@ import {
 import Seo from "../Seo";
 import Copyright from "../Copyright";
 import { format, parseISO } from "date-fns";
+import { useAcountFormControls } from "../Admin/Hooks/useAccountForm";
 
 const Account = () => {
   const dispatch = useDispatch();
@@ -34,21 +35,29 @@ const Account = () => {
   const alert = useAlert();
   const { user } = useSelector((state) => state.user);
   const { error, isUpdated, loading } = useSelector((state) => state.profile);
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
   const [avatar, setAvatar] = useState();
   const [avatarPreview, setAvatarPreview] = useState("/Profile.png");
+
+  const {
+    handleAccountInputValue,
+    accountFormIsValid,
+    errors,
+    accountFormValues,
+    setAcountFormValues,
+  } = useAcountFormControls();
 
   const updateProfile = (event) => {
     event.preventDefault();
 
-    const data = new FormData();
+    if (accountFormIsValid()) {
+      const data = new FormData();
 
-    data.set("name", name);
-    data.set("email", email);
-    data.set("avatar", avatar);
+      data.set("name", accountFormValues.name);
+      data.set("email", accountFormValues.email);
+      data.set("avatar", avatar);
 
-    dispatch(updateUserProfile(data));
+      dispatch(updateUserProfile(data));
+    }
   };
 
   const registerDataChange = (event) => {
@@ -71,8 +80,10 @@ const Account = () => {
 
   useEffect(() => {
     if (user) {
-      setName(user.name);
-      setEmail(user.email);
+      setAcountFormValues({
+        name: user.name,
+        email: user.email,
+      });
       setAvatarPreview(user.profilePic?.url);
     }
     if (error) {
@@ -159,7 +170,7 @@ const Account = () => {
                         color="red"
                         mt={2}
                       >
-                        Image should not be more than 750KB
+                        Image size should not be more than 750KB
                       </Typography>
                     </Box>
                   </CardContent>
@@ -198,12 +209,15 @@ const Account = () => {
                           autoComplete="given-name"
                           id="name"
                           fullWidth
-                          helperText="Please specify your Name"
                           label="Name"
                           name="name"
-                          onChange={(e) => setName(e.target.value)}
-                          value={name}
+                          onChange={handleAccountInputValue}
+                          value={accountFormValues.name}
                           variant="outlined"
+                          {...(errors.name && {
+                            error: true,
+                            helperText: errors.name,
+                          })}
                         />
                       </Grid>
 
@@ -214,9 +228,13 @@ const Account = () => {
                           fullWidth
                           label="Email Address"
                           name="email"
-                          onChange={(e) => setEmail(e.target.value)}
-                          value={email}
+                          onChange={handleAccountInputValue}
+                          value={accountFormValues.email}
                           variant="outlined"
+                          {...(errors.email && {
+                            error: true,
+                            helperText: errors.email,
+                          })}
                         />
                       </Grid>
                     </Grid>
@@ -241,6 +259,7 @@ const Account = () => {
                       type="submit"
                       sx={{ backgroundColor: "secondary.main" }}
                       variant="contained"
+                      disabled={!accountFormIsValid()}
                     >
                       Save details
                     </Button>

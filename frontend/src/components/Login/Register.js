@@ -27,13 +27,8 @@ function Register() {
   const handleMouseDownPassword = () => setShowPassword(!showPassword);
   const history = useNavigate();
   const alert = useAlert();
-  // const [user, setUser] = useState({
-  //   name: "",
-  //   email: "",
-  //   password: "",
-  // });
+
   const dispatch = useDispatch();
-  // const { name, email, password } = user;
 
   const [avatar, setAvatar] = useState();
 
@@ -47,8 +42,6 @@ function Register() {
     errors,
     registerFormvalues,
   } = useRegisterFormControls();
-
-  // const isEnabled = name.length > 0 && email.length > 0 && password.length > 0;
 
   const registerSubmit = (event) => {
     event.preventDefault();
@@ -83,9 +76,6 @@ function Register() {
       }
       reader.readAsDataURL(file);
     }
-    // else {
-    //   setUser({ ...user, [event.target.name]: event.target.value });
-    // }
   };
 
   useEffect(() => {
@@ -225,7 +215,7 @@ function Register() {
               color="red"
               mt={2}
             >
-              Image should not be more than 750KB
+              Image size should not be more than 750KB
             </Typography>
             <Button
               type="submit"

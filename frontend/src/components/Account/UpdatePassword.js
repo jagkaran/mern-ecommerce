@@ -18,6 +18,7 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import EmptyCart from "../EmptyCart";
 import Seo from "../Seo";
+import { usePassUpdateFormControls } from "../Admin/Hooks/usePassUpdateForm";
 
 function UpdatePassword() {
   const [showOldPassword, setShowOldPassword] = useState(false);
@@ -35,20 +36,29 @@ function UpdatePassword() {
   const dispatch = useDispatch();
   const alert = useAlert();
   const [oldPass, setOldPass] = useState("");
-  const [newPass, setNewPass] = useState("");
-  const [confirmPass, setConfirmPass] = useState("");
+  // const [newPass, setNewPass] = useState("");
+  // const [confirmPass, setConfirmPass] = useState("");
   const { error, isUpdated, loading } = useSelector((state) => state.profile);
   const { isAuthenticated } = useSelector((state) => state.user);
-  const isEnabled =
-    oldPass.length > 0 && newPass.length > 0 && confirmPass.length > 0;
+  // const isEnabled =
+  //   oldPass.length > 0 && newPass.length > 0 && confirmPass.length > 0;
+
+  const {
+    handleUpdatePassInputValue,
+    updatePassFormIsValid,
+    errors,
+    updatePassFormValues,
+  } = usePassUpdateFormControls();
 
   const updatePassword = (event) => {
     event.preventDefault();
-    const data = new FormData(event.currentTarget);
-    data.set("oldPassword", oldPass);
-    data.set("newPassword", newPass);
-    data.set("confirmPassword", confirmPass);
-    dispatch(updateUserPassword(data));
+    if (updatePassFormIsValid()) {
+      const data = new FormData(event.currentTarget);
+      data.set("oldPassword", oldPass);
+      data.set("newPassword", updatePassFormValues.newPassword);
+      data.set("confirmPassword", updatePassFormValues.confirmPassword);
+      dispatch(updateUserPassword(data));
+    }
   };
 
   useEffect(() => {
@@ -143,8 +153,12 @@ function UpdatePassword() {
                           type={showNewPassword ? "text" : "password"}
                           id="newPassword"
                           autoComplete="new-password"
-                          value={newPass}
-                          onChange={(e) => setNewPass(e.target.value)}
+                          value={updatePassFormValues.newPassword}
+                          onChange={handleUpdatePassInputValue}
+                          {...(errors.newPassword && {
+                            error: true,
+                            helperText: errors.newPassword,
+                          })}
                           InputProps={{
                             // <-- This is where the toggle button is added.
                             endAdornment: (
@@ -174,8 +188,12 @@ function UpdatePassword() {
                           type={showConfirmPassword ? "text" : "password"}
                           id="confirmPassword"
                           autoComplete="confirm-password"
-                          value={confirmPass}
-                          onChange={(e) => setConfirmPass(e.target.value)}
+                          value={updatePassFormValues.confirmPassword}
+                          onChange={handleUpdatePassInputValue}
+                          {...(errors.confirmPassword && {
+                            error: true,
+                            helperText: errors.confirmPassword,
+                          })}
                           InputProps={{
                             // <-- This is where the toggle button is added.
                             endAdornment: (
@@ -202,9 +220,9 @@ function UpdatePassword() {
                       fullWidth
                       variant="contained"
                       sx={{ mt: 3, mb: 2, backgroundColor: "secondary.main" }}
-                      disabled={!isEnabled}
+                      disabled={!updatePassFormIsValid()}
                     >
-                      Save
+                      Update Password
                     </Button>
                   </Box>
                 </Box>

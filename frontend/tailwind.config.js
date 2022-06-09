@@ -1,5 +1,6 @@
 const lightCol = "#b57865";
 const darkCol = "#875444";
+const linkdein = "#0072b1";
 module.exports = {
   purge: ["./src/**/*.{js,jsx,ts,tsx}", "./public/index.html"],
   darkMode: false, // or 'media' or 'class'
@@ -10,6 +11,7 @@ module.exports = {
           light: lightCol,
           DEFAULT: darkCol,
         },
+        linkdein_blue: linkdein,
       },
     },
   },

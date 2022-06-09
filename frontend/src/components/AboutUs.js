@@ -3,51 +3,39 @@ import React from "react";
 function AboutUs() {
   return (
     <>
-      <div class="flex items-center h-96 w-full justify-center">
-        <div class="max-w-xs">
-          <div class="bg-white shadow-xl rounded-lg py-1">
-            <div class="photo-wrapper p-2">
-              <img
-                class="w-20 h-20 rounded-full mx-auto"
-                src="Pic-JK-min.jpg"
-                alt="John Doe"
-              />
-            </div>
-            <div class="p-2">
-              <h3 class="text-center text-xl text-gray-900 font-medium leading-8">
-                Jagkaran Singh
-              </h3>
-              <div class="text-center text-gray-400 text-xs font-semibold">
-                <p>SFCC consultant & React Enthusiast</p>
-              </div>
-              <table class="text-xs my-3">
-                <tbody>
-                  <tr>
-                    <td class="px-2 py-2 text-gray-500 font-semibold">
-                      Address
-                    </td>
-                    <td class="px-2 py-2">Schulstr. 13, Uttenreuth, Germany</td>
-                  </tr>
-                  <tr>
-                    <td class="px-2 py-2 text-gray-500 font-semibold">Phone</td>
-                    <td class="px-2 py-2">+49 151 68646588</td>
-                  </tr>
-                  <tr>
-                    <td class="px-2 py-2 text-gray-500 font-semibold">Email</td>
-                    <td class="px-2 py-2">jagkarans43@gmail.com</td>
-                  </tr>
-                </tbody>
-              </table>
-
-              <div class="text-center my-3">
-                <a
-                  class="text-xs text-indigo-500 italic hover:underline hover:text-indigo-600 font-medium"
-                  href="https://www.linkedin.com/in/jagkaran-singh/"
-                >
-                  View Profile
-                </a>
-              </div>
-            </div>
+      <div class="relative mt-14 flex items-center h-96 w-full justify-center">
+        <div class="text-center mb-4 absolute -top-10 right-1/2 transform translate-x-1/2">
+          <a href="#" class="block relative">
+            <img
+              alt="profil"
+              src="Pic-JK-min.jpg"
+              class="mx-auto object-cover rounded-lg h-40 w-40  border-2 border-white dark:border-gray-800"
+            />
+          </a>
+        </div>
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow px-8 py-4 pt-24">
+          <div class="text-center">
+            <p class="text-2xl text-gray-800 dark:text-white">Jagkaran Singh</p>
+            <p class="text-xl text-gray-500 dark:text-gray-200 font-light">
+              SFCC consultant & React Enthusiast
+            </p>
+            <p class="text-md text-gray-500 w-60 dark:text-gray-400 mx-auto py-4 font-light">
+              jagkarans43@gmail.com
+            </p>
+          </div>
+          <div class="pt-8 flex border-t border-gray-200 w-40 mx-auto text-gray-500 items-center justify-center">
+            <a href="https://www.linkedin.com/in/jagkaran-singh/">
+              <svg
+                width="30"
+                height="30"
+                fill="currentColor"
+                class="text-xl hover:text-linkdein_blue dark:hover:text-white transition-colors duration-200"
+                viewBox="0 0 1792 1792"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path d="M477 625v991h-330v-991h330zm21-306q1 73-50.5 122t-135.5 49h-2q-82 0-132-49t-50-122q0-74 51.5-122.5t134.5-48.5 133 48.5 51 122.5zm1166 729v568h-329v-530q0-105-40.5-164.5t-126.5-59.5q-63 0-105.5 34.5t-63.5 85.5q-11 30-11 81v553h-329q2-399 2-647t-1-296l-1-48h329v144h-2q20-32 41-56t56.5-52 87-43.5 114.5-15.5q171 0 275 113.5t104 332.5z"></path>
+              </svg>
+            </a>
           </div>
         </div>
       </div>
