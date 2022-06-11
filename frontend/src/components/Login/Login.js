@@ -28,8 +28,6 @@ function Login() {
   const dispatch = useDispatch();
   const alert = useAlert();
   const history = useNavigate();
-  // const [loginEmail, setLoginEmail] = useState("");
-  // const [loginPassword, setLoginPassword] = useState("");
   const location = useLocation();
 
   const { loading, error, isAuthenticated } = useSelector(
@@ -38,8 +36,6 @@ function Login() {
 
   const { handleLoginInputValue, loginFormIsValid, errors, loginFormvalues } =
     useLoginFormControls();
-
-  // const isEnabled = loginEmail.length > 0 && loginPassword.length > 0;
 
   const loginSubmit = (event) => {
     event.preventDefault();

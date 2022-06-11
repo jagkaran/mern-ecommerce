@@ -3,33 +3,38 @@ import React from "react";
 function AboutUs() {
   return (
     <>
-      <div class="relative mt-14 flex items-center h-96 w-full justify-center">
-        <div class="text-center mb-4 absolute -top-10 right-1/2 transform translate-x-1/2">
-          <a href="#" class="block relative">
+      <div className="relative mt-14 flex items-center h-96 w-full justify-center">
+        <div className="text-center mb-4 absolute -top-10 right-1/2 transform translate-x-1/2">
+          <a
+            href="https://www.linkedin.com/in/jagkaran-singh/"
+            className="block relative"
+          >
             <img
               alt="profil"
               src="Pic-JK-min.jpg"
-              class="mx-auto object-cover rounded-lg h-40 w-40  border-2 border-white dark:border-gray-800"
+              className="mx-auto object-cover rounded-lg h-40 w-40  border-2 border-white dark:border-gray-800"
             />
           </a>
         </div>
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow px-8 py-4 pt-24">
-          <div class="text-center">
-            <p class="text-2xl text-gray-800 dark:text-white">Jagkaran Singh</p>
-            <p class="text-xl text-gray-500 dark:text-gray-200 font-light">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow px-8 py-4 pt-24">
+          <div className="text-center">
+            <p className="text-2xl text-gray-800 dark:text-white">
+              Jagkaran Singh
+            </p>
+            <p className="text-xl text-gray-500 dark:text-gray-200 font-light">
               SFCC consultant & React Enthusiast
             </p>
-            <p class="text-md text-gray-500 w-60 dark:text-gray-400 mx-auto py-4 font-light">
+            <p className="text-md text-gray-500 w-60 dark:text-gray-400 mx-auto py-4 font-light">
               jagkarans43@gmail.com
             </p>
           </div>
-          <div class="pt-8 flex border-t border-gray-200 w-40 mx-auto text-gray-500 items-center justify-center">
+          <div className="pt-8 flex border-t border-gray-200 w-40 mx-auto text-gray-500 items-center justify-center">
             <a href="https://www.linkedin.com/in/jagkaran-singh/">
               <svg
                 width="30"
                 height="30"
                 fill="currentColor"
-                class="text-xl hover:text-linkdein_blue dark:hover:text-white transition-colors duration-200"
+                className="text-xl hover:text-linkdein_blue dark:hover:text-white transition-colors duration-200"
                 viewBox="0 0 1792 1792"
                 xmlns="http://www.w3.org/2000/svg"
               >

@@ -36,12 +36,9 @@ function UpdatePassword() {
   const dispatch = useDispatch();
   const alert = useAlert();
   const [oldPass, setOldPass] = useState("");
-  // const [newPass, setNewPass] = useState("");
-  // const [confirmPass, setConfirmPass] = useState("");
+
   const { error, isUpdated, loading } = useSelector((state) => state.profile);
   const { isAuthenticated } = useSelector((state) => state.user);
-  // const isEnabled =
-  //   oldPass.length > 0 && newPass.length > 0 && confirmPass.length > 0;
 
   const {
     handleUpdatePassInputValue,
