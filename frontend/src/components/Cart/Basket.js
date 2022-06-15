@@ -84,7 +84,7 @@ function Basket() {
                     </Typography>
                   </Box>
                   <Divider />
-                  <Box>
+                  <Box mt={2}>
                     <Table
                       sx={{
                         [`& .${tableCellClasses.root}`]: {

@@ -41,7 +41,7 @@ To run this project, make sure to create a config.env file in backend/config dir
 
 ## Tech Stack
 
-**Client:** React, Redux, TailwindCSS, MUI v5
+**Client:** React, Redux, Tailwind CSS, MUI v5
 
 **Server:** Node, Express
 
