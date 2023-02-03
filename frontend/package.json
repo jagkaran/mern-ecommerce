@@ -42,7 +42,7 @@
   },
   "scripts": {
     "start": "export SET NODE_OPTIONS=--openssl-legacy-provider && craco start",
-    "build": "export SET NODE_OPTIONS=--openssl-legacy-provider && craco build",
+    "build": "craco build",
     "test": "craco test",
     "eject": "react-scripts eject"
   },
