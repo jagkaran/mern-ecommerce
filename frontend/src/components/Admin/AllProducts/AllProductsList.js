@@ -10,6 +10,11 @@ import {
   TableCell,
   TableHead,
   TableRow,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
 } from "@mui/material";
 import { Link, useNavigate } from "react-router-dom";
 import EditIcon from "@mui/icons-material/Edit";
@@ -17,13 +22,22 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import { useDispatch, useSelector } from "react-redux";
 import AddIcon from "@mui/icons-material/Add";
 import { clearErrors, deleteProduct } from "../../../actions/productAction";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAlert } from "react-alert";
 
 function AllProductsList({ products }) {
   const dispatch = useDispatch();
   const history = useNavigate();
   const alert = useAlert();
+  const [open, setOpen] = useState(false);
+
+  const handleClickOpen = () => {
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+  };
 
   const { error: deleteError, isDeleted } = useSelector(
     (state) => state.modifiedProduct
@@ -31,6 +45,7 @@ function AllProductsList({ products }) {
 
   const deleteProductHandler = (id) => {
     dispatch(deleteProduct(id));
+    setOpen(false);
   };
 
   useEffect(() => {
@@ -93,9 +108,36 @@ function AllProductsList({ products }) {
                     <Link to={`/admin/product/update/${product._id}`}>
                       <EditIcon />
                     </Link>
-                    <Button onClick={() => deleteProductHandler(product._id)}>
+                    {/* <Button onClick={() => deleteProductHandler(product._id)}> */}
+                    <Button onClick={handleClickOpen}>
                       <DeleteIcon />
                     </Button>
+                    <Dialog
+                      open={open}
+                      onClose={handleClose}
+                      aria-labelledby="alert-dialog-title"
+                      aria-describedby="alert-dialog-description"
+                    >
+                      <DialogTitle id="alert-dialog-title">
+                        {"Delete Confirmation"}
+                      </DialogTitle>
+                      <DialogContent>
+                        <DialogContentText id="alert-dialog-description">
+                          Are you sure you want to delete this product?
+                        </DialogContentText>
+                      </DialogContent>
+                      <DialogActions>
+                        <Button onClick={handleClose} color="primary">
+                          Cancel
+                        </Button>
+                        <Button
+                          onClick={() => deleteProductHandler(product._id)}
+                          color="secondary"
+                        >
+                          Delete
+                        </Button>
+                      </DialogActions>
+                    </Dialog>
                   </TableCell>
                 </TableRow>
               ))}

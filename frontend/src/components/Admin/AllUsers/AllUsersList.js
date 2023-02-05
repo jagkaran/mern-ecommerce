@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import PerfectScrollbar from "react-perfect-scrollbar";
 import {
   Avatar,
@@ -12,6 +12,11 @@ import {
   TableHead,
   TableRow,
   Typography,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
 } from "@mui/material";
 import { Link } from "react-router-dom";
 import EditIcon from "@mui/icons-material/Edit";
@@ -20,6 +25,19 @@ import { format, parseISO } from "date-fns";
 import SeverityPill from "../../Order/SeverityPill";
 
 function AllUsersList({ users, usersCount, deleteUserHandler }) {
+  const [open, setOpen] = useState(false);
+  const handleClickOpen = () => {
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+  };
+
+  const deleteUser = (id) => {
+    deleteUserHandler(id);
+    setOpen(false);
+  };
   return (
     <Card>
       <CardHeader title={`All Users (${usersCount})`} />
@@ -77,9 +95,35 @@ function AllUsersList({ users, usersCount, deleteUserHandler }) {
                     <Link to={`/admin/user/update/${user._id}`}>
                       <EditIcon />
                     </Link>
-                    <Button onClick={() => deleteUserHandler(user._id)}>
+                    <Button onClick={handleClickOpen}>
                       <DeleteIcon />
                     </Button>
+                    <Dialog
+                      open={open}
+                      onClose={handleClose}
+                      aria-labelledby="alert-dialog-title"
+                      aria-describedby="alert-dialog-description"
+                    >
+                      <DialogTitle id="alert-dialog-title">
+                        {"Delete Confirmation"}
+                      </DialogTitle>
+                      <DialogContent>
+                        <DialogContentText id="alert-dialog-description">
+                          Are you sure you want to delete this user?
+                        </DialogContentText>
+                      </DialogContent>
+                      <DialogActions>
+                        <Button onClick={handleClose} color="primary">
+                          Cancel
+                        </Button>
+                        <Button
+                          onClick={() => deleteUser(user._id)}
+                          color="secondary"
+                        >
+                          Delete
+                        </Button>
+                      </DialogActions>
+                    </Dialog>
                   </TableCell>
                 </TableRow>
               ))}

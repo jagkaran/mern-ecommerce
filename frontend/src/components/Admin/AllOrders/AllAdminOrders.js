@@ -51,7 +51,7 @@ function AllAdminOrders() {
 
   const sortedOrdersArrayByDate = orders.slice().sort(sortByDate);
 
-  const deleteProductHandler = (id) => {
+  const deleteOrderHandler = (id) => {
     dispatch(deleteOrder(id));
   };
 
@@ -104,7 +104,7 @@ function AllAdminOrders() {
                 ) : (
                   <AllOrdersList
                     orders={orders && sortedOrdersArrayByDate}
-                    deleteProductHandler={deleteProductHandler}
+                    deleteOrderHandler={deleteOrderHandler}
                   />
                 )}
               </Grid>

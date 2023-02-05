@@ -9,14 +9,34 @@ import {
   TableCell,
   TableHead,
   TableRow,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
 } from "@mui/material";
 import { Link } from "react-router-dom";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { createOrderNumber } from "../../Order/MyOrders";
 import SeverityPill from "../../Order/SeverityPill";
+import { useState } from "react";
 
-function AllOrdersList({ orders, deleteProductHandler }) {
+function AllOrdersList(props) {
+  const [open, setOpen] = useState(false);
+  const { orders, deleteOrderHandler } = props;
+  const handleClickOpen = () => {
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+  };
+
+  const deleteOrder = (id) => {
+    deleteOrderHandler(id);
+    setOpen(false);
+  };
   return (
     <Card>
       <CardHeader title={`All Orders (${orders.length})`} />
@@ -57,9 +77,36 @@ function AllOrdersList({ orders, deleteProductHandler }) {
                     <Link to={`/admin/order/update/${order._id}`}>
                       <EditIcon />
                     </Link>
-                    <Button onClick={() => deleteProductHandler(order._id)}>
+                    {/* <Button onClick={() => deleteProductHandler(order._id)}> */}
+                    <Button onClick={handleClickOpen}>
                       <DeleteIcon />
                     </Button>
+                    <Dialog
+                      open={open}
+                      onClose={handleClose}
+                      aria-labelledby="alert-dialog-title"
+                      aria-describedby="alert-dialog-description"
+                    >
+                      <DialogTitle id="alert-dialog-title">
+                        {"Delete Confirmation"}
+                      </DialogTitle>
+                      <DialogContent>
+                        <DialogContentText id="alert-dialog-description">
+                          Are you sure you want to delete this order?
+                        </DialogContentText>
+                      </DialogContent>
+                      <DialogActions>
+                        <Button onClick={handleClose} color="primary">
+                          Cancel
+                        </Button>
+                        <Button
+                          onClick={() => deleteOrder(order._id)}
+                          color="secondary"
+                        >
+                          Delete
+                        </Button>
+                      </DialogActions>
+                    </Dialog>
                   </TableCell>
                 </TableRow>
               ))}
