@@ -25,8 +25,11 @@ import { useState } from "react";
 function AllOrdersList(props) {
   const [open, setOpen] = useState(false);
   const { orders, deleteOrderHandler } = props;
-  const handleClickOpen = () => {
+  const [selectedOrder, setSelectedOrder] = useState({});
+
+  const handleClickOpen = (order) => {
     setOpen(true);
+    setSelectedOrder(order);
   };
 
   const handleClose = () => {
@@ -78,7 +81,7 @@ function AllOrdersList(props) {
                       <EditIcon />
                     </Link>
                     {/* <Button onClick={() => deleteProductHandler(order._id)}> */}
-                    <Button onClick={handleClickOpen}>
+                    <Button onClick={() => handleClickOpen(order)}>
                       <DeleteIcon />
                     </Button>
                     <Dialog
@@ -92,7 +95,13 @@ function AllOrdersList(props) {
                       </DialogTitle>
                       <DialogContent>
                         <DialogContentText id="alert-dialog-description">
-                          Are you sure you want to delete this order?
+                          Are you sure you want to delete "
+                          {createOrderNumber(
+                            selectedOrder._id,
+                            selectedOrder.shippingInfo &&
+                              selectedOrder.shippingInfo.country
+                          )}
+                          " order?
                         </DialogContentText>
                       </DialogContent>
                       <DialogActions>
@@ -100,7 +109,7 @@ function AllOrdersList(props) {
                           Cancel
                         </Button>
                         <Button
-                          onClick={() => deleteOrder(order._id)}
+                          onClick={() => deleteOrder(selectedOrder._id)}
                           color="secondary"
                         >
                           Delete

@@ -30,6 +30,7 @@ import "../Cart/Table.css";
 
 //   10 Digit order number prepended by country code
 export const createOrderNumber = (id, country) => {
+  if (!id || !country) return "";
   return country + id.replace(/\D/g, "").substring(0, 8);
 };
 

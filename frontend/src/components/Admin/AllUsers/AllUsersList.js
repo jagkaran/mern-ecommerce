@@ -26,8 +26,11 @@ import SeverityPill from "../../Order/SeverityPill";
 
 function AllUsersList({ users, usersCount, deleteUserHandler }) {
   const [open, setOpen] = useState(false);
-  const handleClickOpen = () => {
+  const [selectedUser, setSelectedUser] = useState({});
+
+  const handleClickOpen = (user) => {
     setOpen(true);
+    setSelectedUser(user);
   };
 
   const handleClose = () => {
@@ -95,7 +98,7 @@ function AllUsersList({ users, usersCount, deleteUserHandler }) {
                     <Link to={`/admin/user/update/${user._id}`}>
                       <EditIcon />
                     </Link>
-                    <Button onClick={handleClickOpen}>
+                    <Button onClick={() => handleClickOpen(user)}>
                       <DeleteIcon />
                     </Button>
                     <Dialog
@@ -109,7 +112,8 @@ function AllUsersList({ users, usersCount, deleteUserHandler }) {
                       </DialogTitle>
                       <DialogContent>
                         <DialogContentText id="alert-dialog-description">
-                          Are you sure you want to delete this user?
+                          Are you sure you want to delete "{selectedUser.email}"
+                          user?
                         </DialogContentText>
                       </DialogContent>
                       <DialogActions>
@@ -117,7 +121,7 @@ function AllUsersList({ users, usersCount, deleteUserHandler }) {
                           Cancel
                         </Button>
                         <Button
-                          onClick={() => deleteUser(user._id)}
+                          onClick={() => deleteUser(selectedUser._id)}
                           color="secondary"
                         >
                           Delete

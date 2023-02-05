@@ -30,9 +30,11 @@ function AllProductsList({ products }) {
   const history = useNavigate();
   const alert = useAlert();
   const [open, setOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState({});
 
-  const handleClickOpen = () => {
+  const handleClickOpen = (product) => {
     setOpen(true);
+    setSelectedProduct(product);
   };
 
   const handleClose = () => {
@@ -109,7 +111,7 @@ function AllProductsList({ products }) {
                       <EditIcon />
                     </Link>
                     {/* <Button onClick={() => deleteProductHandler(product._id)}> */}
-                    <Button onClick={handleClickOpen}>
+                    <Button onClick={() => handleClickOpen(product)}>
                       <DeleteIcon />
                     </Button>
                     <Dialog
@@ -123,7 +125,8 @@ function AllProductsList({ products }) {
                       </DialogTitle>
                       <DialogContent>
                         <DialogContentText id="alert-dialog-description">
-                          Are you sure you want to delete this product?
+                          Are you sure you want to delete "
+                          {selectedProduct.name}"?
                         </DialogContentText>
                       </DialogContent>
                       <DialogActions>
@@ -131,7 +134,9 @@ function AllProductsList({ products }) {
                           Cancel
                         </Button>
                         <Button
-                          onClick={() => deleteProductHandler(product._id)}
+                          onClick={() =>
+                            deleteProductHandler(selectedProduct._id)
+                          }
                           color="secondary"
                         >
                           Delete

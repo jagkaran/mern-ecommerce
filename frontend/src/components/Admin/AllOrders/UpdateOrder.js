@@ -139,8 +139,8 @@ function UpdateOrder() {
                         )}
                       </Typography>
                       <ShippingInfoCard
-                        name={order.user.name}
-                        phone={order.shippingInfo.phone}
+                        name={order.user?.name}
+                        phone={order.shippingInfo?.phone}
                         address={addresses.join(", ")}
                       />
                       <Box sx={{ pt: 3 }}>
