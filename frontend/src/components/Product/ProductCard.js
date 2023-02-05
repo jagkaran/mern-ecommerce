@@ -10,7 +10,23 @@ function ProductCard({
   numOfReviews,
   images,
   stock,
+  createdAt,
 }) {
+  function extractDate(createdAt) {
+    const date = new Date(createdAt);
+    return date.toLocaleDateString();
+  }
+  // outputs: "May 23, 2022"
+  const extractedDate = extractDate(createdAt);
+
+  function isProductNew(extractedDate) {
+    const now = new Date();
+    const productAge = now - new Date(extractedDate);
+    const oneMonth = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
+    return productAge < oneMonth;
+  }
+  const isNew = isProductNew(extractedDate);
+
   return (
     <Link to={`/product/${id}`}>
       <div className="w-80 flex justify-center items-center">
@@ -47,6 +63,14 @@ function ProductCard({
               whitespace-nowrap align-baseline font-semibold bg-gray-200 text-gray-700 rounded-full"
                   >
                     Out of Stock
+                  </span>
+                )}
+                {isNew && (
+                  <span
+                    className="text-xs inline-block ml-1 py-1 px-2.5 leading-none text-center 
+              whitespace-nowrap align-baseline font-semibold bg-green-200 text-green-700 rounded-full"
+                  >
+                    New
                   </span>
                 )}
               </div>

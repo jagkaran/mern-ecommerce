@@ -15,6 +15,7 @@ function ProductGrid({ products }) {
             images,
             numOfReviews,
             stock,
+            createdAt,
           }) => (
             <ProductCard
               key={_id}
@@ -26,6 +27,7 @@ function ProductGrid({ products }) {
               images={images}
               numOfReviews={numOfReviews}
               stock={stock}
+              createdAt={createdAt}
             />
           )
         )}
