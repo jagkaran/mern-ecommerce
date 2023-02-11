@@ -4,7 +4,7 @@ This is a MERN stack app created for learning purpose. This app is rolled out in
 
 ## Demo
 
-https://mern-ecommerce-stack.herokuapp.com/
+https://mern-ecommerce-app-91py.onrender.com
 
 ## Run Locally
 
