@@ -1,15 +1,8 @@
 #!/usr/bin/env node
 /**
  * Test Agent -- mern-ecommerce
- * Ensures test files exist with correct imports, then runs Jest.
- *
- * Test file layout:
- *   backend/__tests__/
- *     globalSetup.js      <- mongoose connect  (jest globalSetup)
- *     globalTeardown.js   <- mongoose close    (jest globalTeardown)
- *     product.test.js     <- require('../app')
- *     auth.test.js        <- require('../app')
- *     order.test.js       <- require('../app')
+ * Ensures mongodb-memory-server is installed (no local MongoDB needed),
+ * overwrites test files with correct imports, then runs Jest.
  */
 
 const { execSync } = require("child_process");
@@ -20,41 +13,43 @@ const ROOT   = path.resolve(__dirname, "..");
 const TESTS  = path.join(ROOT, "backend", "__tests__");
 
 function ensure(dir) { if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true }); }
-
-// Always overwrite test files so stale imports are replaced
-function overwrite(file, content) {
+function write(file, content) {
   fs.writeFileSync(file, content, "utf8");
   console.log("  written: " + path.relative(ROOT, file));
 }
 
 ensure(TESTS);
 
-// globalSetup
-overwrite(path.join(TESTS, "globalSetup.js"),
+// globalSetup — uses mongodb-memory-server
+write(path.join(TESTS, "globalSetup.js"),
   '"use strict";\n' +
+  'const { MongoMemoryServer } = require("mongodb-memory-server");\n' +
   'const mongoose = require("mongoose");\n' +
   'module.exports = async function globalSetup() {\n' +
-  '  const uri = process.env.MONGO_URI_TEST || "mongodb://127.0.0.1:27017/mern_test";\n' +
+  '  const mongod = await MongoMemoryServer.create();\n' +
+  '  const uri    = mongod.getUri();\n' +
+  '  process.env.MONGO_URI_TEST = uri;\n' +
+  '  global.__MONGOD__ = mongod;\n' +
   '  await mongoose.connect(uri);\n' +
   '};\n'
 );
 
 // globalTeardown
-overwrite(path.join(TESTS, "globalTeardown.js"),
+write(path.join(TESTS, "globalTeardown.js"),
   '"use strict";\n' +
   'const mongoose = require("mongoose");\n' +
   'module.exports = async function globalTeardown() {\n' +
   '  await mongoose.connection.dropDatabase();\n' +
   '  await mongoose.connection.close();\n' +
+  '  if (global.__MONGOD__) await global.__MONGOD__.stop();\n' +
   '};\n'
 );
 
 // product tests
-overwrite(path.join(TESTS, "product.test.js"),
+write(path.join(TESTS, "product.test.js"),
   '"use strict";\n' +
   'const request = require("supertest");\n' +
   'const app     = require("../app");\n' +
-  '\n' +
   'describe("Product API", () => {\n' +
   '  it("GET /api/v1/products returns 200", async () => {\n' +
   '    const res = await request(app).get("/api/v1/products");\n' +
@@ -69,7 +64,7 @@ overwrite(path.join(TESTS, "product.test.js"),
 );
 
 // auth tests
-overwrite(path.join(TESTS, "auth.test.js"),
+write(path.join(TESTS, "auth.test.js"),
   '"use strict";\n' +
   'const request = require("supertest");\n' +
   'const app     = require("../app");\n' +
@@ -103,7 +98,7 @@ overwrite(path.join(TESTS, "auth.test.js"),
 );
 
 // order tests
-overwrite(path.join(TESTS, "order.test.js"),
+write(path.join(TESTS, "order.test.js"),
   '"use strict";\n' +
   'const request = require("supertest");\n' +
   'const app     = require("../app");\n' +
@@ -123,10 +118,11 @@ overwrite(path.join(TESTS, "order.test.js"),
 const pkgPath = path.join(ROOT, "package.json");
 const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
 pkg.jest = {
-  testEnvironment:  "node",
-  testMatch:        ["**/backend/__tests__/**/*.test.js"],
-  globalSetup:      "<rootDir>/backend/__tests__/globalSetup.js",
-  globalTeardown:   "<rootDir>/backend/__tests__/globalTeardown.js",
+  testEnvironment:   "node",
+  testMatch:         ["**/backend/__tests__/**/*.test.js"],
+  globalSetup:       "<rootDir>/backend/__tests__/globalSetup.js",
+  globalTeardown:    "<rootDir>/backend/__tests__/globalTeardown.js",
+  testTimeout:       30000,
   coverageDirectory: "coverage",
   collectCoverageFrom: ["backend/**/*.js", "!backend/node_modules/**", "!backend/__tests__/**"],
 };
@@ -136,10 +132,17 @@ if (pkg.scripts && !pkg.scripts.test.includes("jest")) {
 fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2), "utf8");
 console.log("  synced package.json jest config");
 
-// Install deps if needed
+// Install deps — add mongodb-memory-server if missing
 console.log("\n[test-agent] Checking test dependencies ...");
-try { require.resolve("jest"); require.resolve("supertest"); console.log("   ok"); }
-catch (_) { execSync("npm install --save-dev jest supertest", { cwd: ROOT, stdio: "inherit" }); }
+const pkgCheck = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
+const allDeps  = Object.assign({}, pkgCheck.dependencies, pkgCheck.devDependencies);
+const missing  = ["jest", "supertest", "mongodb-memory-server"].filter((d) => !allDeps[d]);
+if (missing.length > 0) {
+  console.log("   installing: " + missing.join(", "));
+  execSync("npm install --save-dev " + missing.join(" "), { cwd: ROOT, stdio: "inherit" });
+} else {
+  console.log("   ok  all test deps present");
+}
 
 // Run tests
 console.log("\n[test-agent] Running test suite ...\n");

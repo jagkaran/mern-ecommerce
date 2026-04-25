@@ -1,9 +1,12 @@
 "use strict";
+const { MongoMemoryServer } = require("mongodb-memory-server");
 const mongoose = require("mongoose");
 
 module.exports = async function globalSetup() {
-  const uri = process.env.MONGO_URI_TEST || "mongodb://127.0.0.1:27017/mern_test";
+  const mongod = await MongoMemoryServer.create();
+  const uri    = mongod.getUri();
+  // Store so globalTeardown can stop the server
+  process.env.MONGO_URI_TEST = uri;
+  global.__MONGOD__ = mongod;
   await mongoose.connect(uri);
-  // Store connection so globalTeardown can close it
-  global.__MONGOOSE__ = mongoose;
 };
