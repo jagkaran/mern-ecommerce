@@ -48,28 +48,23 @@ const Account = () => {
 
   const updateProfile = (event) => {
     event.preventDefault();
-
     if (accountFormIsValid()) {
       const data = new FormData();
-
       data.set("name", accountFormValues.name);
       data.set("email", accountFormValues.email);
       data.set("avatar", avatar);
-
       dispatch(updateUserProfile(data));
     }
   };
 
   const registerDataChange = (event) => {
     const reader = new FileReader();
-
     reader.onload = () => {
       if (reader.readyState === 2) {
         setAvatarPreview(reader.result);
         setAvatar(reader.result);
       }
     };
-
     const file = event.target.files[0];
     if (file.size > 760000) {
       alert.error("Please upload an image smaller than 750 KB");
@@ -78,6 +73,7 @@ const Account = () => {
     reader.readAsDataURL(file);
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (user) {
       setAcountFormValues({
@@ -94,9 +90,7 @@ const Account = () => {
       alert.success("Profile Updated Successfully");
       dispatch(loadUser());
       history("/account");
-      dispatch({
-        type: "UpdateProfileReset",
-      });
+      dispatch({ type: "UpdateProfileReset" });
     }
   }, [dispatch, error, alert, history, user, isUpdated]);
 
@@ -116,10 +110,7 @@ const Account = () => {
           component="form"
           noValidate
           onSubmit={updateProfile}
-          sx={{
-            flexGrow: 1,
-            py: 8,
-          }}
+          sx={{ flexGrow: 1, py: 8 }}
         >
           <Container maxWidth="lg">
             <Typography sx={{ mb: 3 }} variant="h4">
@@ -138,11 +129,7 @@ const Account = () => {
                     >
                       <Avatar
                         src={avatarPreview}
-                        sx={{
-                          height: 86,
-                          mb: 2,
-                          width: 86,
-                        }}
+                        sx={{ height: 86, mb: 2, width: 86 }}
                       />
                       <Typography
                         sx={{ textTransform: "uppercase" }}
@@ -220,7 +207,6 @@ const Account = () => {
                           })}
                         />
                       </Grid>
-
                       <Grid item md={6} xs={12}>
                         <TextField
                           id="email"

@@ -9,7 +9,7 @@ import {
   CssBaseline,
 } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useAlert } from "react-alert";
 import { clearErrors, forgotUserPassword } from "../../actions/userAction";
 import LockResetIcon from "@mui/icons-material/LockReset";
@@ -24,8 +24,6 @@ function ForgotPassword() {
   const { error, message, loading } = useSelector(
     (state) => state.forgotPassword
   );
-
-  // const [email, setEmail] = useState("");
 
   const {
     handlePassForgotInputValue,
@@ -52,6 +50,7 @@ function ForgotPassword() {
       alert.success(message);
     }
   }, [dispatch, error, alert, message]);
+
   return (
     <>
       <Seo
@@ -103,7 +102,6 @@ function ForgotPassword() {
                     helperText: errors.email,
                   })}
                 />
-
                 <Button
                   type="submit"
                   fullWidth

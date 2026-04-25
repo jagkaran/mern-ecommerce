@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useTheme } from "@mui/material/styles";
 import Box from "@mui/material/Box";
 import CssBaseline from "@mui/material/CssBaseline";
@@ -29,7 +29,6 @@ import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import PhotoCamera from "@mui/icons-material/PhotoCamera";
-import { useEffect } from "react";
 import CategoryIcon from "@mui/icons-material/Category";
 import { useFormControls } from "../Hooks/useFormControl";
 import UpdateReviews from "./UpdateReviews";
@@ -41,13 +40,8 @@ function UpdateProduct() {
   const [open, setOpen] = React.useState(false);
   const { id } = useParams();
 
-  const handleDrawerOpen = () => {
-    setOpen(true);
-  };
-
-  const handleDrawerClose = () => {
-    setOpen(false);
-  };
+  const handleDrawerOpen = () => setOpen(true);
+  const handleDrawerClose = () => setOpen(false);
 
   const dispatch = useDispatch();
   const alert = useAlert();
@@ -74,79 +68,44 @@ function UpdateProduct() {
     useFormControls();
 
   const categories = [
-    {
-      id: 1,
-      name: "laptop",
-    },
-    {
-      id: 2,
-      name: "footwear",
-    },
-    {
-      id: 3,
-      name: "bottom",
-    },
-    {
-      id: 4,
-      name: "clothing",
-    },
-    {
-      id: 5,
-      name: "tops",
-    },
-    {
-      id: 6,
-      name: "shoes",
-    },
-    {
-      id: 7,
-      name: "camera",
-    },
-    {
-      id: 8,
-      name: "smartphones",
-    },
-    {
-      id: 9,
-      name: "accessories",
-    },
+    { id: 1, name: "laptop" },
+    { id: 2, name: "footwear" },
+    { id: 3, name: "bottom" },
+    { id: 4, name: "clothing" },
+    { id: 5, name: "tops" },
+    { id: 6, name: "shoes" },
+    { id: 7, name: "camera" },
+    { id: 8, name: "smartphones" },
+    { id: 9, name: "accessories" },
   ];
 
   const updateProductSubmitHandler = (e) => {
     e.preventDefault();
     if (formIsValid()) {
       const myForm = new FormData();
-
       myForm.set("name", values.name);
       myForm.set("price", values.price);
       myForm.set("description", values.description);
       myForm.set("category", values.category);
       myForm.set("stock", values.stock);
-
-      images.forEach((image) => {
-        myForm.append("images", image);
-      });
+      images.forEach((image) => myForm.append("images", image));
       dispatch(updateProduct(id, myForm));
     }
   };
 
   const updateProductImagesChange = (e) => {
     const files = Array.from(e.target.files);
-
     setImages([]);
     setImagesPreview([]);
     setOldImages([]);
-
     files.forEach((file) => {
       const reader = new FileReader();
-
       reader.onload = () => {
         if (reader.readyState === 2) {
           setImagesPreview((old) => [...old, reader.result]);
           setImages((old) => [...old, reader.result]);
         }
       };
-
       reader.readAsDataURL(file);
     });
   };
@@ -155,6 +114,7 @@ function UpdateProduct() {
     dispatch(deleteReview(reviewId, id));
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (product && product._id !== id) {
       dispatch(getProductDetails(id));
@@ -224,13 +184,7 @@ function UpdateProduct() {
           handleDrawerClose={handleDrawerClose}
           theme={theme}
         />
-        <Box
-          component="main"
-          sx={{
-            flexGrow: 1,
-            py: 8,
-          }}
-        >
+        <Box component="main" sx={{ flexGrow: 1, py: 8 }}>
           <Container maxWidth="md" sx={{ mt: 2, mb: 2 }}>
             <Grid container spacing={3}>
               <Grid item xs={12} md={12} lg={6}>
@@ -363,11 +317,7 @@ function UpdateProduct() {
                           xs={12}
                           sx={{ display: "flex", alignItems: "center" }}
                         >
-                          <Typography
-                            variant="caption"
-                            display="block"
-                            gutterBottom
-                          >
+                          <Typography variant="caption" display="block" gutterBottom>
                             Old Images:
                           </Typography>
                           {oldImages?.map((image, index) => (
@@ -377,7 +327,7 @@ function UpdateProduct() {
                               sx={{ m: 1, width: 60, height: 80 }}
                               variant="square"
                               alt="Old Images"
-                            ></Avatar>
+                            />
                           ))}
                         </Grid>
                         <Grid
@@ -386,11 +336,7 @@ function UpdateProduct() {
                           mt={2}
                           sx={{ display: "flex", alignItems: "center" }}
                         >
-                          <Typography
-                            variant="caption"
-                            display="block"
-                            gutterBottom
-                          >
+                          <Typography variant="caption" display="block" gutterBottom>
                             New Images:
                           </Typography>
                           {imagesPreview.map((image, index) => (
@@ -400,7 +346,7 @@ function UpdateProduct() {
                               sx={{ m: 1, width: 60, height: 80 }}
                               variant="square"
                               alt="New Images"
-                            ></Avatar>
+                            />
                           ))}
                         </Grid>
                         <Grid
