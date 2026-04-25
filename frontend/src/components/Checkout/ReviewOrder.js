@@ -27,14 +27,12 @@ function ReviewOrder({ reviewData, handleReviewDataChange }) {
     (acc, item) => acc + item.quantity * item.price,
     0
   );
-
   reviewData.shippingCharges = reviewData.subTotal > 1000 ? 0 : 50;
-
   reviewData.tax = reviewData.subTotal * 0.15;
-
   reviewData.totalPrice =
     reviewData.subTotal + reviewData.shippingCharges + reviewData.tax;
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (reviewData?.subTotal !== "") {
       handleReviewDataChange("subTotal", reviewData.subTotal);
@@ -67,12 +65,11 @@ function ReviewOrder({ reviewData, handleReviewDataChange }) {
               src={product.image}
               sx={{ mr: 2, width: 90, height: 120 }}
               variant="square"
-            ></Avatar>
+            />
             <ListItemText
               primary={product.name}
               secondary={`Quantity: ${product.quantity}`}
             />
-
             <Typography variant="body2">
               {product.price} X {product.quantity} ={" "}
               {product.price * product.quantity}
@@ -112,22 +109,13 @@ function ReviewOrder({ reviewData, handleReviewDataChange }) {
             Shipping Details
           </Typography>
           <Typography gutterBottom>
-            <span>
-              <b>Name:</b>
-            </span>{" "}
-            {shippingInfo.firstName} {shippingInfo.lastName}
+            <b>Name:</b> {shippingInfo.firstName} {shippingInfo.lastName}
           </Typography>
           <Typography gutterBottom>
-            <span>
-              <b>Phone No: </b>
-            </span>{" "}
-            {shippingInfo.phone}
+            <b>Phone No:</b> {shippingInfo.phone}
           </Typography>
           <Typography gutterBottom>
-            <span>
-              <b>Shipping Address: </b>
-            </span>{" "}
-            {addresses.join(", ")}
+            <b>Shipping Address:</b> {addresses.join(", ")}
           </Typography>
         </Grid>
       </Grid>

@@ -1,72 +1,75 @@
-import Home from "./components/Home/Home";
+import { lazy, Suspense, useEffect, useState } from "react";
 import {
   BrowserRouter as Router,
   Navigate,
   Route,
   Routes,
 } from "react-router-dom";
-import Header from "./components/Home/Header";
-import Products from "./components/Product/Products";
-import Search from "./components/Search";
-import Register from "./components/Login/Register";
-import Login from "./components/Login/Login";
-import { createTheme, ThemeProvider } from "@mui/material";
+import { createTheme, ThemeProvider, CircularProgress, Box } from "@mui/material";
 import { grey } from "@mui/material/colors";
-import Account from "./components/Account/Account";
-import { useEffect, useState } from "react";
-import { loadUser } from "./actions/userAction";
-import UpdatePassword from "./components/Account/UpdatePassword";
 import { useDispatch, useSelector } from "react-redux";
-import ForgotPassword from "./components/Account/ForgotPassword";
-import ResetPassword from "./components/Account/ResetPassword";
-import Basket from "./components/Cart/Basket";
-import NotFound from "./components/NotFound";
-import Shipping from "./components/Checkout/Shipping";
 import axios from "axios";
+import { loadUser } from "./actions/userAction";
+import Header from "./components/Home/Header";
+import ProtectedRoute from "./components/ProtectedRoute";
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
-import ProtectedRoute from "./components/ProtectedRoute";
-import Success from "./components/Checkout/Success";
-import MyOrders from "./components/Order/MyOrders";
-import OrderDetails from "./components/Order/OrderDetails";
-import Dashboard from "./components/Admin/DashBoard";
-import AllAdminOrders from "./components/Admin/AllOrders/AllAdminOrders";
-import AllAdminUsers from "./components/Admin/AllUsers/AllAdminUsers";
-import AllAdminProducts from "./components/Admin/AllProducts/AllAdminProducts";
-import CreateProduct from "./components/Admin/AllProducts/CreateProduct";
-import UpdateProduct from "./components/Admin/AllProducts/UpdateProduct";
-import UpdateOrder from "./components/Admin/AllOrders/UpdateOrder";
-import UpdateUser from "./components/Admin/AllUsers/UpdateUser";
-import ProductDetailsV2 from "./components/Product/PDP/ProductDetailsV2";
-import AboutUs from "./components/AboutUs";
+
+// Eagerly loaded — always needed on first paint
+import Home from "./components/Home/Home";
+
+// Lazy-loaded route chunks
+const Products = lazy(() => import("./components/Product/Products"));
+const ProductDetailsV2 = lazy(() => import("./components/Product/PDP/ProductDetailsV2"));
+const Search = lazy(() => import("./components/Search"));
+const Login = lazy(() => import("./components/Login/Login"));
+const Register = lazy(() => import("./components/Login/Register"));
+const Account = lazy(() => import("./components/Account/Account"));
+const UpdatePassword = lazy(() => import("./components/Account/UpdatePassword"));
+const ForgotPassword = lazy(() => import("./components/Account/ForgotPassword"));
+const ResetPassword = lazy(() => import("./components/Account/ResetPassword"));
+const Basket = lazy(() => import("./components/Cart/Basket"));
+const Shipping = lazy(() => import("./components/Checkout/Shipping"));
+const Success = lazy(() => import("./components/Checkout/Success"));
+const MyOrders = lazy(() => import("./components/Order/MyOrders"));
+const OrderDetails = lazy(() => import("./components/Order/OrderDetails"));
+const AboutUs = lazy(() => import("./components/AboutUs"));
+const NotFound = lazy(() => import("./components/NotFound"));
+
+// Admin chunk — only downloaded if user is admin
+const Dashboard = lazy(() => import("./components/Admin/DashBoard"));
+const AllAdminOrders = lazy(() => import("./components/Admin/AllOrders/AllAdminOrders"));
+const AllAdminUsers = lazy(() => import("./components/Admin/AllUsers/AllAdminUsers"));
+const AllAdminProducts = lazy(() => import("./components/Admin/AllProducts/AllAdminProducts"));
+const CreateProduct = lazy(() => import("./components/Admin/AllProducts/CreateProduct"));
+const UpdateProduct = lazy(() => import("./components/Admin/AllProducts/UpdateProduct"));
+const UpdateOrder = lazy(() => import("./components/Admin/AllOrders/UpdateOrder"));
+const UpdateUser = lazy(() => import("./components/Admin/AllUsers/UpdateUser"));
 
 const theme = createTheme({
   palette: {
-    primary: {
-      main: grey[900],
-    },
-    secondary: {
-      main: grey[800],
-    },
-    appBar: {
-      main: "#FFFFFF",
-    },
+    primary: { main: grey[900] },
+    secondary: { main: grey[800] },
+    appBar: { main: "#FFFFFF" },
   },
 });
+
+const PageLoader = () => (
+  <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
+    <CircularProgress color="inherit" />
+  </Box>
+);
 
 function App() {
   const dispatch = useDispatch();
   const [stripeApiKey, setStripeApiKey] = useState("");
-
-  async function getStripeApiKey() {
-    const { data } = await axios.get("/api/v1/getstripeapikey");
-    setStripeApiKey(data.stripeApiKey);
-  }
   const { isAuthenticated, user } = useSelector((state) => state.user);
 
   useEffect(() => {
     dispatch(loadUser());
-    getStripeApiKey();
+    axios.get("/api/v1/getstripeapikey").then(({ data }) => {
+      setStripeApiKey(data.stripeApiKey);
+    });
   }, [dispatch]);
 
   return (
@@ -75,92 +78,76 @@ function App() {
         <Router>
           <ThemeProvider theme={theme}>
             <Header />
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/product/:id" element={<ProductDetailsV2 />} />
-              <Route path="/products" element={<Products />} />
-              <Route path="/products/:keyword" element={<Products />} />
-              <Route path="/search" element={<Search />} />
-              <Route path="/signin" element={<Login />} />
-              <Route path="/signup" element={<Register />} />
-              <Route path="/password/forgot" element={<ForgotPassword />} />
-              <Route path="/cart" element={<Basket />} />
-              <Route path="/aboutus" element={<AboutUs />} />
-              {/* Protected Routes. Ex: It will check if the user is logged in*/}
-              <Route
-                element={<ProtectedRoute isAuthenticated={isAuthenticated} />}
-              >
-                <Route path="/password/update" element={<UpdatePassword />} />
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/product/:id" element={<ProductDetailsV2 />} />
+                <Route path="/products" element={<Products />} />
+                <Route path="/products/:keyword" element={<Products />} />
+                <Route path="/search" element={<Search />} />
+                <Route path="/signin" element={<Login />} />
+                <Route path="/signup" element={<Register />} />
+                <Route path="/password/forgot" element={<ForgotPassword />} />
+                <Route path="/cart" element={<Basket />} />
+                <Route path="/aboutus" element={<AboutUs />} />
                 <Route
-                  path="/shipping"
-                  element={
-                    stripeApiKey && (
-                      <Elements stripe={loadStripe(stripeApiKey)}>
-                        <Shipping />
-                      </Elements>
-                    )
-                  }
-                />
-                <Route path="/account" element={<Account />} />
-                <Route path="/success" element={<Success />} />
-                <Route path="/myorders" element={<MyOrders />} />
-                <Route path="/order/:id" element={<OrderDetails />} />
-                <Route
-                  path="/dashboard"
-                  element={user?.role === "admin" ? <Dashboard /> : <Account />}
-                />
-                <Route
-                  path="/admin/products"
-                  element={
-                    user?.role === "admin" ? <AllAdminProducts /> : <Account />
-                  }
-                />
-                <Route
-                  path="/admin/orders"
-                  element={
-                    user?.role === "admin" ? <AllAdminOrders /> : <Account />
-                  }
-                />
-                <Route
-                  path="/admin/users"
-                  element={
-                    user?.role === "admin" ? <AllAdminUsers /> : <Account />
-                  }
-                />
-                <Route
-                  path="/admin/product/new"
-                  element={
-                    user?.role === "admin" ? <CreateProduct /> : <Account />
-                  }
-                />
-
-                <Route
-                  path="/admin/product/update/:id"
-                  element={
-                    user?.role === "admin" ? <UpdateProduct /> : <Account />
-                  }
-                />
-                <Route
-                  path="/admin/user/update/:id"
-                  element={
-                    user?.role === "admin" ? <UpdateUser /> : <Account />
-                  }
-                />
-                <Route
-                  path="/admin/order/update/:id"
-                  element={
-                    user?.role === "admin" ? <UpdateOrder /> : <Account />
-                  }
-                />
-              </Route>
-              ){/* End of Protected Routes */}
-              <Route
-                path="/password/reset/:token"
-                element={<ResetPassword />}
-              />
-              <Route path="*" element={<Navigate to="/notfound" />} />
-              <Route path="/notfound" element={<NotFound />} />
-            </Routes>
+                  element={<ProtectedRoute isAuthenticated={isAuthenticated} />}
+                >
+                  <Route path="/password/update" element={<UpdatePassword />} />
+                  <Route
+                    path="/shipping"
+                    element={
+                      stripeApiKey ? (
+                        <Elements stripe={loadStripe(stripeApiKey)}>
+                          <Shipping />
+                        </Elements>
+                      ) : (
+                        <PageLoader />
+                      )
+                    }
+                  />
+                  <Route path="/account" element={<Account />} />
+                  <Route path="/success" element={<Success />} />
+                  <Route path="/myorders" element={<MyOrders />} />
+                  <Route path="/order/:id" element={<OrderDetails />} />
+                  <Route
+                    path="/dashboard"
+                    element={user?.role === "admin" ? <Dashboard /> : <Account />}
+                  />
+                  <Route
+                    path="/admin/products"
+                    element={user?.role === "admin" ? <AllAdminProducts /> : <Account />}
+                  />
+                  <Route
+                    path="/admin/orders"
+                    element={user?.role === "admin" ? <AllAdminOrders /> : <Account />}
+                  />
+                  <Route
+                    path="/admin/users"
+                    element={user?.role === "admin" ? <AllAdminUsers /> : <Account />}
+                  />
+                  <Route
+                    path="/admin/product/new"
+                    element={user?.role === "admin" ? <CreateProduct /> : <Account />}
+                  />
+                  <Route
+                    path="/admin/product/update/:id"
+                    element={user?.role === "admin" ? <UpdateProduct /> : <Account />}
+                  />
+                  <Route
+                    path="/admin/user/update/:id"
+                    element={user?.role === "admin" ? <UpdateUser /> : <Account />}
+                  />
+                  <Route
+                    path="/admin/order/update/:id"
+                    element={user?.role === "admin" ? <UpdateOrder /> : <Account />}
+                  />
+                </Route>
+                <Route path="/password/reset/:token" element={<ResetPassword />} />
+                <Route path="/notfound" element={<NotFound />} />
+                <Route path="*" element={<Navigate to="/notfound" />} />
+              </Routes>
+            </Suspense>
           </ThemeProvider>
         </Router>
       </main>

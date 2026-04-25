@@ -1,6 +1,6 @@
 import React from "react";
 import { Line } from "react-chartjs-2";
-import { Chart as ChartJS } from "chart.js/auto";
+import "chart.js/auto";
 import { Box, Card, CardContent, CardHeader, Divider } from "@mui/material";
 
 function LastestSales({ totalRevenue }) {
@@ -29,22 +29,13 @@ function LastestSales({ totalRevenue }) {
     responsive: true,
     xAxes: [
       {
-        ticks: {
-          fontColor: "#65748B",
-        },
-        gridLines: {
-          display: false,
-          drawBorder: false,
-        },
+        ticks: { fontColor: "#65748B" },
+        gridLines: { display: false, drawBorder: false },
       },
     ],
     yAxes: [
       {
-        ticks: {
-          fontColor: "#65748B",
-          beginAtZero: true,
-          min: 0,
-        },
+        ticks: { fontColor: "#65748B", beginAtZero: true, min: 0 },
         gridLines: {
           borderDash: [2],
           borderDashOffset: [2],
@@ -74,12 +65,7 @@ function LastestSales({ totalRevenue }) {
       <CardHeader title="Latest Sales" />
       <Divider />
       <CardContent>
-        <Box
-          sx={{
-            height: 400,
-            position: "relative",
-          }}
-        >
+        <Box sx={{ height: 400, position: "relative" }}>
           <Line data={data} options={options} />
         </Box>
       </CardContent>

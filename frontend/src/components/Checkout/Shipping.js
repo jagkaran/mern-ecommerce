@@ -60,7 +60,7 @@ function Shipping() {
   });
 
   const isFormEmpty = (form) => {
-    for (let [key, value] of Object.entries(form)) {
+    for (const value of Object.values(form)) {
       if (value === "") return true;
     }
     return false;
@@ -68,14 +68,8 @@ function Shipping() {
 
   const handleNext = () => {
     if (!isFormEmpty(addFormValues)) {
-      const firstName = addFormValues.firstName;
-      const lastName = addFormValues.lastName;
-      const address = addFormValues.address;
-      const city = addFormValues.city;
-      const state = addFormValues.state;
-      const zip = addFormValues.zip;
-      const country = addFormValues.country;
-      const phone = addFormValues.phone;
+      const { firstName, lastName, address, city, state, zip, country, phone } =
+        addFormValues;
       dispatch(
         saveShippingInfo({
           firstName,
@@ -89,24 +83,21 @@ function Shipping() {
         })
       );
       setActiveStep(activeStep + 1);
-    } else if (isFormEmpty(addFormValues)) {
+    } else {
       alert.error("Please fill all fields");
-      setActiveStep(activeStep);
     }
 
-    if (addFormValues.phone.length < 10 || addFormValues.phone.length > 10) {
+    if (addFormValues.phone.length !== 10) {
       alert.error("Phone Number should be 10 digits Long");
-      setActiveStep(activeStep);
     }
   };
 
-  const handleReviewData = (activeStep) => {
+  const handleReviewData = (step) => {
     if (!isFormEmpty(reviewData)) {
       sessionStorage.setItem("orderInfo", JSON.stringify(reviewData));
-      setActiveStep(activeStep + 1);
-    } else if (isFormEmpty(reviewData)) {
+      setActiveStep(step + 1);
+    } else {
       alert.error("Review data is empty");
-      setActiveStep(activeStep);
     }
   };
 
@@ -123,27 +114,18 @@ function Shipping() {
     totalPrice: orderInfo?.totalPrice,
   };
 
-  const handlePaymentDataProcessing = async (activeStep, e) => {
+  const handlePaymentDataProcessing = async (step, e) => {
     e.preventDefault();
-
     setSubmitLoading(true);
     try {
-      const config = {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      };
-
+      const config = { headers: { "Content-Type": "application/json" } };
       const { data } = await axios.post(
         "/api/v1/payment/process",
         paymentData,
         config
       );
-
       const client_secret = data.client_secret;
-
       if (!stripe || !elements) return;
-
       const result = await stripe.confirmCardPayment(client_secret, {
         payment_method: {
           card: elements.getElement(CardNumberElement),
@@ -160,7 +142,6 @@ function Shipping() {
           },
         },
       });
-
       if (result.error) {
         alert.error(result.error.message);
         setSubmitLoading(false);
@@ -177,14 +158,12 @@ function Shipping() {
           history("/success");
           window.location.reload();
         } else {
-          alert.error("There's some issue while processing payment ");
-          setActiveStep(activeStep);
+          alert.error("There's some issue while processing payment");
           setSubmitLoading(false);
         }
       }
-    } catch (error) {
-      alert.error(error);
-      setActiveStep(activeStep);
+    } catch (err) {
+      alert.error(err);
       setSubmitLoading(false);
     }
   };
@@ -200,28 +179,21 @@ function Shipping() {
   };
 
   const handleReviewDataChange = (input, value) => {
-    setReviewData({ ...reviewData, [input]: value });
+    setReviewData((prev) => ({ ...prev, [input]: value }));
   };
 
-  const handleStepFunc = (activeStep, e) => {
-    if (activeStep === 0) {
-      handleNext();
-    }
-    if (activeStep === 1) {
-      handleReviewData(activeStep);
-    }
-    if (activeStep === 2) {
-      handlePaymentDataProcessing(activeStep, e);
-    }
+  const handleStepFunc = (step, e) => {
+    if (step === 0) handleNext();
+    if (step === 1) handleReviewData(step);
+    if (step === 2) handlePaymentDataProcessing(step, e);
   };
+
   const steps = ["Shipping address", "Review your order", "Payment details"];
 
   const getStepContent = (step) => {
     switch (step) {
       case 0:
-        return (
-          <AddressForm values={addFormValues} handleChange={handleChange} />
-        );
+        return <AddressForm values={addFormValues} handleChange={handleChange} />;
       case 1:
         return (
           <ReviewOrder
@@ -244,10 +216,8 @@ function Shipping() {
     if (error) {
       alert.error(error);
       dispatch(clearErrors());
-      setActiveStep(activeStep);
     }
-    setActiveStep(activeStep);
-  }, [dispatch, error, alert, history, activeStep, cartItems]);
+  }, [dispatch, error, alert, history, cartItems]);
 
   return (
     <div>
@@ -283,7 +253,6 @@ function Shipping() {
                       Back
                     </Button>
                   )}
-
                   {activeStep === steps.length - 1 ? (
                     <LoadingButton
                       size="small"
@@ -302,9 +271,7 @@ function Shipping() {
                       onClick={(e) => handleStepFunc(activeStep, e)}
                       sx={{ mt: 3, ml: 1 }}
                     >
-                      {activeStep === steps.length - 1
-                        ? `Pay $${orderInfo && orderInfo.totalPrice}`
-                        : "Next"}
+                      Next
                     </Button>
                   )}
                 </Box>
