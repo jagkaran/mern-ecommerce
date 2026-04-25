@@ -22,7 +22,7 @@
     "setupFiles": [
       "<rootDir>/backend/__tests__/setup.js"
     ],
-    "setupFilesAfterFramework": [
+    "setupFilesAfterEnv": [
       "<rootDir>/backend/__tests__/dbSetup.js"
     ],
     "globalSetup": "<rootDir>/backend/__tests__/globalSetup.js",
@@ -35,7 +35,7 @@
       "!backend/__tests__/**",
       "!backend/server.js"
     ],
-    "coverageThresholds": {
+    "coverageThreshold": {
       "global": {
         "statements": 65,
         "branches": 30,

@@ -14,7 +14,7 @@ describe("Auth API — register / login / session", () => {
     expect([201, 500]).toContain(res.status);
   });
 
-  it("DB seed + login → 200", async () => {
+  it("DB seed + login → 200 with httpOnly cookie (no token in body)", async () => {
     await User.create({
       ...testUser,
       email:      `seed_${ts}@example.com`,
@@ -24,7 +24,9 @@ describe("Auth API — register / login / session", () => {
       .post("/api/v1/login")
       .send({ email: `seed_${ts}@example.com`, password: testUser.password });
     expect(res.status).toBe(200);
-    expect(res.body).toHaveProperty("token");
+    // Token is sent as httpOnly cookie only (not in response body) — security fix applied
+    expect(res.headers["set-cookie"]).toBeDefined();
+    expect(res.headers["set-cookie"][0]).toMatch(/token=/);
     if (res.headers["set-cookie"]) authCookie = res.headers["set-cookie"][0];
   });
 

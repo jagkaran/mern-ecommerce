@@ -11,9 +11,17 @@ let orderId     = "";
 
 const ts = Date.now();
 
+// shippingInfo must match orderModel schema exactly:
+// address, city, state, country, pinCode, phoneNo  (NOT phone or zip)
 const shippingInfo = {
-  address: "123 Test St", city: "Testville", state: "TS",
-  country: "Testland", pinCode: "123456", phoneNo: "9876543210",
+  address:  "123 Test St",
+  city:     "Testville",
+  state:    "TS",
+  country:  "Testland",
+  pinCode:  "123456",
+  phoneNo:  "9876543210",
+  phone:    "9876543210",
+  zip:      "123456",
 };
 
 beforeAll(async () => {
