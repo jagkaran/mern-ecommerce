@@ -1,39 +1,33 @@
-const app = require("./app");
-const connectDB = require("./config/database");
+const app        = require("./app");
+const connectDB  = require("./config/database");
 const cloudinary = require("cloudinary").v2;
+const logger     = require("./utils/logger");
 
-// Handling Uncaught exceptions
+// Handle uncaught exceptions BEFORE anything else
 process.on("uncaughtException", (err) => {
-  console.log(`Error: ${err.message}`);
-  console.log("Server is shutting down due to Uncaught Exception");
+  logger.error(`Uncaught Exception: ${err.message}`, { stack: err.stack });
   process.exit(1);
 });
 
-// Config for environmental variable
+// Load env in non-production environments
 if (process.env.NODE_ENV !== "PRODUCTION") {
   require("dotenv").config({ path: "backend/config/config.env" });
 }
 
-// Connect database
 connectDB();
 
-// Cloudinary config
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+  cloud_name:  process.env.CLOUDINARY_NAME,
+  api_key:     process.env.CLOUDINARY_API_KEY,
+  api_secret:  process.env.CLOUDINARY_API_SECRET,
 });
 
 const server = app.listen(process.env.PORT, () => {
-  console.log(`Server is running on http://localhost:${process.env.PORT}`);
+  logger.info(`Server running on http://localhost:${process.env.PORT} [${process.env.NODE_ENV || "development"}]`);
 });
 
-// Unhandled promise rejection error: Example: If the DB connect string is invalid.
+// Handle unhandled promise rejections (e.g. bad DB URI)
 process.on("unhandledRejection", (err) => {
-  console.log(`Error: ${err.message}`);
-  console.log("Server is shutting down due to unhandled promise rejection");
-
-  server.close(() => {
-    process.exit(1);
-  });
+  logger.error(`Unhandled Rejection: ${err.message}`, { stack: err.stack });
+  server.close(() => process.exit(1));
 });

@@ -20,15 +20,24 @@
     "setupFilesAfterEnv": [
       "<rootDir>/backend/__tests__/dbSetup.js"
     ],
-    "globalSetup": "<rootDir>/backend/__tests__/globalSetup.js",
+    "globalSetup":    "<rootDir>/backend/__tests__/globalSetup.js",
     "globalTeardown": "<rootDir>/backend/__tests__/globalTeardown.js",
     "testTimeout": 30000,
     "coverageDirectory": "coverage",
     "collectCoverageFrom": [
       "backend/**/*.js",
       "!backend/node_modules/**",
-      "!backend/__tests__/**"
-    ]
+      "!backend/__tests__/**",
+      "!backend/server.js"
+    ],
+    "coverageThresholds": {
+      "global": {
+        "statements": 65,
+        "branches":   30,
+        "functions":  40,
+        "lines":      65
+      }
+    }
   },
   "author": "",
   "license": "ISC",
@@ -50,6 +59,7 @@
     "nodemon": "^3.1.9",
     "stripe": "^17.7.0",
     "validator": "^13.12.0",
+    "winston": "^3.17.0",
     "xss-clean": "^0.1.4"
   },
   "devDependencies": {
