@@ -4,7 +4,7 @@ services:
     env: node
     region: oregon
     plan: free
-    buildCommand: yarn && yarn --cwd frontend install && yarn --cwd frontend build
+    buildCommand: npm install && npm install --prefix frontend && npm run build --prefix frontend
     startCommand: node backend/server.js
     envVars:
       - key: NODE_ENV

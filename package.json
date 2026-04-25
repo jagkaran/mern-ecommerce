@@ -5,14 +5,14 @@
   "main": "backend/server.js",
   "engines": {
     "node": ">=20.0.0",
-    "yarn": ">=1.22.0"
+    "npm": ">=9.0.0"
   },
   "scripts": {
     "test": "jest --runInBand --forceExit",
     "start": "node backend/server.js",
     "dev": "nodemon backend/server.js",
-    "build": "YARN_PRODUCTION=false yarn --cwd frontend && yarn --cwd frontend build",
-    "heroku-postbuild": "YARN_PRODUCTION=false yarn --cwd frontend && yarn --cwd frontend build"
+    "build": "npm install --prefix frontend && npm run build --prefix frontend",
+    "heroku-postbuild": "npm install --prefix frontend && npm run build --prefix frontend"
   },
   "jest": {
     "testEnvironment": "node",
@@ -22,7 +22,7 @@
     "setupFiles": [
       "<rootDir>/backend/__tests__/setup.js"
     ],
-    "setupFilesAfterEnv": [
+    "setupFilesAfterFramework": [
       "<rootDir>/backend/__tests__/dbSetup.js"
     ],
     "globalSetup": "<rootDir>/backend/__tests__/globalSetup.js",
