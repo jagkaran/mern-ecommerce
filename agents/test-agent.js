@@ -205,6 +205,8 @@ describe("Product API — reviews", () => {
 w(path.join(TESTS, "product.test.js"), PRODUCT_TEST);
 
 // ── auth.test.js ──────────────────────────────────────────────────────────────
+// FIX: token is httpOnly cookie only (body no longer contains token after
+//      jwtToken.js security patch). Assert set-cookie header, not res.body.token.
 const AUTH_TEST = `"use strict";
 const request  = require("supertest");
 const app      = require("../app");
@@ -219,13 +221,15 @@ describe("Auth API — register / login / session", () => {
     const res = await request(app).post("/api/v1/register").send(testUser);
     expect([201, 500]).toContain(res.status);
   });
-  it("DB seed + login → 200", async () => {
+  it("DB seed + login → 200 with httpOnly cookie (no token in body)", async () => {
     await User.create({ ...testUser, email: \`seed_\${ts}@example.com\`,
       profilePic: { public_id: "test", url: "http://example.com/img.jpg" } });
     const res = await request(app).post("/api/v1/login")
       .send({ email: \`seed_\${ts}@example.com\`, password: testUser.password });
     expect(res.status).toBe(200);
-    expect(res.body).toHaveProperty("token");
+    // Token is sent as httpOnly cookie only — not in response body (security fix)
+    expect(res.headers["set-cookie"]).toBeDefined();
+    expect(res.headers["set-cookie"][0]).toMatch(/token=/);
     if (res.headers["set-cookie"]) authCookie = res.headers["set-cookie"][0];
   });
   it("POST /api/v1/login → 401 with wrong password", async () => {
@@ -278,6 +282,8 @@ describe("Auth API — password flows", () => {
 w(path.join(TESTS, "auth.test.js"), AUTH_TEST);
 
 // ── order.test.js ─────────────────────────────────────────────────────────────
+// FIX: shippingInfo must include ALL required schema fields.
+//      orderModel requires: address, city, state, country, pinCode, phoneNo, phone, zip
 const ORDER_TEST = `"use strict";
 const request  = require("supertest");
 const app      = require("../app");
@@ -290,9 +296,16 @@ let adminCookie = "";
 let orderId     = "";
 const ts = Date.now();
 
+// All required shippingInfo fields from orderModel schema
 const shippingInfo = {
-  address: "123 Test St", city: "Testville", state: "TS",
-  country: "Testland", pinCode: "123456", phoneNo: "9876543210",
+  address:  "123 Test St",
+  city:     "Testville",
+  state:    "TS",
+  country:  "Testland",
+  pinCode:  "123456",
+  phoneNo:  "9876543210",
+  phone:    "9876543210",
+  zip:      "123456",
 };
 
 beforeAll(async () => {
@@ -376,11 +389,12 @@ describe("Order API — admin", () => {
 `;
 w(path.join(TESTS, "order.test.js"), ORDER_TEST);
 
-// ── Sync package.json jest config (preserve coverageThresholds) ───────────────
+// ── Sync package.json jest config ─────────────────────────────────────────────
 const pkgPath = path.join(ROOT, "package.json");
 const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
 
-// Merge — never overwrite keys that the dev set intentionally
+// Correct jest config keys — setupFilesAfterEnv (not AfterFramework)
+//                           — coverageThreshold (singular, not Thresholds)
 const jestBase = {
   testEnvironment:    "node",
   testMatch:          ["**/backend/__tests__/**/*.test.js"],
@@ -396,14 +410,22 @@ const jestBase = {
     "!backend/__tests__/**",
     "!backend/server.js",
   ],
-  coverageThresholds: {
+  coverageThreshold: {
     global: { statements: 65, branches: 30, functions: 40, lines: 65 },
   },
 };
-// Only set keys that are missing — preserve existing overrides
+
+// Remove stale typo keys if present
+delete pkg.jest["setupFilesAfterFramework"];
+delete pkg.jest["coverageThresholds"];
+
+// Merge — preserve any existing correct overrides
 for (const [k, v] of Object.entries(jestBase)) {
   if (pkg.jest[k] === undefined) pkg.jest[k] = v;
 }
+// Always enforce the correct key names
+pkg.jest.setupFilesAfterEnv = jestBase.setupFilesAfterEnv;
+pkg.jest.coverageThreshold  = jestBase.coverageThreshold;
 
 if (!pkg.scripts.test || !pkg.scripts.test.includes("jest")) {
   pkg.scripts.test = "jest --runInBand --forceExit";
