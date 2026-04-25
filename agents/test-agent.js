@@ -2,6 +2,7 @@
 /**
  * Test Agent -- mern-ecommerce
  * Uses mongodb-memory-server (no local MongoDB needed).
+ * Mocks Stripe so tests run without STRIPE_SECRET_KEY.
  * Always overwrites test files so stale imports are never left behind.
  */
 "use strict";
@@ -14,6 +15,19 @@ const TESTS = path.join(ROOT, "backend", "__tests__");
 if (!fs.existsSync(TESTS)) fs.mkdirSync(TESTS, { recursive: true });
 const w = (f, c) => { fs.writeFileSync(f, c, "utf8"); console.log("  written: " + path.relative(ROOT, f)); };
 
+// Stripe mock — loaded before app.js via jest setupFiles
+w(path.join(TESTS, "setup.js"),
+`"use strict";
+// Mock Stripe so tests run without STRIPE_SECRET_KEY
+jest.mock("stripe", () => {
+  return () => ({
+    paymentIntents: {
+      create: jest.fn().mockResolvedValue({ client_secret: "test_secret" }),
+    },
+  });
+});
+`);
+
 w(path.join(TESTS, "globalSetup.js"),
 `"use strict";
 const { MongoMemoryServer } = require("mongodb-memory-server");
@@ -21,7 +35,8 @@ const mongoose = require("mongoose");
 module.exports = async function globalSetup() {
   const mongod = await MongoMemoryServer.create();
   const uri    = mongod.getUri();
-  process.env.MONGO_URI_TEST = uri;
+  process.env.MONGO_URI_TEST  = uri;
+  process.env.STRIPE_SECRET_KEY = "sk_test_mock";
   global.__MONGOD__ = mongod;
   await mongoose.connect(uri);
 };
@@ -47,7 +62,7 @@ describe("Product API", () => {
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty("products");
   });
-  it("GET /api/v1/product/:id 404 for missing", async () => {
+  it("GET /api/v1/product/:id returns 404 for missing id", async () => {
     const res = await request(app).get("/api/v1/product/000000000000000000000000");
     expect(res.status).toBe(404);
   });
@@ -98,17 +113,18 @@ describe("Order API (auth guard)", () => {
 });
 `);
 
-// Sync package.json jest config
+// Sync package.json jest config — add setupFiles for Stripe mock
 const pkgPath = path.join(ROOT, "package.json");
 const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
 pkg.jest = {
-  testEnvironment:"node",
-  testMatch:["**/backend/__tests__/**/*.test.js"],
-  globalSetup:"<rootDir>/backend/__tests__/globalSetup.js",
-  globalTeardown:"<rootDir>/backend/__tests__/globalTeardown.js",
-  testTimeout:30000,
-  coverageDirectory:"coverage",
-  collectCoverageFrom:["backend/**/*.js","!backend/node_modules/**","!backend/__tests__/**"],
+  testEnvironment:   "node",
+  testMatch:         ["**/backend/__tests__/**/*.test.js"],
+  setupFiles:        ["<rootDir>/backend/__tests__/setup.js"],
+  globalSetup:       "<rootDir>/backend/__tests__/globalSetup.js",
+  globalTeardown:    "<rootDir>/backend/__tests__/globalTeardown.js",
+  testTimeout:       30000,
+  coverageDirectory: "coverage",
+  collectCoverageFrom: ["backend/**/*.js","!backend/node_modules/**","!backend/__tests__/**"],
 };
 if (!pkg.scripts.test.includes("jest")) pkg.scripts.test = "jest --runInBand --forceExit";
 fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2), "utf8");
@@ -116,8 +132,8 @@ console.log("  synced package.json jest config");
 
 // Install deps
 console.log("\n🔍  [test-agent] Checking test dependencies ...");
-const latest   = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
-const all      = Object.assign({}, latest.dependencies, latest.devDependencies);
+const latest    = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
+const all       = Object.assign({}, latest.dependencies, latest.devDependencies);
 const toInstall = ["jest","supertest","mongodb-memory-server"].filter((d) => !all[d]);
 if (toInstall.length > 0) {
   console.log("   installing: " + toInstall.join(", "));

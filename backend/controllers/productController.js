@@ -174,7 +174,7 @@ exports.getProductReviews = catchAsyncErrors(async (req, res, next) => {
 });
 
 // Delete a product review
-exports.deleteProductReview = catchAsyncErrors(async (req, res, _next) => {
+exports.deleteProductReview = catchAsyncErrors(async (req, res, next) => {
   const product = await Product.findById(req.query.productId);
 
   if (!product) {
@@ -188,7 +188,7 @@ exports.deleteProductReview = catchAsyncErrors(async (req, res, _next) => {
   let avg = 0;
   reviews.forEach((rev) => { avg += rev.rating; });
 
-  const ratings     = reviews.length === 0 ? 0 : avg / reviews.length;
+  const ratings      = reviews.length === 0 ? 0 : avg / reviews.length;
   const numOfReviews = reviews.length;
 
   await Product.findByIdAndUpdate(
