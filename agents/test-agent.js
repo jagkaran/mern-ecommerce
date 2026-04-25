@@ -19,10 +19,10 @@ const w = (f, c) => {
   console.log("  written: " + path.relative(ROOT, f));
 };
 
-// ── setup.js (setupFiles) ─────────────────────────────────────────────────────
+// ── setup.js (setupFiles — before any module loads) ──────────────────────────
 w(path.join(TESTS, "setup.js"),
 `"use strict";
-// setupFiles: runs before modules load — mock Stripe + Cloudinary
+// Runs before any module is required. Mocks Stripe + Cloudinary.
 jest.mock("stripe", () => () => ({
   paymentIntents: { create: jest.fn().mockResolvedValue({ client_secret: "test_secret" }) },
 }));
@@ -50,6 +50,7 @@ const path = require("path");
 module.exports = async function globalSetup() {
   const mongod = await MongoMemoryServer.create();
   global.__MONGOD__ = mongod;
+  // Write URI to file so test workers (separate process) can read it
   fs.writeFileSync(path.join(__dirname, ".mongo-uri"), mongod.getUri(), "utf8");
 };
 `);
@@ -71,18 +72,25 @@ module.exports = async function globalTeardown() {
 };
 `);
 
-// ── dbSetup.js (setupFilesAfterFramework) ────────────────────────────────────
+// ── dbSetup.js (setupFilesAfterEnv — runs inside test worker) ─────────────────
 w(path.join(TESTS, "dbSetup.js"),
 `"use strict";
-// Connects mongoose inside the test worker using the URI written by globalSetup
+// setupFilesAfterEnv: runs INSIDE each test worker after Jest is installed.
+// Reads the MongoMemoryServer URI from the file written by globalSetup
+// and connects mongoose before any test runs.
 const mongoose = require("mongoose");
 const fs   = require("fs");
 const path = require("path");
+
 beforeAll(async () => {
-  const uri = fs.readFileSync(path.join(__dirname, ".mongo-uri"), "utf8");
+  const uriFile = path.join(__dirname, ".mongo-uri");
+  const uri = fs.readFileSync(uriFile, "utf8");
   process.env.DB_URI = uri;
-  if (mongoose.connection.readyState === 0) await mongoose.connect(uri);
+  if (mongoose.connection.readyState === 0) {
+    await mongoose.connect(uri);
+  }
 });
+
 afterAll(async () => {
   for (const name of Object.keys(mongoose.connection.collections)) {
     await mongoose.connection.collections[name].deleteMany({});
@@ -154,19 +162,19 @@ describe("Order API (auth guard)", () => {
 });
 `);
 
-// ── Sync package.json jest config ────────────────────────────────────────────
+// ── Sync package.json jest config ─────────────────────────────────────────────
 const pkgPath = path.join(ROOT, "package.json");
 const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
 pkg.jest = {
-  testEnvironment:          "node",
-  testMatch:                ["**/backend/__tests__/**/*.test.js"],
-  setupFiles:               ["<rootDir>/backend/__tests__/setup.js"],
-  setupFilesAfterFramework: ["<rootDir>/backend/__tests__/dbSetup.js"],
-  globalSetup:              "<rootDir>/backend/__tests__/globalSetup.js",
-  globalTeardown:           "<rootDir>/backend/__tests__/globalTeardown.js",
-  testTimeout:              30000,
-  coverageDirectory:        "coverage",
-  collectCoverageFrom:      ["backend/**/*.js", "!backend/node_modules/**", "!backend/__tests__/**"],
+  testEnvironment:       "node",
+  testMatch:             ["**/backend/__tests__/**/*.test.js"],
+  setupFiles:            ["<rootDir>/backend/__tests__/setup.js"],
+  setupFilesAfterEnv:    ["<rootDir>/backend/__tests__/dbSetup.js"],
+  globalSetup:           "<rootDir>/backend/__tests__/globalSetup.js",
+  globalTeardown:        "<rootDir>/backend/__tests__/globalTeardown.js",
+  testTimeout:           30000,
+  coverageDirectory:     "coverage",
+  collectCoverageFrom:   ["backend/**/*.js", "!backend/node_modules/**", "!backend/__tests__/**"],
 };
 if (!pkg.scripts.test || !pkg.scripts.test.includes("jest")) {
   pkg.scripts.test = "jest --runInBand --forceExit";
@@ -174,7 +182,7 @@ if (!pkg.scripts.test || !pkg.scripts.test.includes("jest")) {
 fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2), "utf8");
 console.log("  synced package.json jest config");
 
-// ── Install deps ─────────────────────────────────────────────────────────────
+// ── Install deps ──────────────────────────────────────────────────────────────
 console.log("\n\uD83D\uDD0D  [test-agent] Checking test dependencies ...");
 const freshPkg  = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
 const allDeps   = Object.assign({}, freshPkg.dependencies, freshPkg.devDependencies);
