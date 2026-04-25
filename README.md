@@ -1,86 +1,118 @@
-# Mern Stack Ecom App
+# 🛒 MERN E-Commerce
 
-This is a MERN stack app created for learning purpose. This app is rolled out in MVP mode with bare minimum functionality. However, i will try to add more functionalties over the period of time 😎
+> Full-stack e-commerce platform built with MongoDB, Express, React and Node.js.
 
-## Demo
+![CI](https://github.com/jagkaran/mern-ecommerce/actions/workflows/ci.yml/badge.svg)
 
-https://mern-ecommerce-app-91py.onrender.com
+---
 
-## Run Locally
+## 📦 Tech Stack
 
-Clone the project
+| Layer      | Technology |
+|------------|------------|
+| Frontend   | React 17, Redux Toolkit, Material UI |
+| Backend    | Node.js v19.5.0, Express 4, Mongoose 8 |
+| Database   | MongoDB Atlas |
+| Auth       | JWT (httpOnly cookie) |
+| Storage    | Cloudinary |
+| Payments   | Stripe |
+| Testing    | Jest + Supertest + mongodb-memory-server |
+| CI/CD      | GitHub Actions |
 
-```bash
-  git clone https://github.com/jagkaran/mern-ecommerce.git
-```
+---
 
-Install Backend dependencies
-
-```bash
-  yarn
-```
-
-Install Frontend dependencies
-
-```bash
-  cd frontend
-  yarn
-```
-
-Start the server
+## 🚀 Quick Start
 
 ```bash
-  yarn start
+# 1. Clone
+git clone https://github.com/jagkaran/mern-ecommerce.git
+cd mern-ecommerce
+
+# 2. Install all dependencies
+npm install
+npm install --prefix frontend
+
+# 3. Configure environment
+cp backend/config/config.env.example backend/config/config.env
+# Fill in: MONGO_URI, JWT_SECRET, CLOUDINARY_*, STRIPE_API_KEY, SMTP_*
+
+# 4. Run in development
+npm run dev          # backend on :4000
+npm start --prefix frontend  # frontend on :3000
 ```
 
-## Environment Variables
+---
 
-To run this project, make sure to create a config.env file in backend/config directory and add appropriate variables in order to use the app.
+## 🤖 SDLC Agent Pipeline
 
-`PORT` `DB_URI` `STRIPE_API_KEY` `STRIPE_SECRET_KEY` `JWT_SECRET` `JWT_EXPIRE` `COOKIE_EXPIRE` `SMTP_SERVICE` `SMTP_MAIL` `SMTP_PASSWORD` `SMTP_HOST` `SMTP_PORT` `CLOUDINARY_NAME` `CLOUDINARY_API_KEY` `CLOUDINARY_API_SECRET` `STRIPE_API_KEY` `STRIPE_SECRET_KEY`
+```bash
+node agents/orchestrator.js                        # full pipeline
+node agents/orchestrator.js --agents=security,test  # selective
+```
 
-## Tech Stack
+| Agent | Purpose | Critical |
+|-------|---------|----------|
+| security | npm audit, middleware checks, secret scan | ✅ |
+| dev | Auto-patch known bugs (idempotent) | ✅ |
+| quality | ESLint v9 + Prettier | ⚠️ |
+| test | Jest + mongodb-memory-server | ✅ |
+| coverage | Coverage threshold (≥50%) | ⚠️ |
+| perf | Scan for performance anti-patterns | ⚠️ |
+| critic | Architecture & code-quality review | ⚠️ |
+| readme | Auto-update this README | ⚠️ |
 
-**Client:** React, Redux, Tailwind CSS, MUI v5
+---
 
-**Server:** Node, Express
+## 🔑 Key API Routes
 
-**Database:** Mongo DB
+### Auth
+| Method | Route | Description |
+|--------|-------|-------------|
+| POST | /api/v1/register | Register user |
+| POST | /api/v1/login | Login |
+| GET  | /api/v1/logout | Logout |
+| GET  | /api/v1/me | Get own profile |
 
-**Media Hosting:** Cloudinary
+### Products
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET  | /api/v1/products | All products (paginated) |
+| GET  | /api/v1/product/:id | Product detail |
+| POST | /api/v1/admin/product/new | Create product (admin) |
+| PUT  | /api/v1/admin/product/:id | Update product (admin) |
+| DELETE | /api/v1/admin/product/:id | Delete product (admin) |
 
-**Payment Processor:** Stripe
+### Orders
+| Method | Route | Description |
+|--------|-------|-------------|
+| POST | /api/v1/order/new | Create order |
+| GET  | /api/v1/order/:id | Order detail |
+| GET  | /api/v1/orders/me | My orders |
+| GET  | /api/v1/admin/orders | All orders (admin) |
 
-## Features
+---
 
-#### AS a USER
+## 🛡️ Security Features
 
-- You can browse through the list of products made available by your admin.
-- Search for a specific product with our global search functionality.
-- Filter through the list of products based on price, category and ratings.
-- Submit and modify your ratings and reviews for a selected product.
-- Add selected items to your cart.
-- Checkout your cart and place and order with test stripe card payment.
-- View all the orders created by you.
+- Helmet HTTP headers
+- CORS with origin whitelist
+- Rate limiting on auth routes
+- express-mongo-sanitize (NoSQL injection)
+- xss-clean (XSS protection)
+- JWT in httpOnly + secure + sameSite=strict cookie
+- Secret scanning in CI
 
-#### AS an ADMIN
+---
 
-- You can do all the things as a normal user would do.
-- Additonally, you have access to view Dashboard to see overall sales and manage ecommerce entities.
-- Create or Modify or Delete a Product by assigning multiple properties to it. For example: Name, Description, Price, Images, Stock etc.
-- Modify a user role from Admin to User and vice versa. Also you can delete a user if needed.
-- Process an order by changing the status to shipping and delivered. Aurtomatic Stock level deduction happens during this step. Also you can delete an order if needed.
-- Access to see all the reviews created by users and delete them if needed.
+## 🧪 Tests
 
-## Known Issues
+```bash
+npm test                # run all tests
+npm test -- --coverage  # with coverage report
+```
 
-- My orders Load more/View all option is not available atm.
-- Payment's page has frontend console errors.
-- Reviews doesn't support the created date atm.
-- Form Validations are missing atm.
-- You might face responsiveness issues with mobile.
+*Tests use an in-memory MongoDB — no local database required.*
 
-## Authors
+---
 
-- Github [@jagkaran](https://github.com/jagkaran)
-- Linkedin [@jagkaran-singh](https://www.linkedin.com/in/jagkaran-singh/)
+*Generated by readme-agent v1.0.0 — $(new Date().toISOString().split('T')[0])*

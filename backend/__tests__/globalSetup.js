@@ -5,5 +5,6 @@ const path = require("path");
 module.exports = async function globalSetup() {
   const mongod = await MongoMemoryServer.create();
   global.__MONGOD__ = mongod;
+  // Write URI to file so test workers (separate process) can read it
   fs.writeFileSync(path.join(__dirname, ".mongo-uri"), mongod.getUri(), "utf8");
 };

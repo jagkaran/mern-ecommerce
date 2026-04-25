@@ -1,5 +1,5 @@
 "use strict";
-// setupFiles: runs before modules load — mock Stripe + Cloudinary
+// Runs before any module is required. Mocks Stripe + Cloudinary.
 jest.mock("stripe", () => () => ({
   paymentIntents: { create: jest.fn().mockResolvedValue({ client_secret: "test_secret" }) },
 }));
