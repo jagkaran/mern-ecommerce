@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: mern-ecommerce
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: yarn && yarn --cwd frontend install && yarn --cwd frontend build
+    startCommand: node backend/server.js
+    envVars:
+      - key: NODE_ENV
+        value: PRODUCTION
+      - key: PORT
+        value: 10000
+    autoDeploy: true
