@@ -1,158 +1,132 @@
 #!/usr/bin/env node
 /**
  * Test Agent -- mern-ecommerce
- * Ensures mongodb-memory-server is installed (no local MongoDB needed),
- * overwrites test files with correct imports, then runs Jest.
+ * Uses mongodb-memory-server (no local MongoDB needed).
+ * Always overwrites test files so stale imports are never left behind.
  */
-
+"use strict";
 const { execSync } = require("child_process");
 const fs   = require("fs");
 const path = require("path");
+const ROOT  = path.resolve(__dirname, "..");
+const TESTS = path.join(ROOT, "backend", "__tests__");
 
-const ROOT   = path.resolve(__dirname, "..");
-const TESTS  = path.join(ROOT, "backend", "__tests__");
+if (!fs.existsSync(TESTS)) fs.mkdirSync(TESTS, { recursive: true });
+const w = (f, c) => { fs.writeFileSync(f, c, "utf8"); console.log("  written: " + path.relative(ROOT, f)); };
 
-function ensure(dir) { if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true }); }
-function write(file, content) {
-  fs.writeFileSync(file, content, "utf8");
-  console.log("  written: " + path.relative(ROOT, file));
-}
+w(path.join(TESTS, "globalSetup.js"),
+`"use strict";
+const { MongoMemoryServer } = require("mongodb-memory-server");
+const mongoose = require("mongoose");
+module.exports = async function globalSetup() {
+  const mongod = await MongoMemoryServer.create();
+  const uri    = mongod.getUri();
+  process.env.MONGO_URI_TEST = uri;
+  global.__MONGOD__ = mongod;
+  await mongoose.connect(uri);
+};
+`);
 
-ensure(TESTS);
+w(path.join(TESTS, "globalTeardown.js"),
+`"use strict";
+const mongoose = require("mongoose");
+module.exports = async function globalTeardown() {
+  await mongoose.connection.dropDatabase();
+  await mongoose.connection.close();
+  if (global.__MONGOD__) await global.__MONGOD__.stop();
+};
+`);
 
-// globalSetup — uses mongodb-memory-server
-write(path.join(TESTS, "globalSetup.js"),
-  '"use strict";\n' +
-  'const { MongoMemoryServer } = require("mongodb-memory-server");\n' +
-  'const mongoose = require("mongoose");\n' +
-  'module.exports = async function globalSetup() {\n' +
-  '  const mongod = await MongoMemoryServer.create();\n' +
-  '  const uri    = mongod.getUri();\n' +
-  '  process.env.MONGO_URI_TEST = uri;\n' +
-  '  global.__MONGOD__ = mongod;\n' +
-  '  await mongoose.connect(uri);\n' +
-  '};\n'
-);
+w(path.join(TESTS, "product.test.js"),
+`"use strict";
+const request = require("supertest");
+const app     = require("../app");
+describe("Product API", () => {
+  it("GET /api/v1/products returns 200", async () => {
+    const res = await request(app).get("/api/v1/products");
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty("products");
+  });
+  it("GET /api/v1/product/:id 404 for missing", async () => {
+    const res = await request(app).get("/api/v1/product/000000000000000000000000");
+    expect(res.status).toBe(404);
+  });
+});
+`);
 
-// globalTeardown
-write(path.join(TESTS, "globalTeardown.js"),
-  '"use strict";\n' +
-  'const mongoose = require("mongoose");\n' +
-  'module.exports = async function globalTeardown() {\n' +
-  '  await mongoose.connection.dropDatabase();\n' +
-  '  await mongoose.connection.close();\n' +
-  '  if (global.__MONGOD__) await global.__MONGOD__.stop();\n' +
-  '};\n'
-);
+w(path.join(TESTS, "auth.test.js"),
+`"use strict";
+const request  = require("supertest");
+const app      = require("../app");
+const testUser = { name:"Test User", email:"test_"+Date.now()+"@example.com", password: process.env.TEST_USER_PASSWORD||"Test@12345" };
+let authCookie = "";
+describe("Auth API", () => {
+  it("POST /api/v1/register returns 201", async () => {
+    const res = await request(app).post("/api/v1/register").send(testUser);
+    expect(res.status).toBe(201);
+  });
+  it("POST /api/v1/login returns 200 and sets cookie", async () => {
+    const res = await request(app).post("/api/v1/login").send({ email:testUser.email, password:testUser.password });
+    expect(res.status).toBe(200);
+    if (res.headers["set-cookie"]) authCookie = res.headers["set-cookie"][0];
+  });
+  it("GET /api/v1/me returns 200 with valid session", async () => {
+    if (!authCookie) return;
+    const res = await request(app).get("/api/v1/me").set("Cookie", authCookie);
+    expect(res.status).toBe(200);
+  });
+  it("GET /api/v1/logout returns 200", async () => {
+    const res = await request(app).get("/api/v1/logout").set("Cookie", authCookie);
+    expect(res.status).toBe(200);
+  });
+});
+`);
 
-// product tests
-write(path.join(TESTS, "product.test.js"),
-  '"use strict";\n' +
-  'const request = require("supertest");\n' +
-  'const app     = require("../app");\n' +
-  'describe("Product API", () => {\n' +
-  '  it("GET /api/v1/products returns 200", async () => {\n' +
-  '    const res = await request(app).get("/api/v1/products");\n' +
-  '    expect(res.status).toBe(200);\n' +
-  '    expect(res.body).toHaveProperty("products");\n' +
-  '  });\n' +
-  '  it("GET /api/v1/product/:id 404 for missing id", async () => {\n' +
-  '    const res = await request(app).get("/api/v1/product/000000000000000000000000");\n' +
-  '    expect(res.status).toBe(404);\n' +
-  '  });\n' +
-  '});\n'
-);
-
-// auth tests
-write(path.join(TESTS, "auth.test.js"),
-  '"use strict";\n' +
-  'const request = require("supertest");\n' +
-  'const app     = require("../app");\n' +
-  'const testUser = {\n' +
-  '  name: "Test User",\n' +
-  '  email: "test_" + Date.now() + "@example.com",\n' +
-  '  password: process.env.TEST_USER_PASSWORD || "Test@12345",\n' +
-  '};\n' +
-  'let authCookie = "";\n' +
-  'describe("Auth API", () => {\n' +
-  '  it("POST /api/v1/register returns 201", async () => {\n' +
-  '    const res = await request(app).post("/api/v1/register").send(testUser);\n' +
-  '    expect(res.status).toBe(201);\n' +
-  '  });\n' +
-  '  it("POST /api/v1/login returns 200 and sets cookie", async () => {\n' +
-  '    const res = await request(app).post("/api/v1/login")\n' +
-  '      .send({ email: testUser.email, password: testUser.password });\n' +
-  '    expect(res.status).toBe(200);\n' +
-  '    if (res.headers["set-cookie"]) authCookie = res.headers["set-cookie"][0];\n' +
-  '  });\n' +
-  '  it("GET /api/v1/me returns 200 with valid session", async () => {\n' +
-  '    if (!authCookie) return;\n' +
-  '    const res = await request(app).get("/api/v1/me").set("Cookie", authCookie);\n' +
-  '    expect(res.status).toBe(200);\n' +
-  '  });\n' +
-  '  it("GET /api/v1/logout returns 200", async () => {\n' +
-  '    const res = await request(app).get("/api/v1/logout").set("Cookie", authCookie);\n' +
-  '    expect(res.status).toBe(200);\n' +
-  '  });\n' +
-  '});\n'
-);
-
-// order tests
-write(path.join(TESTS, "order.test.js"),
-  '"use strict";\n' +
-  'const request = require("supertest");\n' +
-  'const app     = require("../app");\n' +
-  'describe("Order API (unauthenticated guard)", () => {\n' +
-  '  it("GET /api/v1/orders/me returns 401 without auth", async () => {\n' +
-  '    const res = await request(app).get("/api/v1/orders/me");\n' +
-  '    expect(res.status).toBe(401);\n' +
-  '  });\n' +
-  '  it("POST /api/v1/order/new returns 401 without auth", async () => {\n' +
-  '    const res = await request(app).post("/api/v1/order/new").send({});\n' +
-  '    expect(res.status).toBe(401);\n' +
-  '  });\n' +
-  '});\n'
-);
+w(path.join(TESTS, "order.test.js"),
+`"use strict";
+const request = require("supertest");
+const app     = require("../app");
+describe("Order API (auth guard)", () => {
+  it("GET /api/v1/orders/me returns 401 without auth", async () => {
+    const res = await request(app).get("/api/v1/orders/me");
+    expect(res.status).toBe(401);
+  });
+  it("POST /api/v1/order/new returns 401 without auth", async () => {
+    const res = await request(app).post("/api/v1/order/new").send({});
+    expect(res.status).toBe(401);
+  });
+});
+`);
 
 // Sync package.json jest config
 const pkgPath = path.join(ROOT, "package.json");
 const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
 pkg.jest = {
-  testEnvironment:   "node",
-  testMatch:         ["**/backend/__tests__/**/*.test.js"],
-  globalSetup:       "<rootDir>/backend/__tests__/globalSetup.js",
-  globalTeardown:    "<rootDir>/backend/__tests__/globalTeardown.js",
-  testTimeout:       30000,
-  coverageDirectory: "coverage",
-  collectCoverageFrom: ["backend/**/*.js", "!backend/node_modules/**", "!backend/__tests__/**"],
+  testEnvironment:"node",
+  testMatch:["**/backend/__tests__/**/*.test.js"],
+  globalSetup:"<rootDir>/backend/__tests__/globalSetup.js",
+  globalTeardown:"<rootDir>/backend/__tests__/globalTeardown.js",
+  testTimeout:30000,
+  coverageDirectory:"coverage",
+  collectCoverageFrom:["backend/**/*.js","!backend/node_modules/**","!backend/__tests__/**"],
 };
-if (pkg.scripts && !pkg.scripts.test.includes("jest")) {
-  pkg.scripts.test = "jest --runInBand --forceExit";
-}
+if (!pkg.scripts.test.includes("jest")) pkg.scripts.test = "jest --runInBand --forceExit";
 fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2), "utf8");
 console.log("  synced package.json jest config");
 
-// Install deps — add mongodb-memory-server if missing
-console.log("\n[test-agent] Checking test dependencies ...");
-const pkgCheck = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
-const allDeps  = Object.assign({}, pkgCheck.dependencies, pkgCheck.devDependencies);
-const missing  = ["jest", "supertest", "mongodb-memory-server"].filter((d) => !allDeps[d]);
-if (missing.length > 0) {
-  console.log("   installing: " + missing.join(", "));
-  execSync("npm install --save-dev " + missing.join(" "), { cwd: ROOT, stdio: "inherit" });
-} else {
-  console.log("   ok  all test deps present");
-}
+// Install deps
+console.log("\n🔍  [test-agent] Checking test dependencies ...");
+const latest   = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
+const all      = Object.assign({}, latest.dependencies, latest.devDependencies);
+const toInstall = ["jest","supertest","mongodb-memory-server"].filter((d) => !all[d]);
+if (toInstall.length > 0) {
+  console.log("   installing: " + toInstall.join(", "));
+  execSync("npm install --save-dev " + toInstall.join(" "), { cwd:ROOT, stdio:"inherit" });
+} else { console.log("   ✅  All test deps present."); }
 
-// Run tests
-console.log("\n[test-agent] Running test suite ...\n");
+// Run
+console.log("\n🧪  [test-agent] Running test suite ...\n");
 try {
-  execSync(
-    "npx jest --runInBand --forceExit --passWithNoTests",
-    { cwd: ROOT, stdio: "inherit" }
-  );
-  console.log("\n  All tests passed.\n");
-} catch (_e) {
-  console.error("\n  Tests failed.\n");
-  process.exit(1);
-}
+  execSync("npx jest --runInBand --forceExit --passWithNoTests", { cwd:ROOT, stdio:"inherit" });
+  console.log("\n  ✅  All tests passed.\n");
+} catch (_) { console.error("\n  ❌  Tests failed.\n"); process.exit(1); }
