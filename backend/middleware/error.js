@@ -1,36 +1,34 @@
 const ErrorHandler = require("../utils/errorHandler");
 
-module.exports = (err, req, res, next) => {
+// Express 4-arg error-handling middleware — `next` is required in the
+// signature even though it is not called; prefix with _ to satisfy ESLint.
+module.exports = (err, req, res, _next) => {
   err.statusCode = err.statusCode || 500;
-  err.message = err.message || "Internal Server Error";
+  err.message    = err.message    || "Internal Server Error";
 
-  //Cast error Handling. Ex: Wrong MongoDB string/ID type
+  // Cast error — wrong MongoDB ID/string type
   if (err.name === "CastError") {
-    const message = `Resource not found, Invalid:${err.path}`;
+    const message = `Resource not found. Invalid: ${err.path}`;
     err = new ErrorHandler(message, 400);
   }
 
-  // Mongoose Duplicate key:{email} error
+  // Mongoose duplicate key (e.g. duplicate email)
   if (err.code === 11000) {
-    const message = `Duplicate ${Object.keys(
-      err.keyValue
-    )} entered, Please register will another email`;
+    const message = `Duplicate ${Object.keys(err.keyValue)} entered. Please use another value.`;
     err = new ErrorHandler(message, 400);
   }
 
-  //Wrong JWT error
+  // Invalid JWT
   if (err.name === "JsonWebTokenError") {
-    const message = `Invalid JWT, Please try again`;
-    err = new ErrorHandler(message, 400);
+    err = new ErrorHandler("Invalid token. Please log in again.", 400);
   }
 
-  //Expire JWT error
+  // Expired JWT
   if (err.name === "TokenExpiredError") {
-    const message = `JWT has been expired, Please try again`;
-    err = new ErrorHandler(message, 400);
+    err = new ErrorHandler("Token has expired. Please log in again.", 400);
   }
 
-  res.status(err.statusCode).send({
+  res.status(err.statusCode).json({
     success: false,
     message: err.message,
   });
