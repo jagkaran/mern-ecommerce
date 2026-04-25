@@ -4,18 +4,18 @@ const sendToken = (user, statusCode, res) => {
   const token = user.getJWTToken();
 
   // Options for cookies
-
   const options = {
     expires: new Date(
-      Date.now() + process.env.COOKIE_EXPIRE * 24 * 60 * 60 * 1000 //Coverting to days
+      Date.now() + process.env.COOKIE_EXPIRE * 24 * 60 * 60 * 1000
     ),
-
     httpOnly: true,
+    secure: process.env.NODE_ENV === "PRODUCTION",
+    sameSite: "strict",
   };
 
+  // Token is set in httpOnly cookie only — NOT returned in JSON body (security fix)
   res.status(statusCode).cookie("token", token, options).json({
     success: true,
-    token,
     user,
   });
 };
