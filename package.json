@@ -14,6 +14,12 @@
     "testMatch": [
       "**/backend/__tests__/**/*.test.js"
     ],
+    "setupFiles": [
+      "<rootDir>/backend/__tests__/setup.js"
+    ],
+    "setupFilesAfterFramework": [
+      "<rootDir>/backend/__tests__/dbSetup.js"
+    ],
     "globalSetup": "<rootDir>/backend/__tests__/globalSetup.js",
     "globalTeardown": "<rootDir>/backend/__tests__/globalTeardown.js",
     "testTimeout": 30000,
