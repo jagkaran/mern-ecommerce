@@ -1,25 +1,43 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# ─── Dependencies ────────────────────────────────────────────────────────────
+node_modules/
+frontend/node_modules/
+frontend/.pnp
+frontend/.pnp.js
 
-# dependencies
-/node_modules
-/frontend/node_modules
-/frontend/.pnp
-/frontend/.pnp.js
+# ─── Environment / Secrets (NEVER commit these) ──────────────────────────────
+backend/config/config.env
+.env
+.env.*
+!.env.example
 
-# testing
-/frontend/coverage
+# ─── Build output ─────────────────────────────────────────────────────────────
+frontend/build/
+build/
+dist/
 
-# production
-/frontend/build
+# ─── Test & Coverage ──────────────────────────────────────────────────────────
+coverage/
+frontend/coverage/
+# Temp file written by MongoMemoryServer bridge between Jest processes
+backend/__tests__/.mongo-uri
 
-# misc
-/backend/config/config.env
-/frontend/.DS_Store
-/frontend/.env.local
-/frontend/.env.development.local
-/frontend/.env.test.local
-/frontend/.env.production.local
-
+# ─── Logs ─────────────────────────────────────────────────────────────────────
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+logs/
+*.log
+
+# ─── OS / Editor ──────────────────────────────────────────────────────────────
+.DS_Store
+**/.DS_Store
+.Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ─── Misc ─────────────────────────────────────────────────────────────────────
+*.pem
+*.key
+*.cert

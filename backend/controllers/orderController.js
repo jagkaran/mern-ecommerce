@@ -1,4 +1,4 @@
-const Order = require("../models/orderModel");
+const Order   = require("../models/orderModel");
 const Product = require("../models/productModel");
 const ErrorHandler = require("../utils/errorHandler");
 const catchAsyncErrors = require("../middleware/catchAsyncErrors");
@@ -27,59 +27,51 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
     user: req.user._id,
   });
 
-  res.status(200).json({
-    success: true,
-    order,
-  });
+  res.status(201).json({ success: true, order });
 });
 
 // Get Order details
 exports.getOrderDetails = catchAsyncErrors(async (req, res, next) => {
-  const order = await Order.findById(req.params.id).populate(
-    "user",
-    "name email"
-  );
+  const order = await Order.findById(req.params.id).populate("user", "name email");
 
   if (!order) {
     return next(new ErrorHandler("Order not found", 404));
   }
 
-  res.status(200).json({
-    success: true,
-    order,
-  });
+  res.status(200).json({ success: true, order });
 });
 
-// Get Order details for logged in users
-exports.getMyOrders = catchAsyncErrors(async (req, res, next) => {
-  const orders = await Order.find({ user: req.user._id });
-  const orderCount = await Order.find({ user: req.user._id }).count();
+// Get orders for logged-in user  (paginated)
+exports.getMyOrders = catchAsyncErrors(async (req, res, _next) => {
+  const page    = Math.max(1, Number(req.query.page) || 1);
+  const limit   = Math.min(50, Number(req.query.limit) || 10);
+  const skip    = (page - 1) * limit;
 
-  res.status(200).json({
-    success: true,
-    orderCount,
-    orders,
-  });
+  const [orders, orderCount] = await Promise.all([
+    Order.find({ user: req.user._id }).skip(skip).limit(limit),
+    Order.countDocuments({ user: req.user._id }),
+  ]);
+
+  res.status(200).json({ success: true, orderCount, page, limit, orders });
 });
 
-// Get All Orders
-exports.getAllOrders = catchAsyncErrors(async (req, res, next) => {
-  const orders = await Order.find();
-  const orderCount = await Order.countDocuments();
+// Get All Orders (Admin — paginated)
+exports.getAllOrders = catchAsyncErrors(async (req, res, _next) => {
+  const page  = Math.max(1, Number(req.query.page) || 1);
+  const limit = Math.min(100, Number(req.query.limit) || 20);
+  const skip  = (page - 1) * limit;
 
-  let totalAmount = 0;
+  const [orders, orderCount] = await Promise.all([
+    Order.find().skip(skip).limit(limit),
+    Order.countDocuments(),
+  ]);
 
-  orders.forEach((order) => (totalAmount += order.totalPrice));
+  const totalAmount = orders.reduce((sum, o) => sum + o.totalPrice, 0);
 
-  res.status(200).json({
-    success: true,
-    orderCount,
-    totalAmount,
-    orders,
-  });
+  res.status(200).json({ success: true, orderCount, totalAmount, page, limit, orders });
 });
 
-//Update Order
+// Update Order (Admin)
 exports.updateOrder = catchAsyncErrors(async (req, res, next) => {
   const order = await Order.findById(req.params.id);
 
@@ -91,10 +83,11 @@ exports.updateOrder = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler("You have already delivered this order", 400));
   }
 
+  // FIX: forEach(async) swallows errors — use for..of so failures propagate
   if (req.body.orderStatus === "Shipped") {
-    order.orderItems.forEach(async (order) => {
-      await updateStock(order.product, order.quantity);
-    });
+    for (const item of order.orderItems) {
+      await updateStock(item.product, item.quantity);
+    }
   }
 
   order.orderStatus = req.body.orderStatus;
@@ -104,21 +97,22 @@ exports.updateOrder = catchAsyncErrors(async (req, res, next) => {
   }
 
   await order.save({ validateBeforeSave: false });
-  res.status(200).json({
-    success: true,
-    order,
-  });
+  res.status(200).json({ success: true, order });
 });
 
 async function updateStock(id, quantity) {
   const product = await Product.findById(id);
 
-  product.stock -= quantity;
+  // FIX: null-check — product may have been deleted
+  if (!product) return;
+
+  // FIX: underflow guard — stock cannot go below 0
+  product.stock = Math.max(0, product.stock - quantity);
 
   await product.save({ validateBeforeSave: false });
 }
 
-// Delete orders - Admin
+// Delete order - Admin
 exports.deleteOrder = catchAsyncErrors(async (req, res, next) => {
   const order = await Order.findById(req.params.id);
 
@@ -126,10 +120,8 @@ exports.deleteOrder = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler("Order not found", 404));
   }
 
-  await order.remove();
+  // FIX: .remove() deprecated in Mongoose 6+ → .deleteOne()
+  await order.deleteOne();
 
-  res.status(200).json({
-    success: true,
-    message: "Order deleted successfully",
-  });
+  res.status(200).json({ success: true, message: "Order deleted successfully" });
 });

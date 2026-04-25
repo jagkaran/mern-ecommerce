@@ -12,18 +12,23 @@ exports.isAuthenticatedUser = catchAsyncErrors(async (req, res, next) => {
 
   const decodeData = jwt.verify(token, process.env.JWT_SECRET);
 
-  req.user = await User.findById(decodeData.id);
+  const user = await User.findById(decodeData.id);
 
+  // FIX: null-check — user may have been deleted mid-session
+  if (!user) {
+    return next(new ErrorHandler("User no longer exists. Please login again.", 401));
+  }
+
+  req.user = user;
   next();
 });
 
 exports.authorizeRoles = (...roles) => {
   return (req, res, next) => {
-    //   Condition to check if the role passed as an argument matches with the user role in DB
     if (!roles.includes(req.user.role)) {
       return next(
         new ErrorHandler(
-          `Role : ${req.user.role} is not allowed to access this resource`,
+          `Role: ${req.user.role} is not allowed to access this resource`,
           403
         )
       );
