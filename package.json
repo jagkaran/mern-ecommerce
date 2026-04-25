@@ -12,8 +12,11 @@
   "jest": {
     "testEnvironment": "node",
     "testMatch": ["**/backend/__tests__/**/*.test.js"],
+    "setupFilesAfterFramework": null,
+    "globalSetup": "<rootDir>/backend/__tests__/globalSetup.js",
+    "globalTeardown": "<rootDir>/backend/__tests__/globalTeardown.js",
     "coverageDirectory": "coverage",
-    "collectCoverageFrom": ["backend/**/*.js", "!backend/node_modules/**"]
+    "collectCoverageFrom": ["backend/**/*.js", "!backend/node_modules/**", "!backend/__tests__/**"]
   },
   "author": "",
   "license": "ISC",
@@ -38,6 +41,7 @@
     "xss-clean": "^0.1.4"
   },
   "devDependencies": {
+    "@eslint/js": "^9.18.0",
     "eslint": "^9.18.0",
     "jest": "^29.7.0",
     "prettier": "^3.4.2",
