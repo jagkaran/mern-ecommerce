@@ -14,16 +14,12 @@ const issues = [];
 
 /**
  * Returns true when the nearest enclosing function (looking backwards)
- * is a short named helper (e.g. async function updateStock) — these
- * intentionally iterate sequentially by design and are already correct.
+ * is a short named helper — these intentionally await sequentially.
  */
 function inHelperFn(lines, i) {
   for (let j = i; j >= 0; j--) {
     const t = lines[j].trim();
-    if (/^async function \w+/.test(t)) {
-      // Short helpers (≤15 lines) are exempt
-      return (i - j) < 15;
-    }
+    if (/^async function \w+/.test(t)) return (i - j) < 15;
     if (/^exports\.\w+/.test(t) || /^module\.exports/.test(t)) return false;
   }
   return false;
@@ -43,13 +39,9 @@ function scanDir(dir) {
 
     lines.forEach((line, i) => {
       const L = i + 1;
-      const t = line.trim();
 
-      // ─ Sequential awaits inside for-loops ─────────────────────────────
-      //   Only flag `for (` loops (NOT `for...of` inside helper fns)
-      //   where the next non-blank line has `await` inside.
+      // ─ Sequential awaits inside for-loops ──────────────────────────
       if (/for\s*\((?!\s*const\s+\w+\s+of)/.test(line)) {
-        // Look ahead up to 3 lines for an await
         for (let j = i + 1; j <= Math.min(i + 3, lines.length - 1); j++) {
           const next = lines[j].trim();
           if (!next) continue;
@@ -60,31 +52,30 @@ function scanDir(dir) {
         }
       }
 
-      // ─ Unbounded .find() with no .limit() ────────────────────────────
+      // ─ Unbounded .find() ───────────────────────────────────────
       //   Skip:
-      //     - ApiFeatures constructor (query is bounded by .pagination() later)
-      //     - Lines already chained with .skip() or .limit()
-      //     - Lines inside Promise.all (array context, limit applied in chain)
+      //     - ApiFeatures file (pagination() applies .limit() later)
+      //     - new ApiFeatures(X.find(), ...) call site (same reason)
+      //     - Lines already chained with .skip()/.limit()
       if (
         /\.find\(\)/.test(line) &&
         !line.includes(".limit(") &&
         !line.includes(".skip(") &&
-        !t.startsWith("this.query") &&           // ApiFeatures internal
-        !/constructor\(/.test(lines[i - 1] || "") &&
-        !rel.includes("apiFeatures")
+        !line.trim().startsWith("this.query") &&
+        !rel.includes("apiFeatures") &&
+        !line.includes("ApiFeatures(")          // ← new: skip ApiFeatures call sites
       ) {
-        // Check if the next 2 lines chain .skip/.limit
         const chain = (lines[i + 1] || "") + (lines[i + 2] || "");
         if (!chain.includes(".limit(") && !chain.includes(".skip(")) {
           issues.push({ file: rel, line: L, msg: "Unbounded .find() — add .limit() or pagination" });
         }
       }
 
-      // ─ Deprecated .remove() ────────────────────────────────────────
+      // ─ Deprecated .remove() ────────────────────────────────────
       if (/\.remove\(\)/.test(line))
         issues.push({ file: rel, line: L, msg: "Deprecated .remove() — use .deleteOne()" });
 
-      // ─ useFindAndModify (removed in Mongoose 6+) ────────────────────
+      // ─ useFindAndModify ─────────────────────────────────────────
       if (/useFindAndModify/.test(line))
         issues.push({ file: rel, line: L, msg: "useFindAndModify removed in Mongoose 6+" });
     });
