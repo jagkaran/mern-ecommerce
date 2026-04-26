@@ -1,3 +1,8 @@
+// Load env vars FIRST — before any module that consumes them
+if (process.env.NODE_ENV?.toLowerCase() !== "production") {
+  require("dotenv").config({ path: "backend/config/config.env" });
+}
+
 const app        = require("./app");
 const connectDB  = require("./config/database");
 const cloudinary = require("cloudinary").v2;
@@ -9,11 +14,6 @@ process.on("uncaughtException", (err) => {
   process.exit(1);
 });
 
-// Load env in non-production environments
-if (process.env.NODE_ENV !== "PRODUCTION") {
-  require("dotenv").config({ path: "backend/config/config.env" });
-}
-
 connectDB();
 
 cloudinary.config({
@@ -22,8 +22,8 @@ cloudinary.config({
   api_secret:  process.env.CLOUDINARY_API_SECRET,
 });
 
-const server = app.listen(process.env.PORT, () => {
-  logger.info(`Server running on http://localhost:${process.env.PORT} [${process.env.NODE_ENV || "development"}]`);
+const server = app.listen(process.env.PORT || 5000, () => {
+  logger.info(`Server running on http://localhost:${process.env.PORT || 5000} [${process.env.NODE_ENV || "development"}]`);
 });
 
 // Handle unhandled promise rejections (e.g. bad DB URI)
