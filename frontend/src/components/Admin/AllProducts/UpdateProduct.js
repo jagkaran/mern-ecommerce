@@ -114,6 +114,8 @@ function UpdateProduct() {
     dispatch(deleteReview(reviewId, id));
   };
 
+  // setValues is a stable setter from useFormControls —
+  // adding it to deps would cause an infinite re-render loop.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (product && product._id !== id) {
