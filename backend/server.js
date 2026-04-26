@@ -1,6 +1,9 @@
-// Load env vars FIRST — before any module that consumes them
+const path = require("path");
+
+// Load env vars FIRST using __dirname so path works from ANY working directory
+// path.join(__dirname, ...) is always relative to server.js itself, never to cwd
 if (process.env.NODE_ENV?.toLowerCase() !== "production") {
-  require("dotenv").config({ path: "backend/config/config.env" });
+  require("dotenv").config({ path: path.join(__dirname, "config", "config.env") });
 }
 
 const app        = require("./app");
