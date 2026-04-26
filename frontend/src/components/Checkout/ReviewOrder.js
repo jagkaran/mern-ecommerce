@@ -32,6 +32,9 @@ function ReviewOrder({ reviewData, handleReviewDataChange }) {
   reviewData.totalPrice =
     reviewData.subTotal + reviewData.shippingCharges + reviewData.tax;
 
+  // handleReviewDataChange is a callback prop — wrapping in useCallback in the
+  // parent would be the clean fix, but adding it here causes infinite re-renders
+  // because the parent recreates it on each render without useCallback.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (reviewData?.subTotal !== "") {
