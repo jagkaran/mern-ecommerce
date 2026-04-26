@@ -65,12 +65,27 @@ function App() {
   const [stripeApiKey, setStripeApiKey] = useState("");
   const { isAuthenticated, user } = useSelector((state) => state.user);
 
+  // Load the current user session on mount.
+  // A 401 here is expected for unauthenticated visitors — Redux handles
+  // it gracefully by setting isAuthenticated: false.
   useEffect(() => {
     dispatch(loadUser());
-    axios.get("/api/v1/getstripeapikey").then(({ data }) => {
-      setStripeApiKey(data.stripeApiKey);
-    });
   }, [dispatch]);
+
+  // Fetch the Stripe publishable key only after the user is authenticated.
+  // The /getstripeapikey endpoint requires a valid session cookie, so calling
+  // it before login always returns 401. Splitting into a separate effect
+  // also prevents an unhandled rejection from crashing the app for visitors.
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    axios
+      .get("/api/v1/getstripeapikey")
+      .then(({ data }) => setStripeApiKey(data.stripeApiKey))
+      .catch(() => {
+        // Stripe key unavailable — /shipping will show a loader until
+        // a subsequent successful fetch or page reload after login.
+      });
+  }, [isAuthenticated]);
 
   return (
     <div className="bg-gray-100">
