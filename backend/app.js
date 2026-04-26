@@ -13,10 +13,11 @@ const mongoSanitize = require("express-mongo-sanitize");
 const xss = require("xss-clean");
 const compression = require("compression");
 
-// Config
-if (process.env.NODE_ENV !== "PRODUCTION") {
-  require("dotenv").config({ path: "backend/config/config.env" });
-}
+// NOTE: dotenv is intentionally NOT loaded here.
+// server.js loads it first (via __dirname) before requiring this module,
+// so all env vars are already in process.env by the time this file runs.
+// Loading it again here with a cwd-relative path caused a NODE_ENV
+// case-mismatch bug and could silently overwrite vars with wrong values.
 
 // HTTP security headers
 app.use(
@@ -80,14 +81,17 @@ app.use("/api/v1/", user);
 app.use("/api/v1/", order);
 app.use("/api/v1/", payment);
 
-// Serve React build — must come AFTER all API routes
-app.use(express.static(path.join(__dirname, "../frontend/build")));
+// Serve React build + SPA fallback — PRODUCTION ONLY.
+// In development the build folder does not exist; registering the static
+// middleware and the wildcard catch-all here would stall the event loop
+// when sendFile tries to resolve a non-existent index.html.
+if (process.env.NODE_ENV?.toLowerCase() === "production") {
+  app.use(express.static(path.join(__dirname, "../frontend/build")));
 
-// SPA fallback — catch-all for client-side routing
-// Must come AFTER static and BEFORE error middleware
-app.get("*", (req, res) => {
-  res.sendFile(path.resolve(__dirname, "../frontend/build/index.html"));
-});
+  app.get("*", (req, res) => {
+    res.sendFile(path.resolve(__dirname, "../frontend/build/index.html"));
+  });
+}
 
 // Error middleware — MUST be last
 app.use(errorMiddleware);
