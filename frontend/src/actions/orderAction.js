@@ -57,14 +57,16 @@ export const getOrderDetails = (id) => async (dispatch) => {
   }
 };
 
-// Get All Orders (admin)
+// Get All Orders (admin) — dispatch full payload so reducer gets orderCount + totalAmount
 export const getAllOrders = () => async (dispatch) => {
   try {
     dispatch({ type: "AllOrdersRequest" });
 
     const { data } = await axios.get("/api/v1/admin/orders");
 
-    dispatch({ type: "AllOrdersSuccess", payload: data.orders });
+    // Pass the entire response object so the reducer can store
+    // orders, orderCount, and totalAmount all at once.
+    dispatch({ type: "AllOrdersSuccess", payload: data });
   } catch (error) {
     dispatch({
       type: "AllOrdersFail",

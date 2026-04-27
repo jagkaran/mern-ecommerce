@@ -42,14 +42,16 @@ export const myOrdersReducer = createReducer(
 );
 
 export const allOrdersReducer = createReducer(
-  { orders: [] },
+  { orders: [], orderCount: 0, totalAmount: 0 },
   {
     AllOrdersRequest: (state) => {
       state.loading = true;
     },
     AllOrdersSuccess: (state, action) => {
-      state.loading = false;
-      state.orders = action.payload;
+      state.loading    = false;
+      state.orders     = action.payload.orders;
+      state.orderCount = action.payload.orderCount;
+      state.totalAmount = action.payload.totalAmount;
     },
     AllOrdersFail: (state, action) => {
       state.loading = false;

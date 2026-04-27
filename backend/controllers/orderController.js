@@ -47,20 +47,20 @@ exports.getMyOrders = catchAsyncErrors(async (req, res, _next) => {
   res.status(200).json({ success: true, orderCount, page, limit, orders });
 });
 
-// Get all orders — Admin (paginated)
+// Get all orders — Admin (NO pagination: admins need to see every order)
 exports.getAllOrders = catchAsyncErrors(async (req, res, _next) => {
-  const page  = Math.max(1,   Number(req.query.page)  || 1);
-  const limit = Math.min(100, Number(req.query.limit)  || 20);
-  const skip  = (page - 1) * limit;
-
-  const [orders, orderCount] = await Promise.all([
-    Order.find().skip(skip).limit(limit),
+  // Return every order sorted newest-first so new orders always appear at the top.
+  // totalAmount is computed in the DB aggregation so it reflects ALL orders,
+  // not just whatever subset might be on a page.
+  const [orders, orderCount, aggResult] = await Promise.all([
+    Order.find().sort({ createdAt: -1 }),
     Order.countDocuments(),
+    Order.aggregate([{ $group: { _id: null, total: { $sum: "$totalPrice" } } }]),
   ]);
 
-  const totalAmount = orders.reduce((sum, o) => sum + o.totalPrice, 0);
+  const totalAmount = aggResult.length > 0 ? aggResult[0].total : 0;
 
-  res.status(200).json({ success: true, orderCount, totalAmount, page, limit, orders });
+  res.status(200).json({ success: true, orderCount, totalAmount, orders });
 });
 
 // Update order status — Admin

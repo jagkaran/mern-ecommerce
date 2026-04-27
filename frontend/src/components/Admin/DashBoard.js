@@ -35,23 +35,21 @@ export default function Dashboard() {
 
   const { products } = useSelector((state) => state.product);
 
-  const { orders } = useSelector((state) => state.allOrders);
+  // orderCount and totalAmount now come directly from the API response
+  // via the reducer — they reflect every order in the DB, not just the
+  // first page of results.
+  const { orders, orderCount, totalAmount } = useSelector(
+    (state) => state.allOrders
+  );
 
   const { usersCount } = useSelector((state) => state.allUsers);
 
   let outOfStock = 0;
-
   products &&
     products.forEach((item) => {
       if (item?.stock === 0) {
         outOfStock += 1;
       }
-    });
-
-  let totalAmount = 0;
-  orders &&
-    orders.forEach((item) => {
-      totalAmount += item.totalPrice;
     });
 
   React.useEffect(() => {
@@ -86,7 +84,8 @@ export default function Dashboard() {
             <Grid container spacing={3}>
               <Grid item lg={3} sm={6} xl={3} xs={12}>
                 <Link to="/admin/orders">
-                  <AllOrders allOrders={orders && orders.length} />
+                  {/* Use orderCount from API so the badge reflects ALL orders */}
+                  <AllOrders allOrders={orderCount ?? (orders && orders.length)} />
                 </Link>
               </Grid>
               <Grid item xl={3} lg={3} sm={6} xs={12}>
@@ -100,10 +99,11 @@ export default function Dashboard() {
                 </Link>
               </Grid>
               <Grid item xl={3} lg={3} sm={6} xs={12}>
-                <TotalRevenue totalRevenue={totalAmount} />
+                {/* totalAmount from Redux state — aggregated in DB across all orders */}
+                <TotalRevenue totalRevenue={totalAmount ?? 0} />
               </Grid>
               <Grid item lg={8} md={12} xl={9} xs={12}>
-                <LastestSales totalRevenue={totalAmount} />
+                <LastestSales totalRevenue={totalAmount ?? 0} />
               </Grid>
               <Grid item lg={4} md={12} xl={3} xs={12}>
                 <InventoryOverview
