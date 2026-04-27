@@ -33,7 +33,6 @@ function Shipping() {
   const dispatch = useDispatch();
   const alert = useAlert();
   const { shippingInfo, cartItems } = useSelector((state) => state.cart);
-  const orderInfo = JSON.parse(sessionStorage.getItem("orderInfo"));
   const history = useNavigate();
   const [activeStep, setActiveStep] = useState(0);
   const stripe = useStripe();
@@ -102,8 +101,12 @@ function Shipping() {
     }
   };
 
+  // Read orderInfo from sessionStorage fresh each render so the Pay button
+  // always shows the value saved when the user clicked Next on step 2.
+  const orderInfo = JSON.parse(sessionStorage.getItem("orderInfo"));
+
   const paymentData = {
-    amount: Math.round(orderInfo?.totalPrice * 100),
+    amount: Math.round((orderInfo?.totalPrice ?? 0) * 100),
   };
 
   const orderData = {
@@ -179,8 +182,6 @@ function Shipping() {
     setAddFormValues({ ...addFormValues, [input]: e.target.value });
   };
 
-  // useCallback ensures this function reference is stable across renders so
-  // ReviewOrder's useEffect dependency array doesn't trigger infinite re-renders.
   const handleReviewDataChange = useCallback((input, value) => {
     setReviewData((prev) => ({ ...prev, [input]: value }));
   }, []);
@@ -221,6 +222,12 @@ function Shipping() {
       dispatch(clearErrors());
     }
   }, [dispatch, error, alert, history, cartItems]);
+
+  // Derive the pay-button label from sessionStorage (set when user clicks Next
+  // on step 2) so it always reflects the confirmed, formatted total.
+  const payLabel = orderInfo?.totalPrice
+    ? `Pay ${fmt(orderInfo.totalPrice)}`
+    : "Pay";
 
   return (
     <div>
@@ -266,7 +273,7 @@ function Shipping() {
                       variant="contained"
                       sx={{ mt: 3, ml: 1 }}
                     >
-                      Pay {orderInfo ? fmt(orderInfo.totalPrice) : ""}
+                      {payLabel}
                     </LoadingButton>
                   ) : (
                     <Button
