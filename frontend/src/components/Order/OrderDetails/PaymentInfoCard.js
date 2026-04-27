@@ -8,6 +8,7 @@ import {
   Typography,
 } from "@mui/material";
 import SeverityPill from "../SeverityPill";
+import { formatPrice } from "../../../utils/fmt";
 
 function PaymentInfoCard({ status, amount, tax }) {
   return (
@@ -23,21 +24,16 @@ function PaymentInfoCard({ status, amount, tax }) {
             item
             md={4}
             sm={6}
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-            }}
+            sx={{ display: "flex", flexDirection: "column" }}
             xs={12}
           >
             <Typography gutterBottom variant="body1">
-              <SeverityPill
-                color={status === "succeeded" ? "success" : "error"}
-              >
+              <SeverityPill color={status === "succeeded" ? "success" : "error"}>
                 {status === "succeeded" ? "PAID" : "NOT PAID"}
               </SeverityPill>
             </Typography>
             <Typography mt={1} gutterBottom variant="body1">
-              Amount: ${amount} (Incl. ${tax} Tax)
+              Amount: ${formatPrice(amount)} (Incl. ${formatPrice(tax)} Tax)
             </Typography>
           </Grid>
         </Grid>

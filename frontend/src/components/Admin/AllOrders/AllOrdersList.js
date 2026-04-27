@@ -28,6 +28,10 @@ import { createOrderNumber } from "../../Order/MyOrders";
 import SeverityPill from "../../Order/SeverityPill";
 import { useState } from "react";
 import useAdminPagination, { PER_PAGE_OPTIONS } from "../Hooks/useAdminPagination";
+import { formatPrice } from "../../../utils/fmt";
+
+// Uniform cell padding used on every column
+const CELL_SX = { px: 3, py: 1.75 };
 
 function AllOrdersList({ orders, deleteOrderHandler }) {
   const [open, setOpen]               = useState(false);
@@ -56,20 +60,20 @@ function AllOrdersList({ orders, deleteOrderHandler }) {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>Order ID</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Items Qty</TableCell>
-                <TableCell>Amount</TableCell>
-                <TableCell>Actions</TableCell>
+                <TableCell sx={CELL_SX}>Order ID</TableCell>
+                <TableCell sx={CELL_SX}>Status</TableCell>
+                <TableCell sx={CELL_SX}>Items Qty</TableCell>
+                <TableCell sx={CELL_SX}>Amount</TableCell>
+                <TableCell sx={CELL_SX}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {paginated.map((order) => (
                 <TableRow hover key={order._id}>
-                  <TableCell>
+                  <TableCell sx={CELL_SX}>
                     {createOrderNumber(order._id, order.shippingInfo?.country)}
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={CELL_SX}>
                     <SeverityPill
                       color={
                         (order.orderStatus === "Delivered" && "success") ||
@@ -81,9 +85,9 @@ function AllOrdersList({ orders, deleteOrderHandler }) {
                       {order.orderStatus}
                     </SeverityPill>
                   </TableCell>
-                  <TableCell>{order.orderItems.length}</TableCell>
-                  <TableCell>${order.totalPrice}</TableCell>
-                  <TableCell>
+                  <TableCell sx={CELL_SX}>{order.orderItems.length}</TableCell>
+                  <TableCell sx={CELL_SX}>${formatPrice(order.totalPrice)}</TableCell>
+                  <TableCell sx={CELL_SX}>
                     <Link to={`/admin/order/update/${order._id}`}>
                       <EditIcon />
                     </Link>
@@ -127,7 +131,7 @@ function AllOrdersList({ orders, deleteOrderHandler }) {
         alignItems="center"
         justifyContent="space-between"
         spacing={2}
-        sx={{ px: 2, py: 1.5 }}
+        sx={{ px: 3, py: 1.5 }}
       >
         <Stack direction="row" alignItems="center" spacing={1}>
           <Typography variant="body2" color="text.secondary">

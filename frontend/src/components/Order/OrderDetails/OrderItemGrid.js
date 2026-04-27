@@ -1,16 +1,19 @@
 import React from "react";
 import { Avatar, Grid, Typography } from "@mui/material";
 import { Link } from "react-router-dom";
+import { formatPrice } from "../../../utils/fmt";
+
 function OrderItemGrid({ id, name, quantity, price, image }) {
+  const unitPrice  = formatPrice(price);
+  const subtotal   = formatPrice(price * quantity);
+
   return (
     <Grid container wrap="wrap">
       <Grid
         item
         md={5}
         sm={6}
-        sx={{
-          display: "flex",
-        }}
+        sx={{ display: "flex" }}
         xs={12}
         alignItems="center"
         mt={2}
@@ -20,7 +23,7 @@ function OrderItemGrid({ id, name, quantity, price, image }) {
             src={image}
             sx={{ mr: 4, width: 90, height: 120 }}
             variant="square"
-          ></Avatar>
+          />
         </Link>
         <Typography color="textPrimary" variant="body1">
           {name}
@@ -30,18 +33,15 @@ function OrderItemGrid({ id, name, quantity, price, image }) {
         item
         md={5}
         sm={6}
-        sx={{
-          display: "flex",
-          mt: 3,
-        }}
+        sx={{ display: "flex", mt: 3 }}
         alignItems="center"
         xs={12}
       >
         <Typography color="textPrimary" gutterBottom variant="body1">
-          {quantity} x ${price} =
+          {quantity} x ${unitPrice} =
         </Typography>
         <Typography ml={1} color="textPrimary" gutterBottom variant="body1">
-          ${price * quantity}
+          ${subtotal}
         </Typography>
       </Grid>
     </Grid>

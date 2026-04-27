@@ -31,6 +31,9 @@ import { clearErrors, deleteProduct } from "../../../actions/productAction";
 import { useEffect, useState } from "react";
 import { useAlert } from "react-alert";
 import useAdminPagination, { PER_PAGE_OPTIONS } from "../Hooks/useAdminPagination";
+import { formatPrice } from "../../../utils/fmt";
+
+const CELL_SX = { px: 3, py: 1.75 };
 
 function AllProductsList({ products }) {
   const dispatch = useDispatch();
@@ -90,22 +93,22 @@ function AllProductsList({ products }) {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>Product ID</TableCell>
-                <TableCell>Name</TableCell>
-                <TableCell>Ratings</TableCell>
-                <TableCell>Stock</TableCell>
-                <TableCell>Price</TableCell>
-                <TableCell>Actions</TableCell>
+                <TableCell sx={CELL_SX}>Product ID</TableCell>
+                <TableCell sx={CELL_SX}>Name</TableCell>
+                <TableCell sx={CELL_SX}>Ratings</TableCell>
+                <TableCell sx={CELL_SX}>Stock</TableCell>
+                <TableCell sx={CELL_SX}>Price</TableCell>
+                <TableCell sx={CELL_SX}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {paginated.map((product) => (
                 <TableRow hover key={product._id}>
-                  <TableCell sx={{ fontSize: "0.75rem", color: "text.secondary" }}>
+                  <TableCell sx={{ ...CELL_SX, fontSize: "0.75rem", color: "text.secondary" }}>
                     {product._id}
                   </TableCell>
-                  <TableCell>{product.name}</TableCell>
-                  <TableCell>
+                  <TableCell sx={CELL_SX}>{product.name}</TableCell>
+                  <TableCell sx={CELL_SX}>
                     <Rating
                       name="half-rating-read"
                       value={product.ratings}
@@ -113,9 +116,9 @@ function AllProductsList({ products }) {
                       readOnly
                     />
                   </TableCell>
-                  <TableCell>{product.stock}</TableCell>
-                  <TableCell>${product.price}</TableCell>
-                  <TableCell>
+                  <TableCell sx={CELL_SX}>{product.stock}</TableCell>
+                  <TableCell sx={CELL_SX}>${formatPrice(product.price)}</TableCell>
+                  <TableCell sx={CELL_SX}>
                     <Link to={`/admin/product/update/${product._id}`}>
                       <EditIcon />
                     </Link>
@@ -123,8 +126,6 @@ function AllProductsList({ products }) {
                       <DeleteIcon />
                     </Button>
 
-                    {/* Confirm dialog — rendered once outside the map would be
-                        cleaner, but keeping it here avoids prop-drilling */}
                     <Dialog
                       open={open && selectedProduct._id === product._id}
                       onClose={handleClose}
@@ -162,7 +163,7 @@ function AllProductsList({ products }) {
         alignItems="center"
         justifyContent="space-between"
         spacing={2}
-        sx={{ px: 2, py: 1.5 }}
+        sx={{ px: 3, py: 1.5 }}
       >
         <Stack direction="row" alignItems="center" spacing={1}>
           <Typography variant="body2" color="text.secondary">

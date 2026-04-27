@@ -30,6 +30,8 @@ import { format, parseISO } from "date-fns";
 import SeverityPill from "../../Order/SeverityPill";
 import useAdminPagination, { PER_PAGE_OPTIONS } from "../Hooks/useAdminPagination";
 
+const CELL_SX = { px: 3, py: 1.75 };
+
 function AllUsersList({ users, usersCount, deleteUserHandler }) {
   const [open, setOpen]             = useState(false);
   const [selectedUser, setSelectedUser] = useState({});
@@ -57,17 +59,17 @@ function AllUsersList({ users, usersCount, deleteUserHandler }) {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>Name</TableCell>
-                <TableCell>Email</TableCell>
-                <TableCell>Role</TableCell>
-                <TableCell>Registered</TableCell>
-                <TableCell>Actions</TableCell>
+                <TableCell sx={CELL_SX}>Name</TableCell>
+                <TableCell sx={CELL_SX}>Email</TableCell>
+                <TableCell sx={CELL_SX}>Role</TableCell>
+                <TableCell sx={CELL_SX}>Registered</TableCell>
+                <TableCell sx={CELL_SX}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {paginated.map((user) => (
                 <TableRow hover key={user._id}>
-                  <TableCell>
+                  <TableCell sx={CELL_SX}>
                     <Box sx={{ display: "flex", alignItems: "center" }}>
                       <Avatar src={user.profilePic.url} sx={{ height: 40, width: 40 }} />
                       <Typography
@@ -79,22 +81,16 @@ function AllUsersList({ users, usersCount, deleteUserHandler }) {
                       </Typography>
                     </Box>
                   </TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>
-                    <SeverityPill
-                      color={
-                        (user.role === "admin" && "success") ||
-                        (user.role === "user"  && "warning") ||
-                        "error"
-                      }
-                    >
+                  <TableCell sx={CELL_SX}>{user.email}</TableCell>
+                  <TableCell sx={CELL_SX}>
+                    <SeverityPill color={user.role === "admin" ? "success" : "warning"}>
                       {user.role}
                     </SeverityPill>
                   </TableCell>
-                  <TableCell>
-                    {format(parseISO(user.createdAt), "dd/MM/yyyy")}
+                  <TableCell sx={CELL_SX}>
+                    {format(parseISO(user.createdAt), "dd MMM yyyy")}
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={CELL_SX}>
                     <Link to={`/admin/user/update/${user._id}`}>
                       <EditIcon />
                     </Link>
@@ -110,7 +106,7 @@ function AllUsersList({ users, usersCount, deleteUserHandler }) {
                       <DialogTitle id="user-delete-title">Delete Confirmation</DialogTitle>
                       <DialogContent>
                         <DialogContentText>
-                          Are you sure you want to delete "{selectedUser.email}" user?
+                          Are you sure you want to delete user "{selectedUser.name}"?
                         </DialogContentText>
                       </DialogContent>
                       <DialogActions>
@@ -136,7 +132,7 @@ function AllUsersList({ users, usersCount, deleteUserHandler }) {
         alignItems="center"
         justifyContent="space-between"
         spacing={2}
-        sx={{ px: 2, py: 1.5 }}
+        sx={{ px: 3, py: 1.5 }}
       >
         <Stack direction="row" alignItems="center" spacing={1}>
           <Typography variant="body2" color="text.secondary">

@@ -18,6 +18,8 @@ import {
 import DeleteIcon from "@mui/icons-material/Delete";
 import SeverityPill from "../../Order/SeverityPill";
 
+const CELL_SX = { px: 3, py: 1.75 };
+
 function UpdateReviews({ reviews, deleteReviewHandler }) {
   return (
     <Grid item xs={12} md={12} lg={6}>
@@ -41,25 +43,25 @@ function UpdateReviews({ reviews, deleteReviewHandler }) {
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell>User</TableCell>
-                    <TableCell>Comment</TableCell>
-                    <TableCell>Rating</TableCell>
-                    <TableCell>Delete</TableCell>
+                    <TableCell sx={CELL_SX}>User</TableCell>
+                    <TableCell sx={CELL_SX}>Comment</TableCell>
+                    <TableCell sx={CELL_SX}>Rating</TableCell>
+                    <TableCell sx={CELL_SX}>Delete</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {reviews.map((review) => (
                     <TableRow hover key={review._id}>
-                      <TableCell>{review.name}</TableCell>
-                      <TableCell>{review.comment}</TableCell>
-                      <TableCell>
+                      <TableCell sx={CELL_SX}>{review.name}</TableCell>
+                      <TableCell sx={CELL_SX}>{review.comment}</TableCell>
+                      <TableCell sx={CELL_SX}>
                         <SeverityPill
                           color={(review.rating >= 3 && "success") || "warning"}
                         >
                           {review.rating}
                         </SeverityPill>
                       </TableCell>
-                      <TableCell>
+                      <TableCell sx={CELL_SX}>
                         <Button onClick={() => deleteReviewHandler(review._id)}>
                           <DeleteIcon />
                         </Button>
