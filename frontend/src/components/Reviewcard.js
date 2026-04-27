@@ -3,14 +3,14 @@ import React from "react";
 import { format, parseISO, isValid } from "date-fns";
 
 /**
- * Formats a review date as "12 Jan 2024".
- * Gracefully handles missing or invalid dates (legacy reviews before the
- * createdAt field was added to the schema).
+ * Formats a review date as "27 Apr 2026".
+ * Handles ISO strings, Date objects, and missing/invalid values gracefully.
  */
 function formatReviewDate(createdAt) {
   if (!createdAt) return null;
   try {
-    const d = typeof createdAt === "string" ? parseISO(createdAt) : new Date(createdAt);
+    // Axios deserialises dates as ISO strings; new Date() handles both
+    const d = new Date(createdAt);
     return isValid(d) ? format(d, "dd MMM yyyy") : null;
   } catch {
     return null;
@@ -23,6 +23,7 @@ function Reviewcard({ name, rating, comment, profileImg, createdAt }) {
   return (
     <div className="bg-white dark:bg-gray-800 w-full rounded-lg p-4 mb-6 shadow sm:inline-block">
       <div className="flex items-start text-left">
+        {/* Avatar */}
         <div className="flex-shrink-0">
           <div className="inline-block relative">
             <a href="/abc" className="block relative">
@@ -45,6 +46,8 @@ function Reviewcard({ name, rating, comment, profileImg, createdAt }) {
             </svg>
           </div>
         </div>
+
+        {/* Content */}
         <div className="ml-6">
           <div className="flex items-baseline gap-3">
             <span className="text-gray-600 capitalize dark:text-gray-200 font-bold">

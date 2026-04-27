@@ -21,13 +21,9 @@ export const getProduct =
       }
 
       const { data } = await axios.get(link);
-
       dispatch({ type: "ProductSuccess", payload: data });
     } catch (error) {
-      dispatch({
-        type: "ProductFailure",
-        payload: error.response.data.message,
-      });
+      dispatch({ type: "ProductFailure", payload: error.response.data.message });
     }
   };
 
@@ -51,19 +47,28 @@ export const getProductDetails = (id) => async (dispatch) => {
     const { data } = await axios.get(`/api/v1/product/${id}`);
     dispatch({ type: "ProductDetailsSuccess", payload: data });
   } catch (error) {
-    dispatch({
-      type: "ProductDetailsFailure",
-      payload: error.response.data.message,
-    });
+    dispatch({ type: "ProductDetailsFailure", payload: error.response.data.message });
   }
 };
 
-// NEW REVIEW
+// NEW REVIEW — send as plain JSON (not FormData) so body-parser can read it
+// and the createdAt timestamp is reliably saved in the subdocument.
 export const newReview = (reviewData) => async (dispatch) => {
   try {
     dispatch({ type: "NewReviewRequest" });
+
+    // Convert FormData → plain object so we can send as JSON.
+    // The original code sent FormData with Content-Type: application/json
+    // which caused body-parser to silently drop the fields.
+    let payload;
+    if (reviewData instanceof FormData) {
+      payload = Object.fromEntries(reviewData.entries());
+    } else {
+      payload = reviewData;
+    }
+
     const config = { headers: { "Content-Type": "application/json" } };
-    const { data } = await axios.put(`/api/v1/review`, reviewData, config);
+    const { data } = await axios.put(`/api/v1/review`, payload, config);
     dispatch({ type: "NewReviewSuccess", payload: data.success });
   } catch (error) {
     dispatch({
@@ -80,10 +85,7 @@ export const getAllReviews = (id) => async (dispatch) => {
     const { data } = await axios.get(`/api/v1/reviews?id=${id}`);
     dispatch({ type: "AllReviewSuccess", payload: data.reviews });
   } catch (error) {
-    dispatch({
-      type: "AllReviewFailure",
-      payload: error.response.data.message,
-    });
+    dispatch({ type: "AllReviewFailure", payload: error.response.data.message });
   }
 };
 
@@ -96,10 +98,7 @@ export const deleteReview = (reviewId, productId) => async (dispatch) => {
     );
     dispatch({ type: "DeleteReviewSuccess", payload: data.success });
   } catch (error) {
-    dispatch({
-      type: "DeleteReviewFailure",
-      payload: error.response.data.message,
-    });
+    dispatch({ type: "DeleteReviewFailure", payload: error.response.data.message });
   }
 };
 
@@ -108,13 +107,9 @@ export const getAdminProducts = () => async (dispatch) => {
   try {
     dispatch({ type: "AdminProductRequest" });
     const { data } = await axios.get("/api/v1/admin/products");
-    // data = { success, productCount, products: [...] }
     dispatch({ type: "AdminProductSuccess", payload: data.products });
   } catch (error) {
-    dispatch({
-      type: "AdminProductFailure",
-      payload: error.response.data.message,
-    });
+    dispatch({ type: "AdminProductFailure", payload: error.response.data.message });
   }
 };
 
@@ -123,17 +118,10 @@ export const createProduct = (productData) => async (dispatch) => {
   try {
     dispatch({ type: "NewProductRequest" });
     const config = { headers: { "Content-Type": "application/json" } };
-    const { data } = await axios.post(
-      `/api/v1/admin/product/new`,
-      productData,
-      config
-    );
+    const { data } = await axios.post(`/api/v1/admin/product/new`, productData, config);
     dispatch({ type: "NewProductSuccess", payload: data });
   } catch (error) {
-    dispatch({
-      type: "NewProductFailure",
-      payload: error.response.data.message,
-    });
+    dispatch({ type: "NewProductFailure", payload: error.response.data.message });
   }
 };
 
@@ -144,10 +132,7 @@ export const deleteProduct = (id) => async (dispatch) => {
     const { data } = await axios.delete(`/api/v1/admin/product/${id}`);
     dispatch({ type: "DeleteProductSuccess", payload: data.success });
   } catch (error) {
-    dispatch({
-      type: "DeleteProductFailure",
-      payload: error.response.data.message,
-    });
+    dispatch({ type: "DeleteProductFailure", payload: error.response.data.message });
   }
 };
 
@@ -156,17 +141,10 @@ export const updateProduct = (id, productData) => async (dispatch) => {
   try {
     dispatch({ type: "UpdateProductRequest" });
     const config = { headers: { "Content-Type": "application/json" } };
-    const { data } = await axios.put(
-      `/api/v1/admin/product/${id}`,
-      productData,
-      config
-    );
+    const { data } = await axios.put(`/api/v1/admin/product/${id}`, productData, config);
     dispatch({ type: "UpdateProductSuccess", payload: data.success });
   } catch (error) {
-    dispatch({
-      type: "UpdateProductFailure",
-      payload: error.response.data.message,
-    });
+    dispatch({ type: "UpdateProductFailure", payload: error.response.data.message });
   }
 };
 
