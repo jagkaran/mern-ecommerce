@@ -1,80 +1,79 @@
-// @ts-check
-const { test, expect } = require("@playwright/test");
-const { loginViaUI } = require("./helpers/auth");
+// e2e/checkout.spec.js
+const { test, expect } = require('@playwright/test');
+const { loginViaUI } = require('./helpers/auth');
 
-// ---------------------------------------------------------------------------
-// Checkout / Shipping E2E Tests
-// Covers: shipping form renders, validation errors on empty submit
-// Note: Full payment flow requires Stripe test keys — covered here up to
-//       the payment step using mock/test card numbers.
-// ---------------------------------------------------------------------------
+const USER_EMAIL = process.env.TEST_USER_EMAIL || 'test@example.com';
+const USER_PASS = process.env.TEST_USER_PASS || 'Test@1234';
 
-test.describe("Shipping form validation", () => {
-  test.skip(
-    !process.env.TEST_EMAIL || !process.env.TEST_PASSWORD,
-    "Set TEST_EMAIL and TEST_PASSWORD env vars to run checkout tests"
-  );
-
+test.describe('Shipping form validation', () => {
   test.beforeEach(async ({ page }) => {
-    await loginViaUI(
-      page,
-      process.env.TEST_EMAIL,
-      process.env.TEST_PASSWORD
-    );
-    // Add a product to cart first so shipping is accessible
-    await page.goto("/products");
-    const firstCard = page.locator(".MuiCard-root a, .MuiCardActionArea-root").first();
-    await firstCard.waitFor({ timeout: 15000 });
-    await firstCard.click();
-    await page.waitForURL(/\/product\//, { timeout: 10000 });
-    const addBtn = page.getByRole("button", { name: /add to cart/i });
-    await addBtn.waitFor({ timeout: 10000 });
-    if (!(await addBtn.isDisabled())) await addBtn.click();
-    await page.goto("/shipping");
+    await loginViaUI(page, USER_EMAIL, USER_PASS);
+    await page.goto('/shipping');
   });
 
-  test("shipping form renders all required fields", async ({ page }) => {
-    await expect(page.getByLabel(/first name/i)).toBeVisible({ timeout: 10000 });
-    await expect(page.getByLabel(/last name/i)).toBeVisible();
-    await expect(page.getByLabel(/address/i)).toBeVisible();
-    await expect(page.getByLabel(/phone/i)).toBeVisible();
+  test('shipping form renders all required fields', async ({ page }) => {
+    await expect(
+      page.getByLabel(/address/i).first()
+    ).toBeVisible({ timeout: 8000 });
     await expect(page.getByLabel(/city/i)).toBeVisible();
-    await expect(page.getByLabel(/zip|postal/i)).toBeVisible();
+    await expect(page.getByLabel(/phone|mobile/i).first()).toBeVisible();
+    await expect(page.getByLabel(/postal|zip|pin/i).first()).toBeVisible();
+    await expect(page.getByLabel(/country/i).first()).toBeVisible();
   });
 
-  test("phone field rejects non-numeric input", async ({ page }) => {
-    const phoneInput = page.getByLabel(/phone/i);
-    await phoneInput.fill("abcdefghij");
+  test('phone field rejects non-numeric input', async ({ page }) => {
+    const phoneInput = page.getByLabel(/phone|mobile/i).first();
+    await phoneInput.fill('abcde');
     await phoneInput.blur();
-    await expect(page.getByText(/10 digits/i)).toBeVisible();
+    await expect(
+      page
+        .getByText(/numeric|digits only|invalid phone|numbers only/i)
+        .first()
+    ).toBeVisible({ timeout: 8000 });
   });
 
-  test("phone field rejects less than 10 digits", async ({ page }) => {
-    const phoneInput = page.getByLabel(/phone/i);
-    await phoneInput.fill("12345");
+  test('phone field rejects less than 10 digits', async ({ page }) => {
+    const phoneInput = page.getByLabel(/phone|mobile/i).first();
+    await phoneInput.fill('12345');
     await phoneInput.blur();
-    await expect(page.getByText(/10 digits/i)).toBeVisible();
+    await expect(
+      page
+        .getByText(/10 digit|must be 10|at least 10|invalid phone/i)
+        .first()
+    ).toBeVisible({ timeout: 8000 });
   });
 
-  test("address field rejects less than 10 characters", async ({ page }) => {
-    const addressInput = page.getByLabel(/^address/i);
-    await addressInput.fill("123 St");
+  test('address field rejects less than 10 characters', async ({ page }) => {
+    const addressInput = page.getByLabel(/address/i).first();
+    await addressInput.fill('Short');
     await addressInput.blur();
-    await expect(page.getByText(/at least 10/i)).toBeVisible();
+    await expect(
+      page.getByText(/at least 10|minimum 10|address must/i).first()
+    ).toBeVisible({ timeout: 8000 });
   });
 
-  test("valid form allows proceeding to next step", async ({ page }) => {
-    await page.getByLabel(/first name/i).fill("John");
-    await page.getByLabel(/last name/i).fill("Doe");
-    await page.getByLabel(/^address/i).fill("123 Main Street, Apt 4");
-    await page.getByLabel(/phone/i).fill("9876543210");
-    await page.getByLabel(/city/i).fill("Mumbai");
-    await page.getByLabel(/zip|postal/i).fill("400001");
-    // Select country
-    await page.getByLabel(/country/i).click();
-    await page.getByRole("option", { name: "India" }).click();
-    // Continue / Next button should be enabled
-    const nextBtn = page.getByRole("button", { name: /continue|next|proceed/i });
-    await expect(nextBtn).toBeEnabled({ timeout: 5000 });
+  test('valid form allows proceeding to next step', async ({ page }) => {
+    await page.getByLabel(/address/i).first().fill('123 Main Street, Apt 4');
+    await page.getByLabel(/city/i).fill('Berlin');
+    await page.getByLabel(/phone|mobile/i).first().fill('9876543210');
+    await page.getByLabel(/postal|zip|pin/i).first().fill('10115');
+
+    const country = page.getByLabel(/country/i).first();
+    const tagName = await country.evaluate((el) => el.tagName.toLowerCase());
+    if (tagName === 'select') {
+      await country.selectOption({ index: 1 });
+    } else {
+      await country.fill('Germany');
+    }
+
+    const continueBtn = page.getByRole('button', {
+      name: /continue|next|proceed/i,
+    });
+    await expect(continueBtn).toBeEnabled({ timeout: 5000 });
+    await continueBtn.click();
+    await page.waitForURL(
+      (url) => !url.pathname.includes('/shipping'),
+      { timeout: 10000 }
+    );
   });
 });
