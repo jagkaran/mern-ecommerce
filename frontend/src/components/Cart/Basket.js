@@ -37,14 +37,14 @@ import { useState, useEffect, useRef, useCallback } from "react";
 
 const UNDO_DURATION = 10; // seconds
 
+// Helper: format a number to exactly 2 decimal places
+const fmt = (n) => Number(n).toFixed(2);
+
 function Basket() {
   const { cartItems } = useSelector((state) => state.cart);
   const dispatch = useDispatch();
 
-  // Map of productId -> { item, timeoutId, intervalId, secondsLeft }
   const [pendingRemovals, setPendingRemovals] = useState({});
-
-  // We keep a ref so the interval callbacks always see fresh state
   const pendingRef = useRef(pendingRemovals);
   useEffect(() => {
     pendingRef.current = pendingRemovals;
@@ -60,7 +60,6 @@ function Basket() {
     dispatch(addItemsToCart(id, quantity - 1));
   };
 
-  // Commit the removal for real
   const commitRemoval = useCallback(
     (productId) => {
       dispatch(removeItemsFromCart(productId));
@@ -73,21 +72,17 @@ function Basket() {
     [dispatch]
   );
 
-  // Called when user clicks the X delete button
   const handleDeleteClick = (item) => {
     const productId = item.product;
-
-    // If there's already a pending removal for this item, skip
     if (pendingRef.current[productId]) return;
 
-    // Countdown interval — updates secondsLeft every second
     const intervalId = setInterval(() => {
       setPendingRemovals((prev) => {
         if (!prev[productId]) return prev;
         const newLeft = prev[productId].secondsLeft - 1;
         if (newLeft <= 0) {
           clearInterval(prev[productId].intervalId);
-          return prev; // timeout callback will clean up
+          return prev;
         }
         return {
           ...prev,
@@ -96,7 +91,6 @@ function Basket() {
       });
     }, 1000);
 
-    // Real removal fires after UNDO_DURATION seconds
     const timeoutId = setTimeout(() => {
       clearInterval(intervalId);
       commitRemoval(productId);
@@ -104,16 +98,10 @@ function Basket() {
 
     setPendingRemovals((prev) => ({
       ...prev,
-      [productId]: {
-        item,
-        timeoutId,
-        intervalId,
-        secondsLeft: UNDO_DURATION,
-      },
+      [productId]: { item, timeoutId, intervalId, secondsLeft: UNDO_DURATION },
     }));
   };
 
-  // Called when user clicks Undo
   const handleUndo = (productId) => {
     const entry = pendingRef.current[productId];
     if (!entry) return;
@@ -126,7 +114,6 @@ function Basket() {
     });
   };
 
-  // Called when user dismisses the snackbar without undoing
   const handleSnackbarClose = (productId) => {
     const entry = pendingRef.current[productId];
     if (!entry) return;
@@ -135,7 +122,6 @@ function Basket() {
     commitRemoval(productId);
   };
 
-  // Cleanup all timers on unmount
   useEffect(() => {
     return () => {
       Object.values(pendingRef.current).forEach(({ timeoutId, intervalId }) => {
@@ -145,17 +131,9 @@ function Basket() {
     };
   }, []);
 
-  // Items currently visible = cart items NOT in the pending-removal queue
-  const visibleItems = cartItems.filter(
-    (item) => !pendingRemovals[item.product]
-  );
-
-  // All items including restored pending ones for total calculations
-  const totalItems = cartItems.filter(
-    (item) => !pendingRemovals[item.product]
-  );
-
-  const pendingList = Object.values(pendingRemovals);
+  const visibleItems = cartItems.filter((item) => !pendingRemovals[item.product]);
+  const totalItems   = cartItems.filter((item) => !pendingRemovals[item.product]);
+  const pendingList  = Object.values(pendingRemovals);
 
   return (
     <>
@@ -165,18 +143,16 @@ function Basket() {
         path="/cart"
       />
 
-      {/* ── Undo Snackbars — one per pending removal ── */}
+      {/* Undo Snackbars */}
       {pendingList.map(({ item, secondsLeft }) => (
         <Snackbar
           key={item.product}
           open
           anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-          // Offset multiple snackbars so they don't overlap
           style={{
             bottom:
               16 +
-              pendingList.findIndex((e) => e.item.product === item.product) *
-                100,
+              pendingList.findIndex((e) => e.item.product === item.product) * 100,
           }}
         >
           <SnackbarContent
@@ -190,7 +166,6 @@ function Basket() {
             }}
             message={
               <Box sx={{ px: 2, pt: 1.5, pb: 0.5, width: "100%" }}>
-                {/* Row: text + buttons */}
                 <Box
                   sx={{
                     display: "flex",
@@ -200,56 +175,26 @@ function Basket() {
                     mb: 1,
                   }}
                 >
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "#fff", flexShrink: 1, mr: 1 }}
-                    noWrap
-                  >
-                    Removed&nbsp;
-                    <strong>{item.name}</strong>
+                  <Typography variant="body2" sx={{ color: "#fff", flexShrink: 1, mr: 1 }} noWrap>
+                    Removed&nbsp;<strong>{item.name}</strong>
                   </Typography>
-
                   <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                    {/* Countdown badge */}
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        color: "#aaa",
-                        minWidth: 24,
-                        textAlign: "right",
-                      }}
-                    >
+                    <Typography variant="caption" sx={{ color: "#aaa", minWidth: 24, textAlign: "right" }}>
                       {secondsLeft}s
                     </Typography>
-
-                    {/* Undo */}
                     <Button
                       size="small"
                       startIcon={<UndoIcon fontSize="small" />}
                       onClick={() => handleUndo(item.product)}
-                      sx={{
-                        color: "#90caf9",
-                        fontWeight: 700,
-                        textTransform: "none",
-                        minWidth: 0,
-                        px: 1,
-                      }}
+                      sx={{ color: "#90caf9", fontWeight: 700, textTransform: "none", minWidth: 0, px: 1 }}
                     >
                       Undo
                     </Button>
-
-                    {/* Dismiss — commits immediately */}
-                    <IconButton
-                      size="small"
-                      onClick={() => handleSnackbarClose(item.product)}
-                      sx={{ color: "#aaa" }}
-                    >
+                    <IconButton size="small" onClick={() => handleSnackbarClose(item.product)} sx={{ color: "#aaa" }}>
                       <CloseIcon fontSize="small" />
                     </IconButton>
                   </Box>
                 </Box>
-
-                {/* Progress bar drains over UNDO_DURATION seconds */}
                 <LinearProgress
                   variant="determinate"
                   value={(secondsLeft / UNDO_DURATION) * 100}
@@ -269,7 +214,7 @@ function Basket() {
         </Snackbar>
       ))}
 
-      {/* ── Cart body ── */}
+      {/* Cart body */}
       {visibleItems.length > 0 || pendingList.length > 0 ? (
         totalItems.length > 0 ? (
           <Container maxWidth="lg">
@@ -280,37 +225,22 @@ function Basket() {
                     <Box sx={{ alignItems: "center", display: "flex" }}>
                       <CardHeader title="Shopping Cart" />
                       <Typography variant="body1" gutterBottom sx={{ mt: 1 }}>
-                        (
-                        {totalItems.reduce(
-                          (acc, item) => acc + item.quantity,
-                          0
-                        )}{" "}
-                        items)
+                        ({totalItems.reduce((acc, item) => acc + item.quantity, 0)} items)
                       </Typography>
                     </Box>
                     <Divider />
                     <Box mt={2}>
-                      <Table
-                        sx={{
-                          [`& .${tableCellClasses.root}`]: { border: "none" },
-                        }}
-                      >
+                      <Table sx={{ [`& .${tableCellClasses.root}`]: { border: "none" } }}>
                         <TableHead>
                           <TableRow>
                             <TableCell>
-                              <Typography variant="h6" gutterBottom component="div" mr={2}>
-                                Product Details
-                              </Typography>
+                              <Typography variant="h6" gutterBottom component="div" mr={2}>Product Details</Typography>
                             </TableCell>
                             <TableCell>
-                              <Typography variant="h6" gutterBottom component="div" mr={2}>
-                                Quantity
-                              </Typography>
+                              <Typography variant="h6" gutterBottom component="div" mr={2}>Quantity</Typography>
                             </TableCell>
                             <TableCell>
-                              <Typography variant="h6" gutterBottom component="div" mr={2}>
-                                SubTotal
-                              </Typography>
+                              <Typography variant="h6" gutterBottom component="div" mr={2}>SubTotal</Typography>
                             </TableCell>
                           </TableRow>
                         </TableHead>
@@ -319,17 +249,12 @@ function Basket() {
                             <TableRow key={item.product}>
                               <TableCell>
                                 <Box sx={{ alignItems: "center", display: "flex" }}>
-                                  <Avatar
-                                    src={item.image}
-                                    sx={{ mr: 2, width: 90, height: 120 }}
-                                    variant="square"
-                                  />
+                                  <Avatar src={item.image} sx={{ mr: 2, width: 90, height: 120 }} variant="square" />
                                   <Box>
+                                    <Typography color="textPrimary" variant="body1">{item.name}</Typography>
+                                    {/* Unit price — always 2 dp */}
                                     <Typography color="textPrimary" variant="body1">
-                                      {item.name}
-                                    </Typography>
-                                    <Typography color="textPrimary" variant="body1">
-                                      ${item.price}
+                                      ${fmt(item.price)}
                                     </Typography>
                                   </Box>
                                 </Box>
@@ -350,9 +275,10 @@ function Basket() {
                                   </button>
                                 </Box>
                               </TableCell>
+                              {/* SubTotal — 2 dp */}
                               <TableCell>
                                 <Typography color="textPrimary" variant="body1">
-                                  {`$${item.price * item.quantity}`}
+                                  ${fmt(item.price * item.quantity)}
                                 </Typography>
                               </TableCell>
                               <TableCell>
@@ -366,37 +292,16 @@ function Basket() {
                       </Table>
                     </Box>
 
-                    {/* Gross Total */}
-                    <Box
-                      sx={{
-                        alignItems: "center",
-                        display: "flex",
-                        justifyContent: "flex-end",
-                        p: 1,
-                        m: 2,
-                      }}
-                    >
-                      <Typography color="textPrimary" variant="h6" mr={3}>
-                        Gross Total
-                      </Typography>
+                    {/* Gross Total — 2 dp */}
+                    <Box sx={{ alignItems: "center", display: "flex", justifyContent: "flex-end", p: 1, m: 2 }}>
+                      <Typography color="textPrimary" variant="h6" mr={3}>Gross Total</Typography>
                       <Typography color="textPrimary" variant="body1" ml={3}>
-                        {`$${totalItems.reduce(
-                          (acc, item) => acc + item.quantity * item.price,
-                          0
-                        )}`}
+                        ${fmt(totalItems.reduce((acc, item) => acc + item.quantity * item.price, 0))}
                       </Typography>
                     </Box>
 
                     {/* Checkout */}
-                    <Box
-                      sx={{
-                        alignItems: "center",
-                        display: "flex",
-                        justifyContent: "flex-end",
-                        p: 1,
-                        m: 2,
-                      }}
-                    >
+                    <Box sx={{ alignItems: "center", display: "flex", justifyContent: "flex-end", p: 1, m: 2 }}>
                       <Link to="/signin?redirect=shipping">
                         <Button
                           startIcon={<ArrowForwardIosIcon fontSize="small" />}
@@ -413,8 +318,6 @@ function Basket() {
             </Grid>
           </Container>
         ) : (
-          // All remaining items are pending removal — show empty state but
-          // snackbars are still visible so user can still undo
           <EmptyCart />
         )
       ) : (
