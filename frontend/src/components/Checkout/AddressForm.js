@@ -2,10 +2,21 @@ import React from "react";
 import Grid from "@mui/material/Grid";
 import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
-import { FormControl, InputLabel, MenuItem, Select } from "@mui/material";
+import {
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  FormHelperText,
+} from "@mui/material";
 import { Country, State } from "country-state-city";
 
-function AddressForm({ values, handleChange }) {
+function AddressForm({ values, errors = {}, touched = {}, handleChange }) {
+  const fieldProps = (name) => ({
+    error: Boolean(touched[name] && errors[name]),
+    helperText: (touched[name] && errors[name]) ? errors[name] : " ",
+  });
+
   return (
     <div>
       <Typography variant="h6" gutterBottom>
@@ -21,8 +32,9 @@ function AddressForm({ values, handleChange }) {
             fullWidth
             autoComplete="given-name"
             variant="standard"
+            value={values?.firstName || ""}
             onChange={(e) => handleChange("firstName", e)}
-            defaultValue={values?.firstName}
+            {...fieldProps("firstName")}
           />
         </Grid>
         <Grid item xs={12} sm={6}>
@@ -34,8 +46,9 @@ function AddressForm({ values, handleChange }) {
             fullWidth
             autoComplete="family-name"
             variant="standard"
+            value={values?.lastName || ""}
             onChange={(e) => handleChange("lastName", e)}
-            defaultValue={values?.lastName}
+            {...fieldProps("lastName")}
           />
         </Grid>
         <Grid item xs={12}>
@@ -47,54 +60,60 @@ function AddressForm({ values, handleChange }) {
             fullWidth
             autoComplete="shipping address-line1"
             variant="standard"
+            value={values?.address || ""}
             onChange={(e) => handleChange("address", e)}
-            defaultValue={values?.address}
+            {...fieldProps("address")}
           />
         </Grid>
         <Grid item xs={12}>
           <TextField
+            required
             id="phone"
             name="phone"
             label="Phone Number"
             fullWidth
             variant="standard"
+            value={values?.phone || ""}
             onChange={(e) => handleChange("phone", e)}
-            defaultValue={values?.phone}
-            inputProps={{
-              maxLength: 10,
-            }}
-            required
+            inputProps={{ maxLength: 10, inputMode: "numeric", pattern: "[0-9]*" }}
+            {...fieldProps("phone")}
           />
         </Grid>
-
         <Grid item xs={12} sm={6}>
-          <FormControl variant="standard" sx={{ minWidth: 230 }}>
+          <FormControl
+            variant="standard"
+            sx={{ minWidth: 230 }}
+            required
+            error={Boolean(touched["country"] && errors["country"])}
+          >
             <InputLabel id="country-label">Country</InputLabel>
             <Select
               labelId="country-label"
               id="country"
+              value={values?.country || ""}
               onChange={(e) => handleChange("country", e)}
               label="Country"
-              defaultValue={values?.country}
             >
-              {Country &&
-                Country.getAllCountries().map((country) => (
-                  <MenuItem key={country.isoCode} value={country.isoCode}>
-                    {country.name}
-                  </MenuItem>
-                ))}
+              {Country.getAllCountries().map((country) => (
+                <MenuItem key={country.isoCode} value={country.isoCode}>
+                  {country.name}
+                </MenuItem>
+              ))}
             </Select>
+            {touched["country"] && errors["country"] && (
+              <FormHelperText>{errors["country"]}</FormHelperText>
+            )}
           </FormControl>
         </Grid>
         <Grid item xs={12} sm={6}>
           <FormControl variant="standard" sx={{ minWidth: 230 }}>
-            <InputLabel id="state-label">State/Province/Region</InputLabel>
+            <InputLabel id="state-label">State / Province / Region</InputLabel>
             <Select
               labelId="state-label"
               id="state"
+              value={values?.state || ""}
               onChange={(e) => handleChange("state", e)}
               label="State"
-              defaultValue={values?.state}
             >
               <MenuItem value="">
                 <em>None</em>
@@ -117,11 +136,11 @@ function AddressForm({ values, handleChange }) {
             fullWidth
             autoComplete="shipping address-level2"
             variant="standard"
+            value={values?.city || ""}
             onChange={(e) => handleChange("city", e)}
-            defaultValue={values?.city}
+            {...fieldProps("city")}
           />
         </Grid>
-
         <Grid item xs={12} sm={6}>
           <TextField
             required
@@ -131,8 +150,9 @@ function AddressForm({ values, handleChange }) {
             fullWidth
             autoComplete="shipping postal-code"
             variant="standard"
+            value={values?.zip || ""}
             onChange={(e) => handleChange("zip", e)}
-            defaultValue={values?.zip}
+            {...fieldProps("zip")}
           />
         </Grid>
       </Grid>
