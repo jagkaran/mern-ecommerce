@@ -30,7 +30,20 @@ import { format, parseISO } from "date-fns";
 import SeverityPill from "../../Order/SeverityPill";
 import useAdminPagination, { PER_PAGE_OPTIONS } from "../Hooks/useAdminPagination";
 
-const CELL_SX = { px: 3, py: 1.75 };
+const TABLE_SX = {
+  "& .MuiTableCell-root": {
+    px: 3,
+    py: 1.75,
+    fontSize: "0.875rem",
+    borderBottom: "1px solid",
+    borderColor: "divider",
+  },
+  "& .MuiTableHead-root .MuiTableCell-root": {
+    fontWeight: 600,
+    color: "text.secondary",
+    bgcolor: "background.default",
+  },
+};
 
 function AllUsersList({ users, usersCount, deleteUserHandler }) {
   const [open, setOpen]             = useState(false);
@@ -49,27 +62,25 @@ function AllUsersList({ users, usersCount, deleteUserHandler }) {
 
   return (
     <Card>
-      {/* ── Header ─────────────────────────────────────────────────── */}
       <CardHeader title={`All Users (${usersCount})`} />
       <Divider />
 
-      {/* ── Table ──────────────────────────────────────────────────── */}
       <PerfectScrollbar>
         <Box sx={{ minWidth: 800 }}>
-          <Table>
+          <Table size="medium" sx={TABLE_SX}>
             <TableHead>
               <TableRow>
-                <TableCell sx={CELL_SX}>Name</TableCell>
-                <TableCell sx={CELL_SX}>Email</TableCell>
-                <TableCell sx={CELL_SX}>Role</TableCell>
-                <TableCell sx={CELL_SX}>Registered</TableCell>
-                <TableCell sx={CELL_SX}>Actions</TableCell>
+                <TableCell>Name</TableCell>
+                <TableCell>Email</TableCell>
+                <TableCell>Role</TableCell>
+                <TableCell>Registered</TableCell>
+                <TableCell>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {paginated.map((user) => (
                 <TableRow hover key={user._id}>
-                  <TableCell sx={CELL_SX}>
+                  <TableCell>
                     <Box sx={{ display: "flex", alignItems: "center" }}>
                       <Avatar src={user.profilePic.url} sx={{ height: 40, width: 40 }} />
                       <Typography
@@ -81,22 +92,28 @@ function AllUsersList({ users, usersCount, deleteUserHandler }) {
                       </Typography>
                     </Box>
                   </TableCell>
-                  <TableCell sx={CELL_SX}>{user.email}</TableCell>
-                  <TableCell sx={CELL_SX}>
+                  <TableCell>{user.email}</TableCell>
+                  <TableCell>
                     <SeverityPill color={user.role === "admin" ? "success" : "warning"}>
                       {user.role}
                     </SeverityPill>
                   </TableCell>
-                  <TableCell sx={CELL_SX}>
+                  <TableCell>
                     {format(parseISO(user.createdAt), "dd MMM yyyy")}
                   </TableCell>
-                  <TableCell sx={CELL_SX}>
-                    <Link to={`/admin/user/update/${user._id}`}>
-                      <EditIcon />
-                    </Link>
-                    <Button onClick={() => handleClickOpen(user)}>
-                      <DeleteIcon />
-                    </Button>
+                  <TableCell>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                      <Link to={`/admin/user/update/${user._id}`}>
+                        <EditIcon fontSize="small" />
+                      </Link>
+                      <Button
+                        size="small"
+                        onClick={() => handleClickOpen(user)}
+                        sx={{ minWidth: 0, p: 0.5 }}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </Button>
+                    </Box>
 
                     <Dialog
                       open={open && selectedUser._id === user._id}
@@ -106,12 +123,12 @@ function AllUsersList({ users, usersCount, deleteUserHandler }) {
                       <DialogTitle id="user-delete-title">Delete Confirmation</DialogTitle>
                       <DialogContent>
                         <DialogContentText>
-                          Are you sure you want to delete user "{selectedUser.name}"?
+                          Are you sure you want to delete user &ldquo;{selectedUser.name}&rdquo;?
                         </DialogContentText>
                       </DialogContent>
                       <DialogActions>
                         <Button onClick={handleClose} color="primary">Cancel</Button>
-                        <Button onClick={() => deleteUser(selectedUser._id)} color="secondary">
+                        <Button onClick={() => deleteUser(selectedUser._id)} color="error">
                           Delete
                         </Button>
                       </DialogActions>
@@ -126,7 +143,6 @@ function AllUsersList({ users, usersCount, deleteUserHandler }) {
 
       <Divider />
 
-      {/* ── Pagination footer ──────────────────────────────────────── */}
       <Stack
         direction={{ xs: "column", sm: "row" }}
         alignItems="center"
@@ -135,9 +151,7 @@ function AllUsersList({ users, usersCount, deleteUserHandler }) {
         sx={{ px: 3, py: 1.5 }}
       >
         <Stack direction="row" alignItems="center" spacing={1}>
-          <Typography variant="body2" color="text.secondary">
-            Rows per page:
-          </Typography>
+          <Typography variant="body2" color="text.secondary">Rows per page:</Typography>
           <Select
             size="small"
             value={perPage}

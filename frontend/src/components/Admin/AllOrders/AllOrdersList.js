@@ -30,8 +30,26 @@ import { useState } from "react";
 import useAdminPagination, { PER_PAGE_OPTIONS } from "../Hooks/useAdminPagination";
 import { formatPrice } from "../../../utils/fmt";
 
-// Uniform cell padding used on every column
-const CELL_SX = { px: 3, py: 1.75 };
+/**
+ * TABLE_SX — applied to <Table> itself.
+ * Resets MUI's internal cell padding and re-applies it uniformly
+ * via the `.MuiTableCell-root` override so EVERY cell (head + body)
+ * gets exactly the same spacing regardless of the theme default.
+ */
+const TABLE_SX = {
+  "& .MuiTableCell-root": {
+    px: 3,
+    py: 1.75,
+    fontSize: "0.875rem",
+    borderBottom: "1px solid",
+    borderColor: "divider",
+  },
+  "& .MuiTableHead-root .MuiTableCell-root": {
+    fontWeight: 600,
+    color: "text.secondary",
+    bgcolor: "background.default",
+  },
+};
 
 function AllOrdersList({ orders, deleteOrderHandler }) {
   const [open, setOpen]               = useState(false);
@@ -50,50 +68,54 @@ function AllOrdersList({ orders, deleteOrderHandler }) {
 
   return (
     <Card>
-      {/* ── Header ─────────────────────────────────────────────────── */}
       <CardHeader title={`All Orders (${orders.length})`} />
       <Divider />
 
-      {/* ── Table ──────────────────────────────────────────────────── */}
       <PerfectScrollbar>
         <Box sx={{ minWidth: 800 }}>
-          <Table>
+          <Table size="medium" sx={TABLE_SX}>
             <TableHead>
               <TableRow>
-                <TableCell sx={CELL_SX}>Order ID</TableCell>
-                <TableCell sx={CELL_SX}>Status</TableCell>
-                <TableCell sx={CELL_SX}>Items Qty</TableCell>
-                <TableCell sx={CELL_SX}>Amount</TableCell>
-                <TableCell sx={CELL_SX}>Actions</TableCell>
+                <TableCell>Order ID</TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell>Items Qty</TableCell>
+                <TableCell>Amount</TableCell>
+                <TableCell>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {paginated.map((order) => (
                 <TableRow hover key={order._id}>
-                  <TableCell sx={CELL_SX}>
+                  <TableCell>
                     {createOrderNumber(order._id, order.shippingInfo?.country)}
                   </TableCell>
-                  <TableCell sx={CELL_SX}>
+                  <TableCell>
                     <SeverityPill
                       color={
                         (order.orderStatus === "Delivered" && "success") ||
                         (order.orderStatus === "Shipped"   && "info")    ||
-                        (order.orderStatus === "Processing"&& "warning") ||
+                        (order.orderStatus === "Processing" && "warning") ||
                         "error"
                       }
                     >
                       {order.orderStatus}
                     </SeverityPill>
                   </TableCell>
-                  <TableCell sx={CELL_SX}>{order.orderItems.length}</TableCell>
-                  <TableCell sx={CELL_SX}>${formatPrice(order.totalPrice)}</TableCell>
-                  <TableCell sx={CELL_SX}>
-                    <Link to={`/admin/order/update/${order._id}`}>
-                      <EditIcon />
-                    </Link>
-                    <Button onClick={() => handleClickOpen(order)}>
-                      <DeleteIcon />
-                    </Button>
+                  <TableCell>{order.orderItems.length}</TableCell>
+                  <TableCell>${formatPrice(order.totalPrice)}</TableCell>
+                  <TableCell>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                      <Link to={`/admin/order/update/${order._id}`}>
+                        <EditIcon fontSize="small" />
+                      </Link>
+                      <Button
+                        size="small"
+                        onClick={() => handleClickOpen(order)}
+                        sx={{ minWidth: 0, p: 0.5 }}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </Button>
+                    </Box>
 
                     <Dialog
                       open={open && selectedOrder._id === order._id}
@@ -103,14 +125,14 @@ function AllOrdersList({ orders, deleteOrderHandler }) {
                       <DialogTitle id="order-delete-title">Delete Confirmation</DialogTitle>
                       <DialogContent>
                         <DialogContentText>
-                          Are you sure you want to delete "{
+                          Are you sure you want to delete &ldquo;{
                             createOrderNumber(selectedOrder._id, selectedOrder.shippingInfo?.country)
-                          }" order?
+                          }&rdquo; order?
                         </DialogContentText>
                       </DialogContent>
                       <DialogActions>
                         <Button onClick={handleClose} color="primary">Cancel</Button>
-                        <Button onClick={() => deleteOrder(selectedOrder._id)} color="secondary">
+                        <Button onClick={() => deleteOrder(selectedOrder._id)} color="error">
                           Delete
                         </Button>
                       </DialogActions>
@@ -125,7 +147,7 @@ function AllOrdersList({ orders, deleteOrderHandler }) {
 
       <Divider />
 
-      {/* ── Pagination footer ──────────────────────────────────────── */}
+      {/* Pagination footer */}
       <Stack
         direction={{ xs: "column", sm: "row" }}
         alignItems="center"

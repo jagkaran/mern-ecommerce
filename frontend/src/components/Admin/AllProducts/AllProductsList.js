@@ -33,7 +33,20 @@ import { useAlert } from "react-alert";
 import useAdminPagination, { PER_PAGE_OPTIONS } from "../Hooks/useAdminPagination";
 import { formatPrice } from "../../../utils/fmt";
 
-const CELL_SX = { px: 3, py: 1.75 };
+const TABLE_SX = {
+  "& .MuiTableCell-root": {
+    px: 3,
+    py: 1.75,
+    fontSize: "0.875rem",
+    borderBottom: "1px solid",
+    borderColor: "divider",
+  },
+  "& .MuiTableHead-root .MuiTableCell-root": {
+    fontWeight: 600,
+    color: "text.secondary",
+    bgcolor: "background.default",
+  },
+};
 
 function AllProductsList({ products }) {
   const dispatch = useDispatch();
@@ -72,7 +85,6 @@ function AllProductsList({ products }) {
 
   return (
     <Card>
-      {/* ── Header ─────────────────────────────────────────────────── */}
       <CardHeader
         title={`All Products (${products.length})`}
         action={
@@ -87,44 +99,44 @@ function AllProductsList({ products }) {
       />
       <Divider />
 
-      {/* ── Table ──────────────────────────────────────────────────── */}
       <PerfectScrollbar>
         <Box sx={{ minWidth: 800 }}>
-          <Table>
+          <Table size="medium" sx={TABLE_SX}>
             <TableHead>
               <TableRow>
-                <TableCell sx={CELL_SX}>Product ID</TableCell>
-                <TableCell sx={CELL_SX}>Name</TableCell>
-                <TableCell sx={CELL_SX}>Ratings</TableCell>
-                <TableCell sx={CELL_SX}>Stock</TableCell>
-                <TableCell sx={CELL_SX}>Price</TableCell>
-                <TableCell sx={CELL_SX}>Actions</TableCell>
+                <TableCell>Product ID</TableCell>
+                <TableCell>Name</TableCell>
+                <TableCell>Ratings</TableCell>
+                <TableCell>Stock</TableCell>
+                <TableCell>Price</TableCell>
+                <TableCell>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {paginated.map((product) => (
                 <TableRow hover key={product._id}>
-                  <TableCell sx={{ ...CELL_SX, fontSize: "0.75rem", color: "text.secondary" }}>
+                  <TableCell sx={{ fontSize: "0.75rem", color: "text.secondary" }}>
                     {product._id}
                   </TableCell>
-                  <TableCell sx={CELL_SX}>{product.name}</TableCell>
-                  <TableCell sx={CELL_SX}>
-                    <Rating
-                      name="half-rating-read"
-                      value={product.ratings}
-                      precision={0.5}
-                      readOnly
-                    />
+                  <TableCell>{product.name}</TableCell>
+                  <TableCell>
+                    <Rating value={product.ratings} precision={0.5} readOnly />
                   </TableCell>
-                  <TableCell sx={CELL_SX}>{product.stock}</TableCell>
-                  <TableCell sx={CELL_SX}>${formatPrice(product.price)}</TableCell>
-                  <TableCell sx={CELL_SX}>
-                    <Link to={`/admin/product/update/${product._id}`}>
-                      <EditIcon />
-                    </Link>
-                    <Button onClick={() => handleClickOpen(product)}>
-                      <DeleteIcon />
-                    </Button>
+                  <TableCell>{product.stock}</TableCell>
+                  <TableCell>${formatPrice(product.price)}</TableCell>
+                  <TableCell>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                      <Link to={`/admin/product/update/${product._id}`}>
+                        <EditIcon fontSize="small" />
+                      </Link>
+                      <Button
+                        size="small"
+                        onClick={() => handleClickOpen(product)}
+                        sx={{ minWidth: 0, p: 0.5 }}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </Button>
+                    </Box>
 
                     <Dialog
                       open={open && selectedProduct._id === product._id}
@@ -134,15 +146,12 @@ function AllProductsList({ products }) {
                       <DialogTitle id="prod-delete-title">Delete Confirmation</DialogTitle>
                       <DialogContent>
                         <DialogContentText>
-                          Are you sure you want to delete "{selectedProduct.name}"?
+                          Are you sure you want to delete &ldquo;{selectedProduct.name}&rdquo;?
                         </DialogContentText>
                       </DialogContent>
                       <DialogActions>
                         <Button onClick={handleClose} color="primary">Cancel</Button>
-                        <Button
-                          onClick={() => deleteProductHandler(selectedProduct._id)}
-                          color="secondary"
-                        >
+                        <Button onClick={() => deleteProductHandler(selectedProduct._id)} color="error">
                           Delete
                         </Button>
                       </DialogActions>
@@ -157,7 +166,6 @@ function AllProductsList({ products }) {
 
       <Divider />
 
-      {/* ── Pagination footer ──────────────────────────────────────── */}
       <Stack
         direction={{ xs: "column", sm: "row" }}
         alignItems="center"
@@ -166,9 +174,7 @@ function AllProductsList({ products }) {
         sx={{ px: 3, py: 1.5 }}
       >
         <Stack direction="row" alignItems="center" spacing={1}>
-          <Typography variant="body2" color="text.secondary">
-            Rows per page:
-          </Typography>
+          <Typography variant="body2" color="text.secondary">Rows per page:</Typography>
           <Select
             size="small"
             value={perPage}
