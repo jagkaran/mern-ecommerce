@@ -14,7 +14,6 @@ exports.createProduct = catchAsyncErrors(async (req, res, _next) => {
     images = req.body.images || [];
   }
 
-  // FIX: parallel Cloudinary uploads
   const imagesLinks = await Promise.all(
     images.map((img) =>
       cloudinary.uploader
@@ -30,6 +29,22 @@ exports.createProduct = catchAsyncErrors(async (req, res, _next) => {
   const product = await Product.create(req.body);
   logger.info(`Product created: ${product._id} by user ${req.user.id}`);
   res.status(201).json({ success: true, product });
+});
+
+// ─── Get Active Categories (distinct categories that have at least 1 product) ─
+exports.getActiveCategories = catchAsyncErrors(async (req, res) => {
+  // distinct returns every unique category string present in the collection.
+  // Because we query the live collection this updates automatically whenever
+  // an admin adds or removes a product.
+  const categories = await Product.distinct("category");
+
+  // Filter out any null / empty strings that may exist in dirty data,
+  // then sort alphabetically for a consistent dropdown order.
+  const clean = categories
+    .filter((c) => c && c.trim().length > 0)
+    .sort((a, b) => a.localeCompare(b));
+
+  res.status(200).json({ success: true, categories: clean });
 });
 
 // ─── Get All Products (search / filter / pagination) ─────────────────────────

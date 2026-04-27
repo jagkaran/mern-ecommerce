@@ -9,6 +9,7 @@ import {
 } from "./reducers/Order";
 import {
   allProductReviewsReducer,
+  categoriesReducer,
   createReviewReducer,
   newProductReducer,
   productDetailsReducer,
@@ -28,6 +29,7 @@ const store = configureStore({
   reducer: {
     product: productReducer,
     productDetails: productDetailsReducer,
+    categories: categoriesReducer,
     user: userReducer,
     profile: profileReducer,
     forgotPassword: forgotPasswordReducer,

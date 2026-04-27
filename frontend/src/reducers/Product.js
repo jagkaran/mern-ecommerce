@@ -35,6 +35,25 @@ export const productReducer = createReducer(initialState, {
   },
 });
 
+// Reducer for the dynamic active-categories list
+export const categoriesReducer = createReducer(
+  { categories: [], loading: false, error: null },
+  {
+    CategoriesRequest: (state) => {
+      state.loading = true;
+      state.error   = null;
+    },
+    CategoriesSuccess: (state, action) => {
+      state.loading    = false;
+      state.categories = action.payload;
+    },
+    CategoriesFailure: (state, action) => {
+      state.loading = false;
+      state.error   = action.payload;
+    },
+  }
+);
+
 export const productModifyReducer = createReducer(
   {},
   {

@@ -36,6 +36,22 @@ export const getProduct =
     }
   };
 
+// Fetch only the categories that have at least one product in the DB.
+// This is a lightweight distinct query on the backend and is completely
+// dynamic — no hardcoded list anywhere in the frontend.
+export const getActiveCategories = () => async (dispatch) => {
+  try {
+    dispatch({ type: "CategoriesRequest" });
+    const { data } = await axios.get("/api/v1/products/categories");
+    dispatch({ type: "CategoriesSuccess", payload: data.categories });
+  } catch (error) {
+    dispatch({
+      type: "CategoriesFailure",
+      payload: error?.response?.data?.message || "Failed to load categories",
+    });
+  }
+};
+
 export const getProductDetails = (id) => async (dispatch) => {
   try {
     dispatch({

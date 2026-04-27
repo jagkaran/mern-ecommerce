@@ -9,12 +9,18 @@ const {
   getProductReviews,
   deleteProductReview,
   getAdminProducts,
+  getActiveCategories,
 } = require("../controllers/productController");
 const { isAuthenticatedUser, authorizeRoles } = require("../middleware/auth");
 
 const router = express.Router();
 
+// Public routes
 router.route("/products").get(getAllProducts);
+
+// IMPORTANT: /products/categories must be declared BEFORE /product/:id
+// otherwise Express would try to match "categories" as an :id param.
+router.route("/products/categories").get(getActiveCategories);
 
 router
   .route("/admin/products")
@@ -23,8 +29,6 @@ router
 router
   .route("/admin/product/new")
   .post(isAuthenticatedUser, authorizeRoles("admin"), createProduct);
-
-// router.route("/product/:id").put(updateProduct);
 
 router
   .route("/admin/product/:id")
