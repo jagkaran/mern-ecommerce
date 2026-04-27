@@ -12,7 +12,6 @@ import {
 } from "../../../actions/productAction";
 import { useParams } from "react-router-dom";
 import { CircularProgress } from "@mui/material";
-
 import Reviewcard from "../../Reviewcard";
 import { useAlert } from "react-alert";
 import Copyright from "../../Copyright";
@@ -38,16 +37,12 @@ function ProductDetailsV2() {
 
   const increaseQty = () => {
     if (product.stock <= quantity) return;
-
-    const qty = quantity + 1;
-    setQuantity(qty);
+    setQuantity(quantity + 1);
   };
 
   const decreaseQty = () => {
     if (1 >= quantity) return;
-
-    const qty = quantity - 1;
-    setQuantity(qty);
+    setQuantity(quantity - 1);
   };
 
   const addToCartHandler = (quantity) => {
@@ -55,41 +50,41 @@ function ProductDetailsV2() {
     alert.success(`${product.name} Added to Cart Successfully`);
   };
 
-  const handleClickOpen = () => {
-    setOpen(true);
-  };
-
-  const handleClose = () => {
-    setOpen(false);
-  };
+  const handleClickOpen = () => setOpen(true);
+  const handleClose = () => setOpen(false);
 
   const reviewSubmitHandler = () => {
     const myForm = new FormData();
-
     myForm.set("rating", rating);
     myForm.set("comment", comment);
     myForm.set("productId", id);
-
     dispatch(newReview(myForm));
-
     setOpen(false);
   };
 
+  // Initial load + error handling
   useEffect(() => {
     if (error) {
-      return alert.error(error);
+      alert.error(error);
+      dispatch(clearErrors());
+      return;
     }
     if (reviewError) {
       alert.error(reviewError);
       dispatch(clearErrors());
+      return;
     }
+    dispatch(getProductDetails(id));
+  }, [dispatch, id, error, reviewError]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Re-fetch product after successful review so new createdAt appears immediately
+  useEffect(() => {
     if (success) {
       alert.success("Review Submitted Successfully");
       dispatch({ type: "NewReviewReset" });
+      dispatch(getProductDetails(id));
     }
-    dispatch(getProductDetails(id));
-  }, [dispatch, id, error, alert, reviewError, success]);
+  }, [success]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <>
@@ -136,6 +131,7 @@ function ProductDetailsV2() {
               />
             </Grid>
           </Grid>
+
           <Grid
             container
             spacing={2}
@@ -146,13 +142,14 @@ function ProductDetailsV2() {
             </Typography>
             {product.reviews && product.reviews.length > 0 ? (
               product.reviews.map(
-                ({ name, rating, comment, _id, profileImg }) => (
+                ({ name, rating, comment, _id, profileImg, createdAt }) => (
                   <Reviewcard
                     key={_id}
                     rating={rating}
                     comment={comment}
                     name={name}
                     profileImg={profileImg}
+                    createdAt={createdAt}
                   />
                 )
               )
@@ -160,12 +157,7 @@ function ProductDetailsV2() {
               <Grid
                 container
                 spacing={2}
-                sx={{
-                  maxWidth: 800,
-                  m: "0 auto",
-                  mt: 6,
-                  justifyContent: "center",
-                }}
+                sx={{ maxWidth: 800, m: "0 auto", mt: 6, justifyContent: "center" }}
               >
                 <Typography mt={2} variant="subtitle1">
                   No Reviews Yet
