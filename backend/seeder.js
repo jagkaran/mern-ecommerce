@@ -9,12 +9,6 @@
  *       - ratings + numOfReviews computed from reviews
  *   • 20 orders with correct field names matching orderModel exactly
  *
- * Image strategy
- * ──────────────
- * All source URLs are verified Unsplash direct-download links
- * (stable, no 404s). Each is uploaded to YOUR Cloudinary so the app
- * stores its own public_id + url and full image management works.
- *
  * Usage  (run from inside /backend)
  * ──────────────────────────────────
  *   node seeder.js            ← wipe + seed
@@ -32,7 +26,7 @@ require("dotenv").config({ path: path.join(__dirname, "config", "config.env") })
 const mongoose   = require("mongoose");
 const cloudinary = require("cloudinary").v2;
 
-// ── Models (paths relative to backend/) ──────────────────────────────────────
+// ── Models ───────────────────────────────────────────────────────────────────
 const User    = require("./models/userModel");
 const Product = require("./models/productModel");
 const Order   = require("./models/orderModel");
@@ -51,11 +45,6 @@ const pick  = (arr)      => arr[Math.floor(Math.random() * arr.length)];
 const rnd   = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 const price = (n)        => parseFloat(n.toFixed(2));
 
-/**
- * Upload a remote image URL to Cloudinary.
- * Returns { public_id, url } matching productModel.images[] schema.
- * On any failure falls back to a placeholder so seeding never aborts.
- */
 async function uploadToCloudinary(remoteUrl, folder = "products") {
   try {
     const r = await cloudinary.uploader.upload(remoteUrl, {
@@ -65,7 +54,6 @@ async function uploadToCloudinary(remoteUrl, folder = "products") {
     return { public_id: r.public_id, url: r.secure_url };
   } catch (err) {
     console.warn(`\n  ⚠  Upload failed for ${remoteUrl.slice(-50)}: ${err.message}`);
-    // Picsum fallback — always returns a real image
     const seed = encodeURIComponent(remoteUrl.slice(-20));
     const fb = await cloudinary.uploader.upload(
       `https://picsum.photos/seed/${seed}/800/800`,
@@ -76,13 +64,41 @@ async function uploadToCloudinary(remoteUrl, folder = "products") {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+//  DROP STALE INDEXES
+//
+//  A previous schema version added a unique index on `slug`. That field no
+//  longer exists in productModel.js, but Atlas still holds the index.
+//  Every insert writes slug:null and hits E11000 on the second document.
+//  We drop the index AFTER wiping the collection, before inserting new data.
+// ─────────────────────────────────────────────────────────────────────────────
+async function dropStaleIndexes() {
+  const col = mongoose.connection.db.collection("products");
+
+  let existingIndexes = [];
+  try {
+    existingIndexes = await col.indexes();
+  } catch (_) {
+    // Collection doesn't exist yet on a fresh DB — nothing to drop
+    return;
+  }
+
+  const staleName = "slug_1";
+  const found     = existingIndexes.some((idx) => idx.name === staleName);
+
+  if (found) {
+    try {
+      await col.dropIndex(staleName);
+      console.log(`   ✔ Dropped stale index: ${staleName}`);
+    } catch (err) {
+      if (err.codeName !== "IndexNotFound") throw err;
+    }
+  } else {
+    console.log(`   ℹ  Stale index not present (nothing to drop): ${staleName}`);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 //  PRODUCT DATA
-//
-//  imageUrls: verified Unsplash direct photo links (all tested 200 OK).
-//  Format: https://images.unsplash.com/photo-{id}?w=800&q=80
-//
-//  Categories match the frontend UpdateProduct.js <select> exactly:
-//  laptop | footwear | bottom | clothing | tops | shoes | camera | smartphones | accessories
 // ─────────────────────────────────────────────────────────────────────────────
 const PRODUCTS_DATA = [
 
@@ -570,7 +586,6 @@ const REVIEW_COMMENTS = [
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  UK SHIPPING ADDRESSES
-//  Fields match orderModel exactly: address, city, state, country, zip (Number), phone (Number)
 // ─────────────────────────────────────────────────────────────────────────────
 const UK_ADDRESSES = [
   { address: "12 Oxford Street",    city: "London",     state: "England",   zip: 10001, phone: 7911123456 },
@@ -584,13 +599,11 @@ const UK_ADDRESSES = [
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  DATABASE CONNECTION
+//  DATABASE CONNECTION  (no deprecated options — removed useNewUrlParser &
+//  useUnifiedTopology which have had no effect since MongoDB Driver v4)
 // ─────────────────────────────────────────────────────────────────────────────
 async function connectDB() {
-  await mongoose.connect(process.env.DB_URI, {
-    useNewUrlParser:    true,
-    useUnifiedTopology: true,
-  });
+  await mongoose.connect(process.env.DB_URI);
   console.log("✔  MongoDB connected:", mongoose.connection.host);
 }
 
@@ -614,13 +627,12 @@ async function destroyData() {
 async function seedData() {
 
   // ── 1. USERS ──────────────────────────────────────────────────────────────
-  // userModel field: profilePic (NOT avatar)
   console.log("\n👤 Creating users…");
 
   const adminUser = await User.create({
     name:     "Admin User",
     email:    "admin@clickit.com",
-    password: "Admin@1234",        // hashed automatically by userModel pre-save hook
+    password: "Admin@1234",
     role:     "admin",
     profilePic: {
       public_id: "avatars/admin_seed",
@@ -644,10 +656,6 @@ async function seedData() {
   const users = [adminUser, normalUser];
 
   // ── 2. PRODUCTS ───────────────────────────────────────────────────────────
-  // productModel fields:
-  //   images[]: { public_id, url }         ← from Cloudinary upload
-  //   reviews[]: { user, profileImg, name, rating, comment }
-  //   createdBy: ObjectId                  ← NOT 'user'
   console.log(`\n📦 Creating ${PRODUCTS_DATA.length} products (uploading images to Cloudinary)…`);
 
   const createdProducts = [];
@@ -656,14 +664,12 @@ async function seedData() {
     const data = PRODUCTS_DATA[i];
     process.stdout.write(`  [${String(i + 1).padStart(2, "0")}/${PRODUCTS_DATA.length}] ${data.name}…`);
 
-    // Upload each image to Cloudinary — returns { public_id, url }
     const images = [];
     for (const url of data.imageUrls) {
       const img = await uploadToCloudinary(url, "products");
       images.push(img);
     }
 
-    // Build 3–5 reviews from seeded users
     const reviewCount = rnd(3, 5);
     const reviews = [];
     for (let r = 0; r < reviewCount; r++) {
@@ -671,7 +677,7 @@ async function seedData() {
       const rating   = rnd(3, 5);
       reviews.push({
         user:       reviewer._id,
-        profileImg: reviewer.profilePic.url,  // productModel field is 'profileImg'
+        profileImg: reviewer.profilePic.url,
         name:       reviewer.name,
         rating,
         comment:    pick(REVIEW_COMMENTS),
@@ -690,7 +696,7 @@ async function seedData() {
       reviews,
       ratings:      parseFloat(avgRating.toFixed(1)),
       numOfReviews: reviews.length,
-      createdBy:    adminUser._id,   // productModel field is 'createdBy'
+      createdBy:    adminUser._id,
     });
 
     createdProducts.push(product);
@@ -698,12 +704,6 @@ async function seedData() {
   }
 
   // ── 3. ORDERS ─────────────────────────────────────────────────────────────
-  // orderModel fields (exact):
-  //   shippingInfo: { address, city, state, country, zip (Number), phone (Number) }
-  //   orderItems[]: { name, price, quantity, image, product (ObjectId) }
-  //   itemPrice  (NOT itemsPrice)
-  //   taxPrice, shippingPrice, totalPrice
-  //   paymentInfo: { id, status }
   console.log("\n🛒 Creating 20 orders…");
 
   const ORDER_STATUSES = ["Processing", "Shipped", "Delivered", "Delivered", "Delivered"];
@@ -713,14 +713,13 @@ async function seedData() {
     const addr       = pick(UK_ADDRESSES);
     const numItems   = rnd(1, 4);
 
-    // Random product subset
     const shuffled   = [...createdProducts].sort(() => 0.5 - Math.random());
     const orderItems = shuffled.slice(0, numItems).map((p) => ({
       name:     p.name,
       price:    p.price,
       quantity: rnd(1, 3),
       image:    p.images[0].url,
-      product:  p._id,           // ObjectId ref — required for My Orders page
+      product:  p._id,
     }));
 
     const rawItemPrice  = orderItems.reduce((s, item) => s + item.price * item.quantity, 0);
@@ -739,8 +738,8 @@ async function seedData() {
         city:    addr.city,
         state:   addr.state,
         country: "United Kingdom",
-        zip:     addr.zip,      // Number — matches orderModel schema
-        phone:   addr.phone,    // Number — matches orderModel schema
+        zip:     addr.zip,
+        phone:   addr.phone,
       },
       orderItems,
       user:        orderUser._id,
@@ -749,7 +748,7 @@ async function seedData() {
         status: "succeeded",
       },
       paidAt,
-      itemPrice,       // orderModel field is 'itemPrice' (NOT itemsPrice)
+      itemPrice,
       taxPrice,
       shippingPrice,
       totalPrice,
@@ -780,8 +779,9 @@ async function seedData() {
 (async () => {
   try {
     await connectDB();
-    await destroyData();                                      // always wipe first
-    if (process.argv[2] !== "--destroy") await seedData();   // then seed unless --destroy
+    await destroyData();              // wipe collections
+    await dropStaleIndexes();         // ← drop slug_1 AFTER wipe, BEFORE insert
+    if (process.argv[2] !== "--destroy") await seedData();
     process.exit(0);
   } catch (err) {
     console.error("\n❌ Seeder failed:", err.message);
