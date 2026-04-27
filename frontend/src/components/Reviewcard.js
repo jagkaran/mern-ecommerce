@@ -1,27 +1,34 @@
 import { Rating } from "@mui/material";
 import React from "react";
-import { format, parseISO, isValid } from "date-fns";
 
 /**
- * Formats a review date as "27 Apr 2026".
- * Handles ISO strings, Date objects, and missing/invalid values gracefully.
+ * Returns a human-readable date string like "27 Apr 2026".
+ * Works with ISO strings, JS Date objects, and MongoDB date values.
+ * Returns null (renders nothing) if the value is absent or unparseable.
  */
 function formatReviewDate(createdAt) {
   if (!createdAt) return null;
-  try {
-    // Axios deserialises dates as ISO strings; new Date() handles both
-    const d = new Date(createdAt);
-    return isValid(d) ? format(d, "dd MMM yyyy") : null;
-  } catch {
-    return null;
-  }
+  const d = new Date(createdAt);
+  if (isNaN(d.getTime())) return null;
+  return d.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
 }
 
 function Reviewcard({ name, rating, comment, profileImg, createdAt }) {
   const dateLabel = formatReviewDate(createdAt);
 
   return (
-    <div className="bg-white dark:bg-gray-800 w-full rounded-lg p-4 mb-6 shadow sm:inline-block">
+    <div className="relative bg-white dark:bg-gray-800 w-full rounded-lg p-4 mb-6 shadow sm:inline-block">
+      {/* Date — top-right corner, always rendered if present */}
+      {dateLabel && (
+        <span className="absolute top-3 right-4 text-xs text-gray-400 dark:text-gray-500 select-none">
+          {dateLabel}
+        </span>
+      )}
+
       <div className="flex items-start text-left">
         {/* Avatar */}
         <div className="flex-shrink-0">
@@ -49,16 +56,9 @@ function Reviewcard({ name, rating, comment, profileImg, createdAt }) {
 
         {/* Content */}
         <div className="ml-6">
-          <div className="flex items-baseline gap-3">
-            <span className="text-gray-600 capitalize dark:text-gray-200 font-bold">
-              {name}
-            </span>
-            {dateLabel && (
-              <span className="text-xs text-gray-400 dark:text-gray-500">
-                {dateLabel}
-              </span>
-            )}
-          </div>
+          <span className="text-gray-600 capitalize dark:text-gray-200 font-bold">
+            {name}
+          </span>
           <div className="flex items-center mt-1">
             <Rating
               name="half-rating-read"
