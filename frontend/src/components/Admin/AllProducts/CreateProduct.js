@@ -2,34 +2,46 @@ import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { useAlert } from "react-alert";
+import { useTheme } from "@mui/material/styles";
+import Box from "@mui/material/Box";
+import CssBaseline from "@mui/material/CssBaseline";
+import DashboardAppBar from "../Sidebar/DashboardAppBar";
+import DashboardDrawer from "../Sidebar/DashboardDrawer";
 import {
-  Box,
+  Avatar,
   Button,
+  CircularProgress,
+  Container,
   FormControl,
   FormHelperText,
+  Grid,
   InputLabel,
   MenuItem,
   Select,
   TextField,
   Typography,
-  CircularProgress,
 } from "@mui/material";
+import CategoryIcon from "@mui/icons-material/Category";
 import { createProduct, clearErrors } from "../../../actions/productAction";
-import { NEW_PRODUCT_RESET } from "../../../constants/productConstants";
-import AdminSidebar from "../AdminSidebar";
 import { useProductForm, CATEGORIES } from "../../../hooks/useProductForm";
+import Copyright from "../../Copyright";
+import Seo from "../../Seo";
 
 function CreateProduct() {
+  const theme = useTheme();
+  const [open, setOpen] = React.useState(false);
+  const handleDrawerOpen = () => setOpen(true);
+  const handleDrawerClose = () => setOpen(false);
+
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const alert = useAlert();
 
   const { loading, error, success } = useSelector((state) => state.newProduct);
 
-  const { values, errors, touched, handleChange, handleBlur, validateAll, isValid, fieldProps, setValues } =
+  const { values, errors, touched, handleChange, handleBlur, validateAll, isValid, fieldProps } =
     useProductForm();
 
-  // images state remains local — not part of form validation hook
   const [images, setImages] = React.useState([]);
   const [imagesPreview, setImagesPreview] = React.useState([]);
 
@@ -41,7 +53,7 @@ function CreateProduct() {
     if (success) {
       alert.success("Product created successfully");
       navigate("/admin/products");
-      dispatch({ type: NEW_PRODUCT_RESET });
+      dispatch({ type: "NewProductReset" });
     }
   }, [error, success, alert, navigate, dispatch]);
 
@@ -64,153 +76,195 @@ function CreateProduct() {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!validateAll()) return;
-    const formData = new FormData();
-    formData.set("name", values.name);
-    formData.set("price", values.price);
-    formData.set("description", values.description);
-    formData.set("category", values.category);
-    formData.set("stock", values.stock);
-    images.forEach((img) => formData.append("images", img));
-    dispatch(createProduct(formData));
+    const myForm = new FormData();
+    myForm.set("name", values.name);
+    myForm.set("price", values.price);
+    myForm.set("description", values.description);
+    myForm.set("category", values.category);
+    myForm.set("stock", values.stock);
+    images.forEach((img) => myForm.append("images", img));
+    dispatch(createProduct(myForm));
   };
 
   return (
-    <Box sx={{ display: "flex" }}>
-      <AdminSidebar />
-      <Box
-        component="main"
-        sx={{ flexGrow: 1, p: 3, maxWidth: 600 }}
-      >
-        <Typography variant="h5" gutterBottom fontWeight={600}>
-          Create Product
-        </Typography>
-
-        <Box component="form" noValidate onSubmit={handleSubmit} sx={{ mt: 2 }}>
-          {/* Product Name */}
-          <TextField
-            required
-            fullWidth
-            id="name"
-            name="name"
-            label="Product Name"
-            value={values.name}
-            onChange={handleChange}
-            sx={{ mb: 2 }}
-            {...fieldProps("name")}
-          />
-
-          {/* Price */}
-          <TextField
-            required
-            fullWidth
-            id="price"
-            name="price"
-            label="Price"
-            type="number"
-            value={values.price}
-            onChange={handleChange}
-            inputProps={{ min: 0, step: "0.01" }}
-            sx={{ mb: 2 }}
-            {...fieldProps("price")}
-          />
-
-          {/* Description */}
-          <TextField
-            required
-            fullWidth
-            id="description"
-            name="description"
-            label="Description"
-            multiline
-            rows={4}
-            value={values.description}
-            onChange={handleChange}
-            sx={{ mb: 2 }}
-            {...fieldProps("description")}
-          />
-
-          {/* Category */}
-          <FormControl
-            fullWidth
-            required
-            sx={{ mb: 2 }}
-            error={Boolean(touched["category"] && errors["category"])}
-          >
-            <InputLabel id="category-label">Category</InputLabel>
-            <Select
-              labelId="category-label"
-              id="category"
-              name="category"
-              value={values.category}
-              label="Category"
-              onChange={handleChange}
-              onBlur={handleBlur}
+    <>
+      <Box sx={{ display: "flex" }}>
+        <Seo
+          title="Create Product - Click.it Dashboard - Admin access only"
+          description="Dashboard panel to create a new product on Click.it store"
+          path="/admin/product/new"
+        />
+        <CssBaseline />
+        <DashboardAppBar open={open} handleDrawerOpen={handleDrawerOpen} />
+        <DashboardDrawer
+          open={open}
+          handleDrawerClose={handleDrawerClose}
+          theme={theme}
+        />
+        <Box component="main" sx={{ flexGrow: 1, py: 8 }}>
+          <Container maxWidth="sm" sx={{ mt: 2, mb: 2 }}>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+              }}
             >
-              {CATEGORIES.map((cat) => (
-                <MenuItem key={cat} value={cat}>
-                  {cat}
-                </MenuItem>
-              ))}
-            </Select>
-            {touched["category"] && errors["category"] && (
-              <FormHelperText>{errors["category"]}</FormHelperText>
-            )}
-          </FormControl>
+              <Avatar sx={{ m: 1, bgcolor: "secondary.main" }}>
+                <CategoryIcon />
+              </Avatar>
+              <Typography component="h1" variant="h5">
+                Create Product
+              </Typography>
 
-          {/* Stock */}
-          <TextField
-            required
-            fullWidth
-            id="stock"
-            name="stock"
-            label="Stock"
-            type="number"
-            value={values.stock}
-            onChange={handleChange}
-            inputProps={{ min: 0, step: 1 }}
-            sx={{ mb: 2 }}
-            {...fieldProps("stock")}
-          />
+              <Box
+                component="form"
+                noValidate
+                onSubmit={handleSubmit}
+                sx={{ mt: 3, width: "100%" }}
+              >
+                <Grid container spacing={2}>
+                  {/* Product Name */}
+                  <Grid item xs={12}>
+                    <TextField
+                      required
+                      fullWidth
+                      id="name"
+                      name="name"
+                      label="Product Name"
+                      autoFocus
+                      value={values.name}
+                      onChange={handleChange}
+                      {...fieldProps("name")}
+                    />
+                  </Grid>
 
-          {/* Images */}
-          <Box sx={{ mb: 2 }}>
-            <Button variant="outlined" component="label">
-              Upload Images
-              <input
-                type="file"
-                name="images"
-                accept="image/*"
-                multiple
-                onChange={handleImageChange}
-                hidden
-              />
-            </Button>
-            <Box sx={{ display: "flex", gap: 1, mt: 1, flexWrap: "wrap" }}>
-              {imagesPreview.map((img, idx) => (
-                <img
-                  key={idx}
-                  src={img}
-                  alt={`preview-${idx}`}
-                  width={80}
-                  height={80}
-                  style={{ objectFit: "cover", borderRadius: 4 }}
-                />
-              ))}
+                  {/* Price */}
+                  <Grid item xs={12}>
+                    <TextField
+                      required
+                      fullWidth
+                      id="price"
+                      name="price"
+                      label="Price"
+                      type="number"
+                      value={values.price}
+                      onChange={handleChange}
+                      inputProps={{ min: 0, step: "0.01" }}
+                      {...fieldProps("price")}
+                    />
+                  </Grid>
+
+                  {/* Description */}
+                  <Grid item xs={12}>
+                    <TextField
+                      required
+                      fullWidth
+                      id="description"
+                      name="description"
+                      label="Description"
+                      multiline
+                      rows={4}
+                      value={values.description}
+                      onChange={handleChange}
+                      {...fieldProps("description")}
+                    />
+                  </Grid>
+
+                  {/* Category */}
+                  <Grid item xs={12}>
+                    <FormControl
+                      fullWidth
+                      required
+                      error={Boolean(touched["category"] && errors["category"])}
+                    >
+                      <InputLabel id="category-label">Category</InputLabel>
+                      <Select
+                        labelId="category-label"
+                        id="category"
+                        name="category"
+                        value={values.category}
+                        label="Category"
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                      >
+                        {CATEGORIES.map((cat) => (
+                          <MenuItem key={cat} value={cat}>
+                            {cat}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                      {touched["category"] && errors["category"] && (
+                        <FormHelperText>{errors["category"]}</FormHelperText>
+                      )}
+                    </FormControl>
+                  </Grid>
+
+                  {/* Stock */}
+                  <Grid item xs={12}>
+                    <TextField
+                      required
+                      fullWidth
+                      id="stock"
+                      name="stock"
+                      label="Stock"
+                      type="number"
+                      value={values.stock}
+                      onChange={handleChange}
+                      inputProps={{ min: 0, step: 1 }}
+                      {...fieldProps("stock")}
+                    />
+                  </Grid>
+
+                  {/* Image upload */}
+                  <Grid item xs={12} sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 1 }}>
+                    <Button
+                      variant="contained"
+                      component="label"
+                      sx={{ bgcolor: "secondary.main" }}
+                    >
+                      Upload Images
+                      <input
+                        type="file"
+                        name="images"
+                        accept="image/*"
+                        multiple
+                        onChange={handleImageChange}
+                        hidden
+                      />
+                    </Button>
+                    {imagesPreview.map((img, idx) => (
+                      <Avatar
+                        key={idx}
+                        src={img}
+                        sx={{ width: 60, height: 60 }}
+                        variant="square"
+                        alt={`preview-${idx}`}
+                      />
+                    ))}
+                  </Grid>
+                </Grid>
+
+                <Button
+                  type="submit"
+                  fullWidth
+                  variant="contained"
+                  disabled={!isValid() || loading}
+                  sx={{ mt: 3, mb: 2, bgcolor: "secondary.main" }}
+                >
+                  {loading ? (
+                    <CircularProgress size={24} color="inherit" />
+                  ) : (
+                    "Create Product"
+                  )}
+                </Button>
+              </Box>
             </Box>
-          </Box>
-
-          <Button
-            type="submit"
-            fullWidth
-            variant="contained"
-            disabled={!isValid() || loading}
-            sx={{ mt: 1, py: 1.5, bgcolor: "secondary.main" }}
-          >
-            {loading ? <CircularProgress size={24} color="inherit" /> : "Create Product"}
-          </Button>
+          </Container>
         </Box>
       </Box>
-    </Box>
+      <Copyright />
+    </>
   );
 }
 
