@@ -27,7 +27,7 @@ import { useAlert } from "react-alert";
 import { logoutUser } from "../../actions/userAction";
 import MenuIcon from "@mui/icons-material/Menu";
 import CategoryIcon from "@mui/icons-material/Category";
-import InfoIcon from "@mui/icons-info";
+import InfoIcon from "@mui/icons-material/Info";
 
 function Header() {
   const history = useNavigate();
@@ -105,9 +105,9 @@ function Header() {
   );
 
   const menuItems = [
-    { id: 2, icon: <PersonIcon fontSize="small" />,        name: "Profile",   func: account },
-    { id: 3, icon: <ShoppingBasketIcon fontSize="small" />, name: "Orders",    func: orders  },
-    { id: 4, icon: <Logout fontSize="small" />,             name: "Logout",    func: logout  },
+    { id: 2, icon: <PersonIcon fontSize="small" />,         name: "Profile",   func: account },
+    { id: 3, icon: <ShoppingBasketIcon fontSize="small" />,  name: "Orders",    func: orders  },
+    { id: 4, icon: <Logout fontSize="small" />,              name: "Logout",    func: logout  },
   ];
 
   if (user?.role === "admin") {
@@ -129,10 +129,6 @@ function Header() {
   }
 
   return (
-    // fixed + left-0 right-0 = truly pinned to top of viewport regardless of any
-    // parent overflow/transform. z-50 keeps it above MUI modals (z-index 1300 is
-    // MUI's modal, but drawers are z-1200; z-50 = 50 in Tailwind = 50 which is
-    // lower, so we inline a higher value via style prop).
     <header
       style={{ zIndex: 1100 }}
       className={[
@@ -144,12 +140,10 @@ function Header() {
       ].join(" ")}
     >
       <div className="container mx-auto px-6 flex items-center justify-between">
-        {/* Logo */}
         <div className="uppercase text-gray-800 font-black text-3xl">
           <Link to="/">Click.it</Link>
         </div>
 
-        {/* Desktop nav */}
         <div className="flex items-center">
           <nav className="font-sen text-gray-800 uppercase text-lg lg:flex items-center hidden">
             <a href="/aboutus" className="py-2 px-6 flex">About Us</a>
@@ -216,7 +210,6 @@ function Header() {
             )}
           </nav>
 
-          {/* Mobile hamburger */}
           <div className="lg:hidden flex flex-col ml-4">
             {["right"].map((anchor) => (
               <React.Fragment key={anchor}>
