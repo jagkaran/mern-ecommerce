@@ -65,11 +65,8 @@ exports.getAllProducts = catchAsyncErrors(async (req, res) => {
 
 // ─── Get All Products (Admin — NO pagination, returns every product) ──────────
 exports.getAdminProducts = catchAsyncErrors(async (req, res, _next) => {
-  // Admins need to see every product in the catalogue without pagination.
-  // Sorting newest-first so a freshly created product appears at the top.
   const products      = await Product.find().sort({ createdAt: -1 });
   const productCount  = products.length;
-
   res.status(200).json({ success: true, productCount, products });
 });
 
@@ -147,33 +144,31 @@ exports.deleteProduct = catchAsyncErrors(async (req, res, next) => {
 exports.createProductReview = catchAsyncErrors(async (req, res, next) => {
   const { rating, comment, productId } = req.body;
 
-  const review = {
-    user:       req.user.id,
-    profileImg: req.user.profilePic.url,
-    name:       req.user.name,
-    rating:     Number(rating),
-    comment,
-  };
-
   const product = await Product.findById(productId);
 
   if (!product) {
     return next(new ErrorHandler("Product not found", 404));
   }
 
-  const isReviewed = product.reviews.find(
+  const existingReview = product.reviews.find(
     (rev) => rev.user.toString() === req.user._id.toString()
   );
 
-  if (isReviewed) {
-    product.reviews.forEach((rev) => {
-      if (rev.user.toString() === req.user._id.toString()) {
-        rev.rating  = rating;
-        rev.comment = comment;
-      }
-    });
+  if (existingReview) {
+    // Update rating and comment — preserve the original createdAt so the
+    // review timestamp reflects when it was first written, not last edited.
+    existingReview.rating  = Number(rating);
+    existingReview.comment = comment;
   } else {
-    product.reviews.push(review);
+    // New review — stamp createdAt at the moment of submission.
+    product.reviews.push({
+      user:       req.user.id,
+      profileImg: req.user.profilePic.url,
+      name:       req.user.name,
+      rating:     Number(rating),
+      comment,
+      createdAt:  new Date(),
+    });
     product.numOfReviews = product.reviews.length;
   }
 

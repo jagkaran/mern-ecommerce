@@ -68,6 +68,13 @@ const productSchema = new mongoose.Schema({
         type: String,
         required: true,
       },
+      // Timestamp for when the review was first submitted.
+      // When a user edits their review we deliberately keep the original
+      // createdAt so readers know when the review was first written.
+      createdAt: {
+        type: Date,
+        default: Date.now,
+      },
     },
   ],
 

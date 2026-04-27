@@ -39,16 +39,12 @@ function ProductDetails() {
 
   const increaseQty = () => {
     if (product.stock <= quantity) return;
-
-    const qty = quantity + 1;
-    setQuantity(qty);
+    setQuantity(quantity + 1);
   };
 
   const decreaseQty = () => {
     if (1 >= quantity) return;
-
-    const qty = quantity - 1;
-    setQuantity(qty);
+    setQuantity(quantity - 1);
   };
 
   const addToCartHandler = (quantity) => {
@@ -56,23 +52,15 @@ function ProductDetails() {
     alert.success(`${product.name} Added to Cart Successfully`);
   };
 
-  const handleClickOpen = () => {
-    setOpen(true);
-  };
-
-  const handleClose = () => {
-    setOpen(false);
-  };
+  const handleClickOpen = () => setOpen(true);
+  const handleClose     = () => setOpen(false);
 
   const reviewSubmitHandler = () => {
     const myForm = new FormData();
-
     myForm.set("rating", rating);
     myForm.set("comment", comment);
     myForm.set("productId", id);
-
     dispatch(newReview(myForm));
-
     setOpen(false);
   };
 
@@ -84,7 +72,6 @@ function ProductDetails() {
       alert.error(reviewError);
       dispatch(clearErrors());
     }
-
     if (success) {
       alert.success("Review Submitted Successfully");
       dispatch({ type: "NewReviewReset" });
@@ -108,7 +95,7 @@ function ProductDetails() {
           <div className="container px-5 py-24 mx-auto">
             <div className="lg:w-4/5 mx-auto flex flex-wrap">
               {product.images &&
-                product.images.map((item, i) => (
+                product.images.map((item) => (
                   <img
                     alt="ecommerce"
                     className="lg:w-1/2 w-full object-cover object-center rounded border border-gray-200"
@@ -149,7 +136,7 @@ function ProductDetails() {
                       value={quantity}
                       type="number"
                       onChange={(e) => setQuantity(e.target.value)}
-                    ></input>
+                    />
                     <button onClick={increaseQty}>
                       <AddCircleOutlineIcon />
                     </button>
@@ -162,23 +149,17 @@ function ProductDetails() {
                   <button
                     className={
                       product.stock === 0
-                        ? "flex ml-auto px-4 py-2 transition ease-in duration-200 uppercase rounded-full border-2 border-gray-900 opacity-50 cursor-not-allowed "
+                        ? "flex ml-auto px-4 py-2 transition ease-in duration-200 uppercase rounded-full border-2 border-gray-900 opacity-50 cursor-not-allowed"
                         : "flex ml-auto px-4 py-2 transition ease-in duration-200 uppercase rounded-full hover:bg-gray-800 hover:text-white border-2 border-gray-900 focus:outline-none"
                     }
-                    onClick={() =>
-                      product.stock !== 0 && addToCartHandler(quantity)
-                    }
+                    onClick={() => product.stock !== 0 && addToCartHandler(quantity)}
                   >
                     Add to cart
                   </button>
                 </div>
                 <p>
-                  Status: {}
-                  <b
-                    className={
-                      product.stock < 1 ? "text-red-500" : "text-green-500"
-                    }
-                  >
+                  Status:{" "}
+                  <b className={product.stock < 1 ? "text-red-500" : "text-green-500"}>
                     {product.stock < 1 ? "Out of Stock" : "Available"}
                   </b>
                 </p>
@@ -215,23 +196,24 @@ function ProductDetails() {
                 </Dialog>
               </div>
             </div>
+
             <h3 className="text-xl font-bold tracking-tight text-gray-800 text-center mt-10 mb-10">
               Reviews
             </h3>
             {product.reviews && product.reviews[0] ? (
               <div className="flex flex-col space-y-6 items-center">
-                {product.reviews &&
-                  product.reviews.map(
-                    ({ name, rating, comment, _id, profileImg, createdAt }) => (
-                      <Reviewcard
-                        key={_id}
-                        rating={rating}
-                        comment={comment}
-                        name={name}
-                        profileImg={profileImg}
-                      />
-                    )
-                  )}
+                {product.reviews.map(
+                  ({ name, rating, comment, _id, profileImg, createdAt }) => (
+                    <Reviewcard
+                      key={_id}
+                      rating={rating}
+                      comment={comment}
+                      name={name}
+                      profileImg={profileImg}
+                      createdAt={createdAt}
+                    />
+                  )
+                )}
               </div>
             ) : (
               <p className="text-gray-600 text-center mt-8">No Reviews Yet</p>

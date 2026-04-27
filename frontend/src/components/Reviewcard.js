@@ -1,7 +1,25 @@
 import { Rating } from "@mui/material";
 import React from "react";
+import { format, parseISO, isValid } from "date-fns";
+
+/**
+ * Formats a review date as "12 Jan 2024".
+ * Gracefully handles missing or invalid dates (legacy reviews before the
+ * createdAt field was added to the schema).
+ */
+function formatReviewDate(createdAt) {
+  if (!createdAt) return null;
+  try {
+    const d = typeof createdAt === "string" ? parseISO(createdAt) : new Date(createdAt);
+    return isValid(d) ? format(d, "dd MMM yyyy") : null;
+  } catch {
+    return null;
+  }
+}
 
 function Reviewcard({ name, rating, comment, profileImg, createdAt }) {
+  const dateLabel = formatReviewDate(createdAt);
+
   return (
     <div className="bg-white dark:bg-gray-800 w-full rounded-lg p-4 mb-6 shadow sm:inline-block">
       <div className="flex items-start text-left">
@@ -15,7 +33,7 @@ function Reviewcard({ name, rating, comment, profileImg, createdAt }) {
                     ? profileImg
                     : "https://icon-library.com/images/white-profile-icon/white-profile-icon-24.jpg"
                 }
-                className="mx-auto object-cover rounded-full h-16 w-16 "
+                className="mx-auto object-cover rounded-full h-16 w-16"
               />
             </a>
             <svg
@@ -28,11 +46,16 @@ function Reviewcard({ name, rating, comment, profileImg, createdAt }) {
           </div>
         </div>
         <div className="ml-6">
-          <p className="flex items-baseline">
+          <div className="flex items-baseline gap-3">
             <span className="text-gray-600 capitalize dark:text-gray-200 font-bold">
               {name}
             </span>
-          </p>
+            {dateLabel && (
+              <span className="text-xs text-gray-400 dark:text-gray-500">
+                {dateLabel}
+              </span>
+            )}
+          </div>
           <div className="flex items-center mt-1">
             <Rating
               name="half-rating-read"
