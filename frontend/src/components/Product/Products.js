@@ -51,54 +51,30 @@ function Products() {
     filteredProductsCount,
   } = useSelector((state) => state.product);
 
-  // Live categories from DB — only those that actually have products
   const { categories } = useSelector((state) => state.categories);
-
   const { keyword } = useParams();
 
   const numberOfPages = Math.floor(
     (filteredProductsCount + resultPerPage - 1) / resultPerPage
   );
 
-  const priceHandler = (e, newPrice) => {
-    setPrice(newPrice);
-  };
-
-  const priceRangeHandler = () => {
-    setPriceRange(price);
-  };
-
-  const setCurrentPageNo = (e, value) => {
-    setCurrentPage(value);
-  };
+  const priceHandler = (e, newPrice) => setPrice(newPrice);
+  const priceRangeHandler = () => setPriceRange(price);
+  const setCurrentPageNo = (e, value) => setCurrentPage(value);
 
   const handleChangeCategory = (event) => {
     setCategory(event.target.value);
-    setCurrentPage(1); // reset to page 1 when filter changes
+    setCurrentPage(1);
   };
 
-  // Fetch available categories once on mount
   useEffect(() => {
     dispatch(getActiveCategories());
   }, [dispatch]);
 
   useEffect(() => {
-    if (error) {
-      return alert.error(error);
-    }
-    dispatch(
-      getProduct(keyword, currentPage, priceRange, category, ratingValue)
-    );
-  }, [
-    dispatch,
-    error,
-    alert,
-    keyword,
-    currentPage,
-    priceRange,
-    category,
-    ratingValue,
-  ]);
+    if (error) return alert.error(error);
+    dispatch(getProduct(keyword, currentPage, priceRange, category, ratingValue));
+  }, [dispatch, error, alert, keyword, currentPage, priceRange, category, ratingValue]);
 
   return (
     <>
@@ -118,7 +94,9 @@ function Products() {
               <h2 className="text-2xl font-extrabold tracking-tight text-gray-800 text-left">
                 All Products ({productsCount})
               </h2>
-              <div className="flex flex-col items-center justify-around p-4 sm:flex-row  bg-gray-100 mt-2 mb-2 border-1 rounded-lg">
+
+              <div className="flex flex-col items-center justify-around p-4 sm:flex-row bg-gray-100 mt-2 mb-2 border-1 rounded-lg">
+                {/* Price slider */}
                 <div className="ml-4 w-36">
                   <Typography sx={{ textAlign: "center" }}>
                     Price{" "}
@@ -138,23 +116,29 @@ function Products() {
                   />
                 </div>
 
+                {/* Category dropdown
+                    Key fix: when value="" the MUI InputLabel would overlap the
+                    "All" placeholder because displayEmpty alone doesn't shrink
+                    the label. Adding shrink={true} forces the label to always
+                    float above the select box. */}
                 <div className="ml-6 w-40 mt-6 sm:mt-0">
-                  <FormControl fullWidth>
-                    <InputLabel id="category-select-label">Category</InputLabel>
+                  <FormControl fullWidth size="small">
+                    <InputLabel
+                      id="category-select-label"
+                      shrink={true}
+                    >
+                      Category
+                    </InputLabel>
                     <Select
                       labelId="category-select-label"
                       id="category-select"
                       label="Category"
                       value={category}
                       onChange={handleChangeCategory}
-                      // Allow clearing the filter by selecting an empty value
                       displayEmpty
+                      notched
                     >
-                      {/* "All" option to clear category filter */}
-                      <MenuItem value="">
-                        <em>All</em>
-                      </MenuItem>
-
+                      <MenuItem value="">All</MenuItem>
                       {categories.map((cat) => (
                         <MenuItem key={cat} value={cat}>
                           <span className="capitalize">{cat}</span>
@@ -164,6 +148,7 @@ function Products() {
                   </FormControl>
                 </div>
 
+                {/* Ratings filter */}
                 <div className="ml-4 mt-6 sm:mt-0">
                   <Stack spacing={1}>
                     <Typography sx={{ textAlign: "center" }}>Ratings</Typography>
@@ -171,16 +156,10 @@ function Products() {
                       <Rating
                         name="hover-feedback"
                         value={ratingValue}
-                        onChange={(event, newRatingValue) => {
-                          setRatingValue(newRatingValue);
-                        }}
-                        onChangeActive={(event, newHover) => {
-                          setRatingHover(newHover);
-                        }}
+                        onChange={(event, newRatingValue) => setRatingValue(newRatingValue)}
+                        onChangeActive={(event, newHover) => setRatingHover(newHover)}
                         size="large"
-                        emptyIcon={
-                          <StarIcon style={{ opacity: 0.55 }} fontSize="inherit" />
-                        }
+                        emptyIcon={<StarIcon style={{ opacity: 0.55 }} fontSize="inherit" />}
                       />
                       {ratingValue !== null && (
                         <span className="ml-4">

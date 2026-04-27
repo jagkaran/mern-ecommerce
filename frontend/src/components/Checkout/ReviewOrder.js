@@ -7,6 +7,7 @@ import Grid from "@mui/material/Grid";
 import { useSelector } from "react-redux";
 import { Avatar } from "@mui/material";
 import { Country, State } from "country-state-city";
+import { fmt, fmtNum } from "../../utils/formatCurrency";
 
 function ReviewOrder({ reviewData, handleReviewDataChange }) {
   const { shippingInfo, cartItems } = useSelector((state) => state.cart);
@@ -32,9 +33,6 @@ function ReviewOrder({ reviewData, handleReviewDataChange }) {
   reviewData.totalPrice =
     reviewData.subTotal + reviewData.shippingCharges + reviewData.tax;
 
-  // handleReviewDataChange is a callback prop — wrapping in useCallback in the
-  // parent would be the clean fix, but adding it here causes infinite re-renders
-  // because the parent recreates it on each render without useCallback.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (reviewData?.subTotal !== "") {
@@ -74,38 +72,43 @@ function ReviewOrder({ reviewData, handleReviewDataChange }) {
               secondary={`Quantity: ${product.quantity}`}
             />
             <Typography variant="body2">
-              {product.price} X {product.quantity} ={" "}
-              {product.price * product.quantity}
+              {fmtNum(product.price)} X {product.quantity} ={" "}
+              {fmtNum(product.price * product.quantity)}
             </Typography>
           </ListItem>
         ))}
+
         <ListItem sx={{ mt: 3, py: 1, px: 0 }}>
           <ListItemText primary="Sub Total" />
           <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-            ${reviewData.subTotal}
+            {fmt(reviewData.subTotal)}
           </Typography>
         </ListItem>
+
         <ListItem sx={{ py: 1, px: 0 }}>
           <ListItemText primary="Shipping Charges" />
           <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
             {reviewData.shippingCharges === 0
               ? "Free"
-              : `$${reviewData.shippingCharges}`}
+              : fmt(reviewData.shippingCharges)}
           </Typography>
         </ListItem>
+
         <ListItem sx={{ py: 1, px: 0 }}>
           <ListItemText primary="Tax" />
           <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-            ${reviewData.tax}
+            {fmt(reviewData.tax)}
           </Typography>
         </ListItem>
+
         <ListItem sx={{ py: 1, px: 0 }}>
           <ListItemText primary="Total" />
           <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-            ${reviewData.totalPrice}
+            {fmt(reviewData.totalPrice)}
           </Typography>
         </ListItem>
       </List>
+
       <Grid container spacing={2}>
         <Grid item xs={12} sm={12}>
           <Typography variant="h5" gutterBottom sx={{ mt: 2 }}>
