@@ -4,12 +4,18 @@ import {
   Button,
   Card,
   CardHeader,
+  Divider,
+  MenuItem,
+  Pagination,
   Rating,
+  Select,
+  Stack,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableRow,
+  Typography,
   Dialog,
   DialogActions,
   DialogContent,
@@ -24,22 +30,21 @@ import AddIcon from "@mui/icons-material/Add";
 import { clearErrors, deleteProduct } from "../../../actions/productAction";
 import { useEffect, useState } from "react";
 import { useAlert } from "react-alert";
+import useAdminPagination, { PER_PAGE_OPTIONS } from "../Hooks/useAdminPagination";
 
 function AllProductsList({ products }) {
   const dispatch = useDispatch();
-  const history = useNavigate();
-  const alert = useAlert();
-  const [open, setOpen] = useState(false);
+  const history  = useNavigate();
+  const alert    = useAlert();
+
+  const [open, setOpen]                   = useState(false);
   const [selectedProduct, setSelectedProduct] = useState({});
 
-  const handleClickOpen = (product) => {
-    setOpen(true);
-    setSelectedProduct(product);
-  };
+  const { page, perPage, totalPages, paginated, setPage, setPerPage } =
+    useAdminPagination(products, 10);
 
-  const handleClose = () => {
-    setOpen(false);
-  };
+  const handleClickOpen = (product) => { setOpen(true); setSelectedProduct(product); };
+  const handleClose     = () => setOpen(false);
 
   const { error: deleteError, isDeleted } = useSelector(
     (state) => state.modifiedProduct
@@ -55,16 +60,16 @@ function AllProductsList({ products }) {
       alert.error(deleteError);
       dispatch(clearErrors());
     }
-
     if (isDeleted) {
       alert.success("Product Deleted Successfully");
-      history("/dashboard");
+      history("/admin/products");
       dispatch({ type: "DeleteProductReset" });
     }
   }, [dispatch, alert, deleteError, history, isDeleted]);
 
   return (
     <Card>
+      {/* ── Header ─────────────────────────────────────────────────── */}
       <CardHeader
         title={`All Products (${products.length})`}
         action={
@@ -77,6 +82,9 @@ function AllProductsList({ products }) {
           </Button>
         }
       />
+      <Divider />
+
+      {/* ── Table ──────────────────────────────────────────────────── */}
       <PerfectScrollbar>
         <Box sx={{ minWidth: 800 }}>
           <Table>
@@ -91,9 +99,11 @@ function AllProductsList({ products }) {
               </TableRow>
             </TableHead>
             <TableBody>
-              {products.map((product) => (
+              {paginated.map((product) => (
                 <TableRow hover key={product._id}>
-                  <TableCell>{product._id}</TableCell>
+                  <TableCell sx={{ fontSize: "0.75rem", color: "text.secondary" }}>
+                    {product._id}
+                  </TableCell>
                   <TableCell>{product.name}</TableCell>
                   <TableCell>
                     <Rating
@@ -106,37 +116,30 @@ function AllProductsList({ products }) {
                   <TableCell>{product.stock}</TableCell>
                   <TableCell>${product.price}</TableCell>
                   <TableCell>
-                    {" "}
                     <Link to={`/admin/product/update/${product._id}`}>
                       <EditIcon />
                     </Link>
-                    {/* <Button onClick={() => deleteProductHandler(product._id)}> */}
                     <Button onClick={() => handleClickOpen(product)}>
                       <DeleteIcon />
                     </Button>
+
+                    {/* Confirm dialog — rendered once outside the map would be
+                        cleaner, but keeping it here avoids prop-drilling */}
                     <Dialog
-                      open={open}
+                      open={open && selectedProduct._id === product._id}
                       onClose={handleClose}
-                      aria-labelledby="alert-dialog-title"
-                      aria-describedby="alert-dialog-description"
+                      aria-labelledby="prod-delete-title"
                     >
-                      <DialogTitle id="alert-dialog-title">
-                        {"Delete Confirmation"}
-                      </DialogTitle>
+                      <DialogTitle id="prod-delete-title">Delete Confirmation</DialogTitle>
                       <DialogContent>
-                        <DialogContentText id="alert-dialog-description">
-                          Are you sure you want to delete "
-                          {selectedProduct.name}"?
+                        <DialogContentText>
+                          Are you sure you want to delete "{selectedProduct.name}"?
                         </DialogContentText>
                       </DialogContent>
                       <DialogActions>
-                        <Button onClick={handleClose} color="primary">
-                          Cancel
-                        </Button>
+                        <Button onClick={handleClose} color="primary">Cancel</Button>
                         <Button
-                          onClick={() =>
-                            deleteProductHandler(selectedProduct._id)
-                          }
+                          onClick={() => deleteProductHandler(selectedProduct._id)}
                           color="secondary"
                         >
                           Delete
@@ -150,6 +153,47 @@ function AllProductsList({ products }) {
           </Table>
         </Box>
       </PerfectScrollbar>
+
+      <Divider />
+
+      {/* ── Pagination footer ──────────────────────────────────────── */}
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        alignItems="center"
+        justifyContent="space-between"
+        spacing={2}
+        sx={{ px: 2, py: 1.5 }}
+      >
+        <Stack direction="row" alignItems="center" spacing={1}>
+          <Typography variant="body2" color="text.secondary">
+            Rows per page:
+          </Typography>
+          <Select
+            size="small"
+            value={perPage}
+            onChange={(e) => setPerPage(Number(e.target.value))}
+            sx={{ fontSize: "0.875rem" }}
+          >
+            {PER_PAGE_OPTIONS.map((opt) => (
+              <MenuItem key={opt} value={opt}>{opt}</MenuItem>
+            ))}
+          </Select>
+        </Stack>
+
+        <Stack direction="row" alignItems="center" spacing={2}>
+          <Typography variant="body2" color="text.secondary">
+            {Math.min((page - 1) * perPage + 1, products.length)}–
+            {Math.min(page * perPage, products.length)} of {products.length}
+          </Typography>
+          <Pagination
+            count={totalPages}
+            page={page}
+            onChange={(_, v) => setPage(v)}
+            shape="rounded"
+            size="small"
+          />
+        </Stack>
+      </Stack>
     </Card>
   );
 }

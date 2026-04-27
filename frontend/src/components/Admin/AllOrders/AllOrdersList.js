@@ -4,11 +4,17 @@ import {
   Button,
   Card,
   CardHeader,
+  Divider,
+  MenuItem,
+  Pagination,
+  Select,
+  Stack,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableRow,
+  Typography,
   Dialog,
   DialogActions,
   DialogContent,
@@ -21,28 +27,30 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import { createOrderNumber } from "../../Order/MyOrders";
 import SeverityPill from "../../Order/SeverityPill";
 import { useState } from "react";
+import useAdminPagination, { PER_PAGE_OPTIONS } from "../Hooks/useAdminPagination";
 
-function AllOrdersList(props) {
-  const [open, setOpen] = useState(false);
-  const { orders, deleteOrderHandler } = props;
+function AllOrdersList({ orders, deleteOrderHandler }) {
+  const [open, setOpen]               = useState(false);
   const [selectedOrder, setSelectedOrder] = useState({});
 
-  const handleClickOpen = (order) => {
-    setOpen(true);
-    setSelectedOrder(order);
-  };
+  const { page, perPage, totalPages, paginated, setPage, setPerPage } =
+    useAdminPagination(orders, 10);
 
-  const handleClose = () => {
-    setOpen(false);
-  };
+  const handleClickOpen = (order) => { setOpen(true); setSelectedOrder(order); };
+  const handleClose     = () => setOpen(false);
 
   const deleteOrder = (id) => {
     deleteOrderHandler(id);
     setOpen(false);
   };
+
   return (
     <Card>
+      {/* ── Header ─────────────────────────────────────────────────── */}
       <CardHeader title={`All Orders (${orders.length})`} />
+      <Divider />
+
+      {/* ── Table ──────────────────────────────────────────────────── */}
       <PerfectScrollbar>
         <Box sx={{ minWidth: 800 }}>
           <Table>
@@ -50,13 +58,13 @@ function AllOrdersList(props) {
               <TableRow>
                 <TableCell>Order ID</TableCell>
                 <TableCell>Status</TableCell>
-                <TableCell>Items Quantity</TableCell>
+                <TableCell>Items Qty</TableCell>
                 <TableCell>Amount</TableCell>
                 <TableCell>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {orders.map((order) => (
+              {paginated.map((order) => (
                 <TableRow hover key={order._id}>
                   <TableCell>
                     {createOrderNumber(order._id, order.shippingInfo?.country)}
@@ -65,8 +73,8 @@ function AllOrdersList(props) {
                     <SeverityPill
                       color={
                         (order.orderStatus === "Delivered" && "success") ||
-                        (order.orderStatus === "Shipped" && "info") ||
-                        (order.orderStatus === "Processing" && "warning") ||
+                        (order.orderStatus === "Shipped"   && "info")    ||
+                        (order.orderStatus === "Processing"&& "warning") ||
                         "error"
                       }
                     >
@@ -76,40 +84,29 @@ function AllOrdersList(props) {
                   <TableCell>{order.orderItems.length}</TableCell>
                   <TableCell>${order.totalPrice}</TableCell>
                   <TableCell>
-                    {" "}
                     <Link to={`/admin/order/update/${order._id}`}>
                       <EditIcon />
                     </Link>
                     <Button onClick={() => handleClickOpen(order)}>
                       <DeleteIcon />
                     </Button>
+
                     <Dialog
-                      open={open}
+                      open={open && selectedOrder._id === order._id}
                       onClose={handleClose}
-                      aria-labelledby="alert-dialog-title"
-                      aria-describedby="alert-dialog-description"
+                      aria-labelledby="order-delete-title"
                     >
-                      <DialogTitle id="alert-dialog-title">
-                        {"Delete Confirmation"}
-                      </DialogTitle>
+                      <DialogTitle id="order-delete-title">Delete Confirmation</DialogTitle>
                       <DialogContent>
-                        <DialogContentText id="alert-dialog-description">
-                          Are you sure you want to delete "
-                          {createOrderNumber(
-                            selectedOrder._id,
-                            selectedOrder.shippingInfo?.country
-                          )}
-                          " order?
+                        <DialogContentText>
+                          Are you sure you want to delete "{
+                            createOrderNumber(selectedOrder._id, selectedOrder.shippingInfo?.country)
+                          }" order?
                         </DialogContentText>
                       </DialogContent>
                       <DialogActions>
-                        <Button onClick={handleClose} color="primary">
-                          Cancel
-                        </Button>
-                        <Button
-                          onClick={() => deleteOrder(selectedOrder._id)}
-                          color="secondary"
-                        >
+                        <Button onClick={handleClose} color="primary">Cancel</Button>
+                        <Button onClick={() => deleteOrder(selectedOrder._id)} color="secondary">
                           Delete
                         </Button>
                       </DialogActions>
@@ -121,6 +118,47 @@ function AllOrdersList(props) {
           </Table>
         </Box>
       </PerfectScrollbar>
+
+      <Divider />
+
+      {/* ── Pagination footer ──────────────────────────────────────── */}
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        alignItems="center"
+        justifyContent="space-between"
+        spacing={2}
+        sx={{ px: 2, py: 1.5 }}
+      >
+        <Stack direction="row" alignItems="center" spacing={1}>
+          <Typography variant="body2" color="text.secondary">
+            Rows per page:
+          </Typography>
+          <Select
+            size="small"
+            value={perPage}
+            onChange={(e) => setPerPage(Number(e.target.value))}
+            sx={{ fontSize: "0.875rem" }}
+          >
+            {PER_PAGE_OPTIONS.map((opt) => (
+              <MenuItem key={opt} value={opt}>{opt}</MenuItem>
+            ))}
+          </Select>
+        </Stack>
+
+        <Stack direction="row" alignItems="center" spacing={2}>
+          <Typography variant="body2" color="text.secondary">
+            {Math.min((page - 1) * perPage + 1, orders.length)}–
+            {Math.min(page * perPage, orders.length)} of {orders.length}
+          </Typography>
+          <Pagination
+            count={totalPages}
+            page={page}
+            onChange={(_, v) => setPage(v)}
+            shape="rounded"
+            size="small"
+          />
+        </Stack>
+      </Stack>
     </Card>
   );
 }
