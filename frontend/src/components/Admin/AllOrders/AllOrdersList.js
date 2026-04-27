@@ -59,7 +59,7 @@ function AllOrdersList(props) {
               {orders.map((order) => (
                 <TableRow hover key={order._id}>
                   <TableCell>
-                    {createOrderNumber(order._id, order.shippingInfo.country)}
+                    {createOrderNumber(order._id, order.shippingInfo?.country)}
                   </TableCell>
                   <TableCell>
                     <SeverityPill
@@ -80,7 +80,6 @@ function AllOrdersList(props) {
                     <Link to={`/admin/order/update/${order._id}`}>
                       <EditIcon />
                     </Link>
-                    {/* <Button onClick={() => deleteProductHandler(order._id)}> */}
                     <Button onClick={() => handleClickOpen(order)}>
                       <DeleteIcon />
                     </Button>
@@ -98,8 +97,7 @@ function AllOrdersList(props) {
                           Are you sure you want to delete "
                           {createOrderNumber(
                             selectedOrder._id,
-                            selectedOrder.shippingInfo &&
-                              selectedOrder.shippingInfo.country
+                            selectedOrder.shippingInfo?.country
                           )}
                           " order?
                         </DialogContentText>
