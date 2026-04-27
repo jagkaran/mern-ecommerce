@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useCallback, useEffect } from "react";
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useAlert } from "react-alert";
@@ -27,6 +27,7 @@ import { clearErrors, createOrder } from "../../actions/orderAction";
 import PaymentIcon from "@mui/icons-material/Payment";
 import LoadingButton from "@mui/lab/LoadingButton";
 import Copyright from "../Copyright";
+import { fmt } from "../../utils/formatCurrency";
 
 function Shipping() {
   const dispatch = useDispatch();
@@ -178,9 +179,11 @@ function Shipping() {
     setAddFormValues({ ...addFormValues, [input]: e.target.value });
   };
 
-  const handleReviewDataChange = (input, value) => {
+  // useCallback ensures this function reference is stable across renders so
+  // ReviewOrder's useEffect dependency array doesn't trigger infinite re-renders.
+  const handleReviewDataChange = useCallback((input, value) => {
     setReviewData((prev) => ({ ...prev, [input]: value }));
-  };
+  }, []);
 
   const handleStepFunc = (step, e) => {
     if (step === 0) handleNext();
@@ -263,7 +266,7 @@ function Shipping() {
                       variant="contained"
                       sx={{ mt: 3, ml: 1 }}
                     >
-                      Pay ${orderInfo && orderInfo.totalPrice}
+                      Pay {orderInfo ? fmt(orderInfo.totalPrice) : ""}
                     </LoadingButton>
                   ) : (
                     <Button

@@ -33,7 +33,8 @@ function ReviewOrder({ reviewData, handleReviewDataChange }) {
   reviewData.totalPrice =
     reviewData.subTotal + reviewData.shippingCharges + reviewData.tax;
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // handleReviewDataChange is now wrapped in useCallback in the parent (Shipping.js)
+  // so it is safe to include in the dependency array without causing infinite re-renders.
   useEffect(() => {
     if (reviewData?.subTotal !== "") {
       handleReviewDataChange("subTotal", reviewData.subTotal);
@@ -52,6 +53,7 @@ function ReviewOrder({ reviewData, handleReviewDataChange }) {
     reviewData.shippingCharges,
     reviewData.tax,
     reviewData.totalPrice,
+    handleReviewDataChange,
   ]);
 
   return (
