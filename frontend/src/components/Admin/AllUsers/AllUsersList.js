@@ -33,15 +33,24 @@ import useAdminPagination, { PER_PAGE_OPTIONS } from "../Hooks/useAdminPaginatio
 const TABLE_SX = {
   "& .MuiTableCell-root": {
     px: 3,
-    py: 1.75,
+    py: 2,
     fontSize: "0.875rem",
     borderBottom: "1px solid",
     borderColor: "divider",
   },
+  "& .MuiTableCell-root:first-of-type": {
+    pl: 4,
+  },
+  "& .MuiTableCell-root:last-of-type": {
+    pr: 4,
+  },
   "& .MuiTableHead-root .MuiTableCell-root": {
     fontWeight: 600,
     color: "text.secondary",
-    bgcolor: "background.default",
+    bgcolor: "grey.50",
+    fontSize: "0.75rem",
+    letterSpacing: "0.04em",
+    textTransform: "uppercase",
   },
 };
 
@@ -55,14 +64,11 @@ function AllUsersList({ users, usersCount, deleteUserHandler }) {
   const handleClickOpen = (user) => { setOpen(true); setSelectedUser(user); };
   const handleClose     = () => setOpen(false);
 
-  const deleteUser = (id) => {
-    deleteUserHandler(id);
-    setOpen(false);
-  };
+  const deleteUser = (id) => { deleteUserHandler(id); setOpen(false); };
 
   return (
     <Card>
-      <CardHeader title={`All Users (${usersCount})`} />
+      <CardHeader title={`All Users (${usersCount})`} sx={{ px: 4, py: 2.5 }} />
       <Divider />
 
       <PerfectScrollbar>
@@ -82,12 +88,8 @@ function AllUsersList({ users, usersCount, deleteUserHandler }) {
                 <TableRow hover key={user._id}>
                   <TableCell>
                     <Box sx={{ display: "flex", alignItems: "center" }}>
-                      <Avatar src={user.profilePic.url} sx={{ height: 40, width: 40 }} />
-                      <Typography
-                        sx={{ ml: 2, textTransform: "capitalize" }}
-                        color="textPrimary"
-                        variant="body2"
-                      >
+                      <Avatar src={user.profilePic.url} sx={{ height: 36, width: 36 }} />
+                      <Typography sx={{ ml: 2, textTransform: "capitalize" }} color="textPrimary" variant="body2">
                         {user.name}
                       </Typography>
                     </Box>
@@ -98,39 +100,29 @@ function AllUsersList({ users, usersCount, deleteUserHandler }) {
                       {user.role}
                     </SeverityPill>
                   </TableCell>
+                  <TableCell>{format(parseISO(user.createdAt), "dd MMM yyyy")}</TableCell>
                   <TableCell>
-                    {format(parseISO(user.createdAt), "dd MMM yyyy")}
-                  </TableCell>
-                  <TableCell>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <Link to={`/admin/user/update/${user._id}`}>
-                        <EditIcon fontSize="small" />
+                        <EditIcon fontSize="small" sx={{ color: "text.secondary", "&:hover": { color: "primary.main" } }} />
                       </Link>
                       <Button
                         size="small"
                         onClick={() => handleClickOpen(user)}
-                        sx={{ minWidth: 0, p: 0.5 }}
+                        sx={{ minWidth: 0, p: 0.5, color: "text.secondary", "&:hover": { color: "error.main" } }}
                       >
                         <DeleteIcon fontSize="small" />
                       </Button>
                     </Box>
 
-                    <Dialog
-                      open={open && selectedUser._id === user._id}
-                      onClose={handleClose}
-                      aria-labelledby="user-delete-title"
-                    >
+                    <Dialog open={open && selectedUser._id === user._id} onClose={handleClose} aria-labelledby="user-delete-title">
                       <DialogTitle id="user-delete-title">Delete Confirmation</DialogTitle>
                       <DialogContent>
-                        <DialogContentText>
-                          Are you sure you want to delete user &ldquo;{selectedUser.name}&rdquo;?
-                        </DialogContentText>
+                        <DialogContentText>Are you sure you want to delete user &ldquo;{selectedUser.name}&rdquo;?</DialogContentText>
                       </DialogContent>
                       <DialogActions>
                         <Button onClick={handleClose} color="primary">Cancel</Button>
-                        <Button onClick={() => deleteUser(selectedUser._id)} color="error">
-                          Delete
-                        </Button>
+                        <Button onClick={() => deleteUser(selectedUser._id)} color="error">Delete</Button>
                       </DialogActions>
                     </Dialog>
                   </TableCell>
@@ -148,34 +140,19 @@ function AllUsersList({ users, usersCount, deleteUserHandler }) {
         alignItems="center"
         justifyContent="space-between"
         spacing={2}
-        sx={{ px: 3, py: 1.5 }}
+        sx={{ px: 4, py: 2 }}
       >
         <Stack direction="row" alignItems="center" spacing={1}>
           <Typography variant="body2" color="text.secondary">Rows per page:</Typography>
-          <Select
-            size="small"
-            value={perPage}
-            onChange={(e) => setPerPage(Number(e.target.value))}
-            sx={{ fontSize: "0.875rem" }}
-          >
-            {PER_PAGE_OPTIONS.map((opt) => (
-              <MenuItem key={opt} value={opt}>{opt}</MenuItem>
-            ))}
+          <Select size="small" value={perPage} onChange={(e) => setPerPage(Number(e.target.value))} sx={{ fontSize: "0.875rem" }}>
+            {PER_PAGE_OPTIONS.map((opt) => (<MenuItem key={opt} value={opt}>{opt}</MenuItem>))}
           </Select>
         </Stack>
-
         <Stack direction="row" alignItems="center" spacing={2}>
           <Typography variant="body2" color="text.secondary">
-            {Math.min((page - 1) * perPage + 1, users.length)}–
-            {Math.min(page * perPage, users.length)} of {users.length}
+            {Math.min((page - 1) * perPage + 1, users.length)}–{Math.min(page * perPage, users.length)} of {users.length}
           </Typography>
-          <Pagination
-            count={totalPages}
-            page={page}
-            onChange={(_, v) => setPage(v)}
-            shape="rounded"
-            size="small"
-          />
+          <Pagination count={totalPages} page={page} onChange={(_, v) => setPage(v)} shape="rounded" size="small" />
         </Stack>
       </Stack>
     </Card>

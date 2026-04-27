@@ -36,15 +36,24 @@ import { formatPrice } from "../../../utils/fmt";
 const TABLE_SX = {
   "& .MuiTableCell-root": {
     px: 3,
-    py: 1.75,
+    py: 2,
     fontSize: "0.875rem",
     borderBottom: "1px solid",
     borderColor: "divider",
   },
+  "& .MuiTableCell-root:first-of-type": {
+    pl: 4,
+  },
+  "& .MuiTableCell-root:last-of-type": {
+    pr: 4,
+  },
   "& .MuiTableHead-root .MuiTableCell-root": {
     fontWeight: 600,
     color: "text.secondary",
-    bgcolor: "background.default",
+    bgcolor: "grey.50",
+    fontSize: "0.75rem",
+    letterSpacing: "0.04em",
+    textTransform: "uppercase",
   },
 };
 
@@ -62,9 +71,7 @@ function AllProductsList({ products }) {
   const handleClickOpen = (product) => { setOpen(true); setSelectedProduct(product); };
   const handleClose     = () => setOpen(false);
 
-  const { error: deleteError, isDeleted } = useSelector(
-    (state) => state.modifiedProduct
-  );
+  const { error: deleteError, isDeleted } = useSelector((state) => state.modifiedProduct);
 
   const deleteProductHandler = (id) => {
     dispatch(deleteProduct(id));
@@ -72,10 +79,7 @@ function AllProductsList({ products }) {
   };
 
   useEffect(() => {
-    if (deleteError) {
-      alert.error(deleteError);
-      dispatch(clearErrors());
-    }
+    if (deleteError) { alert.error(deleteError); dispatch(clearErrors()); }
     if (isDeleted) {
       alert.success("Product Deleted Successfully");
       history("/admin/products");
@@ -87,12 +91,9 @@ function AllProductsList({ products }) {
     <Card>
       <CardHeader
         title={`All Products (${products.length})`}
+        sx={{ px: 4, py: 2.5 }}
         action={
-          <Button
-            endIcon={<AddIcon fontSize="small" />}
-            size="small"
-            href="/admin/product/new"
-          >
+          <Button endIcon={<AddIcon fontSize="small" />} size="small" href="/admin/product/new">
             Create Product
           </Button>
         }
@@ -115,45 +116,37 @@ function AllProductsList({ products }) {
             <TableBody>
               {paginated.map((product) => (
                 <TableRow hover key={product._id}>
-                  <TableCell sx={{ fontSize: "0.75rem", color: "text.secondary" }}>
+                  <TableCell sx={{ fontSize: "0.72rem", color: "text.secondary", fontFamily: "monospace" }}>
                     {product._id}
                   </TableCell>
                   <TableCell>{product.name}</TableCell>
                   <TableCell>
-                    <Rating value={product.ratings} precision={0.5} readOnly />
+                    <Rating value={product.ratings} precision={0.5} readOnly size="small" />
                   </TableCell>
                   <TableCell>{product.stock}</TableCell>
                   <TableCell>${formatPrice(product.price)}</TableCell>
                   <TableCell>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <Link to={`/admin/product/update/${product._id}`}>
-                        <EditIcon fontSize="small" />
+                        <EditIcon fontSize="small" sx={{ color: "text.secondary", "&:hover": { color: "primary.main" } }} />
                       </Link>
                       <Button
                         size="small"
                         onClick={() => handleClickOpen(product)}
-                        sx={{ minWidth: 0, p: 0.5 }}
+                        sx={{ minWidth: 0, p: 0.5, color: "text.secondary", "&:hover": { color: "error.main" } }}
                       >
                         <DeleteIcon fontSize="small" />
                       </Button>
                     </Box>
 
-                    <Dialog
-                      open={open && selectedProduct._id === product._id}
-                      onClose={handleClose}
-                      aria-labelledby="prod-delete-title"
-                    >
+                    <Dialog open={open && selectedProduct._id === product._id} onClose={handleClose} aria-labelledby="prod-delete-title">
                       <DialogTitle id="prod-delete-title">Delete Confirmation</DialogTitle>
                       <DialogContent>
-                        <DialogContentText>
-                          Are you sure you want to delete &ldquo;{selectedProduct.name}&rdquo;?
-                        </DialogContentText>
+                        <DialogContentText>Are you sure you want to delete &ldquo;{selectedProduct.name}&rdquo;?</DialogContentText>
                       </DialogContent>
                       <DialogActions>
                         <Button onClick={handleClose} color="primary">Cancel</Button>
-                        <Button onClick={() => deleteProductHandler(selectedProduct._id)} color="error">
-                          Delete
-                        </Button>
+                        <Button onClick={() => deleteProductHandler(selectedProduct._id)} color="error">Delete</Button>
                       </DialogActions>
                     </Dialog>
                   </TableCell>
@@ -171,34 +164,19 @@ function AllProductsList({ products }) {
         alignItems="center"
         justifyContent="space-between"
         spacing={2}
-        sx={{ px: 3, py: 1.5 }}
+        sx={{ px: 4, py: 2 }}
       >
         <Stack direction="row" alignItems="center" spacing={1}>
           <Typography variant="body2" color="text.secondary">Rows per page:</Typography>
-          <Select
-            size="small"
-            value={perPage}
-            onChange={(e) => setPerPage(Number(e.target.value))}
-            sx={{ fontSize: "0.875rem" }}
-          >
-            {PER_PAGE_OPTIONS.map((opt) => (
-              <MenuItem key={opt} value={opt}>{opt}</MenuItem>
-            ))}
+          <Select size="small" value={perPage} onChange={(e) => setPerPage(Number(e.target.value))} sx={{ fontSize: "0.875rem" }}>
+            {PER_PAGE_OPTIONS.map((opt) => (<MenuItem key={opt} value={opt}>{opt}</MenuItem>))}
           </Select>
         </Stack>
-
         <Stack direction="row" alignItems="center" spacing={2}>
           <Typography variant="body2" color="text.secondary">
-            {Math.min((page - 1) * perPage + 1, products.length)}–
-            {Math.min(page * perPage, products.length)} of {products.length}
+            {Math.min((page - 1) * perPage + 1, products.length)}–{Math.min(page * perPage, products.length)} of {products.length}
           </Typography>
-          <Pagination
-            count={totalPages}
-            page={page}
-            onChange={(_, v) => setPage(v)}
-            shape="rounded"
-            size="small"
-          />
+          <Pagination count={totalPages} page={page} onChange={(_, v) => setPage(v)} shape="rounded" size="small" />
         </Stack>
       </Stack>
     </Card>

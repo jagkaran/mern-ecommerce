@@ -30,24 +30,31 @@ import { useState } from "react";
 import useAdminPagination, { PER_PAGE_OPTIONS } from "../Hooks/useAdminPagination";
 import { formatPrice } from "../../../utils/fmt";
 
-/**
- * TABLE_SX — applied to <Table> itself.
- * Resets MUI's internal cell padding and re-applies it uniformly
- * via the `.MuiTableCell-root` override so EVERY cell (head + body)
- * gets exactly the same spacing regardless of the theme default.
- */
 const TABLE_SX = {
+  // All cells: generous vertical padding, consistent font size
   "& .MuiTableCell-root": {
     px: 3,
-    py: 1.75,
+    py: 2,
     fontSize: "0.875rem",
     borderBottom: "1px solid",
     borderColor: "divider",
   },
+  // First cell in each row gets extra left padding so text is away from card edge
+  "& .MuiTableCell-root:first-of-type": {
+    pl: 4,
+  },
+  // Last cell gets extra right padding so actions don't hug the right border
+  "& .MuiTableCell-root:last-of-type": {
+    pr: 4,
+  },
+  // Header styling
   "& .MuiTableHead-root .MuiTableCell-root": {
     fontWeight: 600,
     color: "text.secondary",
-    bgcolor: "background.default",
+    bgcolor: "grey.50",
+    fontSize: "0.75rem",
+    letterSpacing: "0.04em",
+    textTransform: "uppercase",
   },
 };
 
@@ -68,7 +75,7 @@ function AllOrdersList({ orders, deleteOrderHandler }) {
 
   return (
     <Card>
-      <CardHeader title={`All Orders (${orders.length})`} />
+      <CardHeader title={`All Orders (${orders.length})`} sx={{ px: 4, py: 2.5 }} />
       <Divider />
 
       <PerfectScrollbar>
@@ -104,14 +111,14 @@ function AllOrdersList({ orders, deleteOrderHandler }) {
                   <TableCell>{order.orderItems.length}</TableCell>
                   <TableCell>${formatPrice(order.totalPrice)}</TableCell>
                   <TableCell>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                       <Link to={`/admin/order/update/${order._id}`}>
-                        <EditIcon fontSize="small" />
+                        <EditIcon fontSize="small" sx={{ color: "text.secondary", "&:hover": { color: "primary.main" } }} />
                       </Link>
                       <Button
                         size="small"
                         onClick={() => handleClickOpen(order)}
-                        sx={{ minWidth: 0, p: 0.5 }}
+                        sx={{ minWidth: 0, p: 0.5, color: "text.secondary", "&:hover": { color: "error.main" } }}
                       >
                         <DeleteIcon fontSize="small" />
                       </Button>
@@ -132,9 +139,7 @@ function AllOrdersList({ orders, deleteOrderHandler }) {
                       </DialogContent>
                       <DialogActions>
                         <Button onClick={handleClose} color="primary">Cancel</Button>
-                        <Button onClick={() => deleteOrder(selectedOrder._id)} color="error">
-                          Delete
-                        </Button>
+                        <Button onClick={() => deleteOrder(selectedOrder._id)} color="error">Delete</Button>
                       </DialogActions>
                     </Dialog>
                   </TableCell>
@@ -147,18 +152,15 @@ function AllOrdersList({ orders, deleteOrderHandler }) {
 
       <Divider />
 
-      {/* Pagination footer */}
       <Stack
         direction={{ xs: "column", sm: "row" }}
         alignItems="center"
         justifyContent="space-between"
         spacing={2}
-        sx={{ px: 3, py: 1.5 }}
+        sx={{ px: 4, py: 2 }}
       >
         <Stack direction="row" alignItems="center" spacing={1}>
-          <Typography variant="body2" color="text.secondary">
-            Rows per page:
-          </Typography>
+          <Typography variant="body2" color="text.secondary">Rows per page:</Typography>
           <Select
             size="small"
             value={perPage}
@@ -170,19 +172,11 @@ function AllOrdersList({ orders, deleteOrderHandler }) {
             ))}
           </Select>
         </Stack>
-
         <Stack direction="row" alignItems="center" spacing={2}>
           <Typography variant="body2" color="text.secondary">
-            {Math.min((page - 1) * perPage + 1, orders.length)}–
-            {Math.min(page * perPage, orders.length)} of {orders.length}
+            {Math.min((page - 1) * perPage + 1, orders.length)}–{Math.min(page * perPage, orders.length)} of {orders.length}
           </Typography>
-          <Pagination
-            count={totalPages}
-            page={page}
-            onChange={(_, v) => setPage(v)}
-            shape="rounded"
-            size="small"
-          />
+          <Pagination count={totalPages} page={page} onChange={(_, v) => setPage(v)} shape="rounded" size="small" />
         </Stack>
       </Stack>
     </Card>
