@@ -16,38 +16,38 @@ function AllAdminProducts() {
   const theme = useTheme();
   const [open, setOpen] = React.useState(false);
 
-  const handleDrawerOpen = () => {
-    setOpen(true);
-  };
-
-  const handleDrawerClose = () => {
-    setOpen(false);
-  };
+  const handleDrawerOpen  = () => setOpen(true);
+  const handleDrawerClose = () => setOpen(false);
 
   const dispatch = useDispatch();
-  const alert = useAlert();
+  const alert    = useAlert();
 
   const { loading, error, products } = useSelector((state) => state.product);
 
-  function sortByDate(a, b) {
-    if (a.createdAt < b.createdAt) {
-      return 1;
-    }
-    if (a.createdAt > b.createdAt) {
-      return -1;
-    }
-    return 0;
-  }
-
-  const sortedProductsArrayByDate = products.slice().sort(sortByDate);
-
+  // Re-fetch every time this page mounts so a freshly created product
+  // appears immediately without requiring a manual browser refresh.
   React.useEffect(() => {
     if (error) {
       alert.error(error);
       dispatch(clearErrors());
     }
     dispatch(getAdminProducts());
-  }, [dispatch, error, alert]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dispatch]);
+
+  // Error side-effect handled separately so it doesn’t re-trigger the fetch
+  React.useEffect(() => {
+    if (error) {
+      alert.error(error);
+      dispatch(clearErrors());
+    }
+  }, [error, alert, dispatch]);
+
+  // Backend already returns products sorted newest-first, but keep the
+  // client-side sort as a safety net in case the order ever changes.
+  const sortedProducts = (products || []).slice().sort(
+    (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+  );
 
   return (
     <>
@@ -64,13 +64,7 @@ function AllAdminProducts() {
           handleDrawerClose={handleDrawerClose}
           theme={theme}
         />
-        <Box
-          component="main"
-          sx={{
-            flexGrow: 1,
-            py: 8,
-          }}
-        >
+        <Box component="main" sx={{ flexGrow: 1, py: 8 }}>
           <Container maxWidth="lg" sx={{ mt: 2, mb: 2 }}>
             <Grid container spacing={3}>
               <Grid item xs={12}>
@@ -79,9 +73,7 @@ function AllAdminProducts() {
                     <CircularProgress />
                   </div>
                 ) : (
-                  <AllProductsList
-                    products={products && sortedProductsArrayByDate}
-                  />
+                  <AllProductsList products={sortedProducts} />
                 )}
               </Grid>
             </Grid>

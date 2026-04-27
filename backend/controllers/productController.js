@@ -33,17 +33,10 @@ exports.createProduct = catchAsyncErrors(async (req, res, _next) => {
 
 // ─── Get Active Categories (distinct categories that have at least 1 product) ─
 exports.getActiveCategories = catchAsyncErrors(async (req, res) => {
-  // distinct returns every unique category string present in the collection.
-  // Because we query the live collection this updates automatically whenever
-  // an admin adds or removes a product.
   const categories = await Product.distinct("category");
-
-  // Filter out any null / empty strings that may exist in dirty data,
-  // then sort alphabetically for a consistent dropdown order.
   const clean = categories
     .filter((c) => c && c.trim().length > 0)
     .sort((a, b) => a.localeCompare(b));
-
   res.status(200).json({ success: true, categories: clean });
 });
 
@@ -70,18 +63,14 @@ exports.getAllProducts = catchAsyncErrors(async (req, res) => {
   });
 });
 
-// ─── Get All Products (Admin — paginated) ──────────────────────────────────
+// ─── Get All Products (Admin — NO pagination, returns every product) ──────────
 exports.getAdminProducts = catchAsyncErrors(async (req, res, _next) => {
-  const page  = Math.max(1, Number(req.query.page)   || 1);
-  const limit = Math.min(100, Number(req.query.limit) || 20);
-  const skip  = (page - 1) * limit;
+  // Admins need to see every product in the catalogue without pagination.
+  // Sorting newest-first so a freshly created product appears at the top.
+  const products      = await Product.find().sort({ createdAt: -1 });
+  const productCount  = products.length;
 
-  const [products, productCount] = await Promise.all([
-    Product.find().skip(skip).limit(limit),
-    Product.countDocuments(),
-  ]);
-
-  res.status(200).json({ success: true, productCount, page, limit, products });
+  res.status(200).json({ success: true, productCount, products });
 });
 
 // ─── Get Single Product ──────────────────────────────────────────────────────────
