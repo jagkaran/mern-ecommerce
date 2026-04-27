@@ -27,7 +27,7 @@ import { useAlert } from "react-alert";
 import { logoutUser } from "../../actions/userAction";
 import MenuIcon from "@mui/icons-material/Menu";
 import CategoryIcon from "@mui/icons-material/Category";
-import InfoIcon from "@mui/icons-material/Info";
+import InfoIcon from "@mui/icons-info";
 
 function Header() {
   const history = useNavigate();
@@ -38,7 +38,6 @@ function Header() {
   const [scrolled, setScrolled] = React.useState(false);
   const open = Boolean(anchorEl);
 
-  // Track scroll position to add a drop-shadow once the user scrolls down
   React.useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -46,51 +45,25 @@ function Header() {
   }, []);
 
   const handleClick = (event) => {
-    if (!isAuthenticated) {
-      login();
-    }
+    if (!isAuthenticated) { login(); return; }
     setAnchorEl(event.currentTarget);
   };
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
-  const { cartItems } = useSelector((state) => state.cart);
-  const [drawerState, setDrawerState] = React.useState({
-    right: false,
-  });
-  const toggleDrawer = (anchor, open) => (event) => {
-    if (
-      event &&
-      event.type === "keydown" &&
-      (event.key === "Tab" || event.key === "Shift")
-    ) {
-      return;
-    }
+  const handleClose = () => setAnchorEl(null);
 
+  const { cartItems } = useSelector((state) => state.cart);
+  const [drawerState, setDrawerState] = React.useState({ right: false });
+
+  const toggleDrawer = (anchor, open) => (event) => {
+    if (event && event.type === "keydown" && (event.key === "Tab" || event.key === "Shift")) return;
     setDrawerState({ ...drawerState, [anchor]: open });
   };
 
   const mobileArrList = [
-    {
-      name: "About Us",
-      url: aboutus,
-    },
-    {
-      name: "Products",
-      url: products,
-    },
-    {
-      name: "Search",
-      url: search,
-    },
-    {
-      name: "Cart",
-      url: cart,
-    },
-    {
-      name: "Account",
-      url: "",
-    },
+    { name: "About Us",  url: aboutus  },
+    { name: "Products",  url: products },
+    { name: "Search",    url: search   },
+    { name: "Cart",      url: cart     },
+    { name: "Account",   url: ""       },
   ];
 
   const mobileList = (anchor) => (
@@ -110,31 +83,16 @@ function Header() {
                 {index === 2 && <SearchIcon />}
                 {index === 3 && (
                   <Badge
-                    anchorOrigin={{
-                      vertical: "top",
-                      horizontal: "right",
-                    }}
-                    badgeContent={cartItems.reduce(
-                      (accum, item) => accum + item.quantity,
-                      0
-                    )}
+                    anchorOrigin={{ vertical: "top", horizontal: "right" }}
+                    badgeContent={cartItems.reduce((a, i) => a + i.quantity, 0)}
                     color="primary"
                   >
                     <ShoppingCartIcon />
                   </Badge>
                 )}
                 {index === 4 && (
-                  <IconButton
-                    size="small"
-                    aria-controls={open ? "account-menu" : undefined}
-                    aria-haspopup="true"
-                    aria-expanded={open ? "true" : undefined}
-                  >
-                    <Avatar
-                      sx={{ width: 28, height: 28 }}
-                      alt={user && user.name}
-                      src={user && user.profilePic?.url}
-                    />
+                  <IconButton size="small">
+                    <Avatar sx={{ width: 28, height: 28 }} alt={user?.name} src={user?.profilePic?.url} />
                   </IconButton>
                 )}
               </ListItemIcon>
@@ -147,59 +105,23 @@ function Header() {
   );
 
   const menuItems = [
-    {
-      id: 2,
-      icon: <PersonIcon fontSize="small" />,
-      name: "Profile",
-      func: account,
-    },
-    {
-      id: 3,
-      icon: <ShoppingBasketIcon fontSize="small" />,
-      name: "Orders",
-      func: orders,
-    },
-    {
-      id: 4,
-      icon: <Logout fontSize="small" />,
-      name: "Logout",
-      func: logout,
-    },
+    { id: 2, icon: <PersonIcon fontSize="small" />,        name: "Profile",   func: account },
+    { id: 3, icon: <ShoppingBasketIcon fontSize="small" />, name: "Orders",    func: orders  },
+    { id: 4, icon: <Logout fontSize="small" />,             name: "Logout",    func: logout  },
   ];
 
   if (user?.role === "admin") {
-    menuItems.unshift({
-      id: 1,
-      icon: <DashboardIcon fontSize="small" />,
-      name: "Dashboard",
-      func: dashboard,
-    });
+    menuItems.unshift({ id: 1, icon: <DashboardIcon fontSize="small" />, name: "Dashboard", func: dashboard });
   }
 
-  function dashboard() {
-    history("/dashboard", { replace: true });
-  }
-  function products() {
-    history("/products", { replace: true });
-  }
-  function search() {
-    history("/search", { replace: true });
-  }
-  function cart() {
-    history("/cart", { replace: true });
-  }
-  function aboutus() {
-    history("/aboutus", { replace: true });
-  }
-  function login() {
-    history("/signin", { replace: true });
-  }
-  function account() {
-    history("/account", { replace: true });
-  }
-  function orders() {
-    history("/myorders", { replace: true });
-  }
+  function dashboard() { history("/dashboard",  { replace: true }); }
+  function products()  { history("/products",   { replace: true }); }
+  function search()    { history("/search",      { replace: true }); }
+  function cart()      { history("/cart",        { replace: true }); }
+  function aboutus()   { history("/aboutus",     { replace: true }); }
+  function login()     { history("/signin",      { replace: true }); }
+  function account()   { history("/account",     { replace: true }); }
+  function orders()    { history("/myorders",    { replace: true }); }
   function logout() {
     dispatch(logoutUser());
     history("/", { replace: true });
@@ -207,48 +129,36 @@ function Header() {
   }
 
   return (
+    // fixed + left-0 right-0 = truly pinned to top of viewport regardless of any
+    // parent overflow/transform. z-50 keeps it above MUI modals (z-index 1300 is
+    // MUI's modal, but drawers are z-1200; z-50 = 50 in Tailwind = 50 which is
+    // lower, so we inline a higher value via style prop).
     <header
+      style={{ zIndex: 1100 }}
       className={[
-        // ── Sticky positioning ──────────────────────────────────────
-        "sticky top-0 z-50",
-        // ── Size & layout ───────────────────────────────────────────
+        "fixed top-0 left-0 right-0",
         "h-16 sm:h-20 flex items-center w-full",
-        // ── Background + frosted-glass blur ─────────────────────────
-        "bg-white/90 backdrop-blur-md",
-        // ── Border that only appears after scrolling ─────────────────
-        scrolled
-          ? "border-b border-gray-200 shadow-sm"
-          : "border-b border-transparent",
-        // ── Smooth transition on scroll ──────────────────────────────
+        "bg-white/95 backdrop-blur-md",
+        scrolled ? "border-b border-gray-200 shadow-sm" : "border-b border-transparent",
         "transition-shadow transition-colors duration-200",
       ].join(" ")}
     >
       <div className="container mx-auto px-6 flex items-center justify-between">
-        <div className="uppercase text-gray-800 dark:text-white font-black text-3xl">
+        {/* Logo */}
+        <div className="uppercase text-gray-800 font-black text-3xl">
           <Link to="/">Click.it</Link>
         </div>
-        <div className="flex items-center">
-          <nav className="font-sen text-gray-800 dark:text-white uppercase text-lg lg:flex items-center hidden">
-            <a href="/aboutus" className="py-2 px-6 flex">
-              About Us
-            </a>
-            <a href="/products" className="py-2 px-6 flex">
-              Products
-            </a>
-            <a href="/search" className="py-2 px-2 flex">
-              <SearchIcon />
-            </a>
 
+        {/* Desktop nav */}
+        <div className="flex items-center">
+          <nav className="font-sen text-gray-800 uppercase text-lg lg:flex items-center hidden">
+            <a href="/aboutus" className="py-2 px-6 flex">About Us</a>
+            <a href="/products" className="py-2 px-6 flex">Products</a>
+            <a href="/search" className="py-2 px-2 flex"><SearchIcon /></a>
             <a href="/cart" className="py-2 px-2 flex">
               <Badge
-                anchorOrigin={{
-                  vertical: "top",
-                  horizontal: "right",
-                }}
-                badgeContent={cartItems.reduce(
-                  (accum, item) => accum + item.quantity,
-                  0
-                )}
+                anchorOrigin={{ vertical: "top", horizontal: "right" }}
+                badgeContent={cartItems.reduce((a, i) => a + i.quantity, 0)}
                 color="primary"
               >
                 <ShoppingCartIcon />
@@ -265,11 +175,7 @@ function Header() {
                     aria-haspopup="true"
                     aria-expanded={open ? "true" : undefined}
                   >
-                    <Avatar
-                      sx={{ width: 28, height: 28 }}
-                      alt={user && user.name}
-                      src={user && user.profilePic?.url}
-                    />
+                    <Avatar sx={{ width: 28, height: 28 }} alt={user?.name} src={user?.profilePic?.url} />
                   </IconButton>
                 </Tooltip>
                 <Menu
@@ -284,20 +190,10 @@ function Header() {
                       overflow: "visible",
                       filter: "drop-shadow(0px 2px 8px rgba(0,0,0,0.32))",
                       mt: 1.5,
-                      "& .MuiAvatar-root": {
-                        width: 28,
-                        height: 28,
-                        ml: -0.5,
-                        mr: 1,
-                      },
+                      "& .MuiAvatar-root": { width: 28, height: 28, ml: -0.5, mr: 1 },
                       "&:before": {
-                        content: '""',
-                        display: "block",
-                        position: "absolute",
-                        top: 0,
-                        right: 14,
-                        width: 10,
-                        height: 10,
+                        content: '""', display: "block", position: "absolute",
+                        top: 0, right: 14, width: 10, height: 10,
                         bgcolor: "background.paper",
                         transform: "translateY(-50%) rotate(45deg)",
                         zIndex: 0,
@@ -316,27 +212,17 @@ function Header() {
                 </Menu>
               </>
             ) : (
-              <>
-                <a href="/signin" className="py-2 px-2 flex">
-                  <AccountCircleIcon />
-                </a>
-              </>
+              <a href="/signin" className="py-2 px-2 flex"><AccountCircleIcon /></a>
             )}
           </nav>
 
+          {/* Mobile hamburger */}
           <div className="lg:hidden flex flex-col ml-4">
             {["right"].map((anchor) => (
               <React.Fragment key={anchor}>
-                <IconButton
-                  onClick={toggleDrawer(anchor, true)}
-                  size="small"
-                  aria-controls={open ? "account-menu" : undefined}
-                  aria-haspopup="true"
-                  aria-expanded={open ? "true" : undefined}
-                >
+                <IconButton onClick={toggleDrawer(anchor, true)} size="small">
                   <MenuIcon />
                 </IconButton>
-
                 <SwipeableDrawer
                   anchor={anchor}
                   open={drawerState[anchor]}

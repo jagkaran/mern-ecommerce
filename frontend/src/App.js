@@ -19,38 +19,38 @@ import { loadStripe } from "@stripe/stripe-js";
 import Home from "./components/Home/Home";
 
 // Lazy-loaded route chunks
-const Products = lazy(() => import("./components/Product/Products"));
+const Products         = lazy(() => import("./components/Product/Products"));
 const ProductDetailsV2 = lazy(() => import("./components/Product/PDP/ProductDetailsV2"));
-const Search = lazy(() => import("./components/Search"));
-const Login = lazy(() => import("./components/Login/Login"));
-const Register = lazy(() => import("./components/Login/Register"));
-const Account = lazy(() => import("./components/Account/Account"));
-const UpdatePassword = lazy(() => import("./components/Account/UpdatePassword"));
-const ForgotPassword = lazy(() => import("./components/Account/ForgotPassword"));
-const ResetPassword = lazy(() => import("./components/Account/ResetPassword"));
-const Basket = lazy(() => import("./components/Cart/Basket"));
-const Shipping = lazy(() => import("./components/Checkout/Shipping"));
-const Success = lazy(() => import("./components/Checkout/Success"));
-const MyOrders = lazy(() => import("./components/Order/MyOrders"));
-const OrderDetails = lazy(() => import("./components/Order/OrderDetails"));
-const AboutUs = lazy(() => import("./components/AboutUs"));
-const NotFound = lazy(() => import("./components/NotFound"));
+const Search           = lazy(() => import("./components/Search"));
+const Login            = lazy(() => import("./components/Login/Login"));
+const Register         = lazy(() => import("./components/Login/Register"));
+const Account          = lazy(() => import("./components/Account/Account"));
+const UpdatePassword   = lazy(() => import("./components/Account/UpdatePassword"));
+const ForgotPassword   = lazy(() => import("./components/Account/ForgotPassword"));
+const ResetPassword    = lazy(() => import("./components/Account/ResetPassword"));
+const Basket           = lazy(() => import("./components/Cart/Basket"));
+const Shipping         = lazy(() => import("./components/Checkout/Shipping"));
+const Success          = lazy(() => import("./components/Checkout/Success"));
+const MyOrders         = lazy(() => import("./components/Order/MyOrders"));
+const OrderDetails     = lazy(() => import("./components/Order/OrderDetails"));
+const AboutUs          = lazy(() => import("./components/AboutUs"));
+const NotFound         = lazy(() => import("./components/NotFound"));
 
 // Admin chunk — only downloaded if user is admin
-const Dashboard = lazy(() => import("./components/Admin/DashBoard"));
-const AllAdminOrders = lazy(() => import("./components/Admin/AllOrders/AllAdminOrders"));
-const AllAdminUsers = lazy(() => import("./components/Admin/AllUsers/AllAdminUsers"));
+const Dashboard        = lazy(() => import("./components/Admin/DashBoard"));
+const AllAdminOrders   = lazy(() => import("./components/Admin/AllOrders/AllAdminOrders"));
+const AllAdminUsers    = lazy(() => import("./components/Admin/AllUsers/AllAdminUsers"));
 const AllAdminProducts = lazy(() => import("./components/Admin/AllProducts/AllAdminProducts"));
-const CreateProduct = lazy(() => import("./components/Admin/AllProducts/CreateProduct"));
-const UpdateProduct = lazy(() => import("./components/Admin/AllProducts/UpdateProduct"));
-const UpdateOrder = lazy(() => import("./components/Admin/AllOrders/UpdateOrder"));
-const UpdateUser = lazy(() => import("./components/Admin/AllUsers/UpdateUser"));
+const CreateProduct    = lazy(() => import("./components/Admin/AllProducts/CreateProduct"));
+const UpdateProduct    = lazy(() => import("./components/Admin/AllProducts/UpdateProduct"));
+const UpdateOrder      = lazy(() => import("./components/Admin/AllOrders/UpdateOrder"));
+const UpdateUser       = lazy(() => import("./components/Admin/AllUsers/UpdateUser"));
 
 const theme = createTheme({
   palette: {
-    primary: { main: grey[900] },
+    primary:   { main: grey[900] },
     secondary: { main: grey[800] },
-    appBar: { main: "#FFFFFF" },
+    appBar:    { main: "#FFFFFF" },
   },
 });
 
@@ -65,34 +65,32 @@ function App() {
   const [stripeApiKey, setStripeApiKey] = useState("");
   const { isAuthenticated, user } = useSelector((state) => state.user);
 
-  // Load the current user session on mount.
-  // A 401 here is expected for unauthenticated visitors — Redux handles
-  // it gracefully by setting isAuthenticated: false.
-  useEffect(() => {
-    dispatch(loadUser());
-  }, [dispatch]);
+  useEffect(() => { dispatch(loadUser()); }, [dispatch]);
 
-  // Fetch the Stripe publishable key only after the user is authenticated.
-  // The /getstripeapikey endpoint requires a valid session cookie, so calling
-  // it before login always returns 401. Splitting into a separate effect
-  // also prevents an unhandled rejection from crashing the app for visitors.
   useEffect(() => {
     if (!isAuthenticated) return;
     axios
       .get("/api/v1/getstripeapikey")
       .then(({ data }) => setStripeApiKey(data.stripeApiKey))
-      .catch(() => {
-        // Stripe key unavailable — /shipping will show a loader until
-        // a subsequent successful fetch or page reload after login.
-      });
+      .catch(() => {});
   }, [isAuthenticated]);
 
   return (
-    <div className="bg-gray-100">
-      <main className="dark:bg-gray-800 bg-white mx-auto overflow-y-auto">
-        <Router>
-          <ThemeProvider theme={theme}>
-            <Header />
+    // bg-white on the outermost shell; NO overflow-y-auto here — that was
+    // silently breaking `position:sticky`. Page-level scrolling happens on
+    // <body> (the default), which is what the browser needs for sticky/fixed.
+    <div className="bg-white min-h-screen">
+      <Router>
+        <ThemeProvider theme={theme}>
+          {/* Fixed header — sits outside the scroll flow */}
+          <Header />
+
+          {/*
+            pt-16 (64 px) on mobile / pt-20 (80 px) on sm+ matches the header
+            heights defined in Header.js (h-16 / sm:h-20) so page content
+            starts exactly below the header and nothing is hidden underneath it.
+          */}
+          <main className="pt-16 sm:pt-20">
             <Suspense fallback={<PageLoader />}>
               <Routes>
                 <Route path="/" element={<Home />} />
@@ -105,9 +103,7 @@ function App() {
                 <Route path="/password/forgot" element={<ForgotPassword />} />
                 <Route path="/cart" element={<Basket />} />
                 <Route path="/aboutus" element={<AboutUs />} />
-                <Route
-                  element={<ProtectedRoute isAuthenticated={isAuthenticated} />}
-                >
+                <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} />}>
                   <Route path="/password/update" element={<UpdatePassword />} />
                   <Route
                     path="/shipping"
@@ -125,47 +121,23 @@ function App() {
                   <Route path="/success" element={<Success />} />
                   <Route path="/myorders" element={<MyOrders />} />
                   <Route path="/order/:id" element={<OrderDetails />} />
-                  <Route
-                    path="/dashboard"
-                    element={user?.role === "admin" ? <Dashboard /> : <Account />}
-                  />
-                  <Route
-                    path="/admin/products"
-                    element={user?.role === "admin" ? <AllAdminProducts /> : <Account />}
-                  />
-                  <Route
-                    path="/admin/orders"
-                    element={user?.role === "admin" ? <AllAdminOrders /> : <Account />}
-                  />
-                  <Route
-                    path="/admin/users"
-                    element={user?.role === "admin" ? <AllAdminUsers /> : <Account />}
-                  />
-                  <Route
-                    path="/admin/product/new"
-                    element={user?.role === "admin" ? <CreateProduct /> : <Account />}
-                  />
-                  <Route
-                    path="/admin/product/update/:id"
-                    element={user?.role === "admin" ? <UpdateProduct /> : <Account />}
-                  />
-                  <Route
-                    path="/admin/user/update/:id"
-                    element={user?.role === "admin" ? <UpdateUser /> : <Account />}
-                  />
-                  <Route
-                    path="/admin/order/update/:id"
-                    element={user?.role === "admin" ? <UpdateOrder /> : <Account />}
-                  />
+                  <Route path="/dashboard"              element={user?.role === "admin" ? <Dashboard />        : <Account />} />
+                  <Route path="/admin/products"         element={user?.role === "admin" ? <AllAdminProducts /> : <Account />} />
+                  <Route path="/admin/orders"           element={user?.role === "admin" ? <AllAdminOrders />   : <Account />} />
+                  <Route path="/admin/users"            element={user?.role === "admin" ? <AllAdminUsers />    : <Account />} />
+                  <Route path="/admin/product/new"      element={user?.role === "admin" ? <CreateProduct />    : <Account />} />
+                  <Route path="/admin/product/update/:id" element={user?.role === "admin" ? <UpdateProduct /> : <Account />} />
+                  <Route path="/admin/user/update/:id"  element={user?.role === "admin" ? <UpdateUser />      : <Account />} />
+                  <Route path="/admin/order/update/:id" element={user?.role === "admin" ? <UpdateOrder />     : <Account />} />
                 </Route>
                 <Route path="/password/reset/:token" element={<ResetPassword />} />
                 <Route path="/notfound" element={<NotFound />} />
                 <Route path="*" element={<Navigate to="/notfound" />} />
               </Routes>
             </Suspense>
-          </ThemeProvider>
-        </Router>
-      </main>
+          </main>
+        </ThemeProvider>
+      </Router>
     </div>
   );
 }
