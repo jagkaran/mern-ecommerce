@@ -3,7 +3,10 @@ import ProductCard from "./ProductCard";
 
 function ProductGrid({ products }) {
   return (
-    <div className="grid grid-cols-1 gap-y-10 sm:grid-cols-2 gap-x-6 place-items-center lg:grid-cols-3 xl:grid-cols-4 xl:gap-x-8">
+    // items-stretch (instead of place-items-center) makes every card in a
+    // row stretch to the same height — the tallest card sets the row height
+    // and every sibling card fills that height via h-full.
+    <div className="grid grid-cols-1 gap-y-6 sm:grid-cols-2 gap-x-6 items-stretch lg:grid-cols-3 xl:grid-cols-4 xl:gap-x-8">
       {products &&
         products.map(
           ({
