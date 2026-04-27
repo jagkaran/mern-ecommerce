@@ -19,6 +19,13 @@ const compression = require("compression");
 // Loading it again here with a cwd-relative path caused a NODE_ENV
 // case-mismatch bug and could silently overwrite vars with wrong values.
 
+// Trust the first proxy in front of the app (nginx, Render, Railway, etc.).
+// Required so express-rate-limit can read the real client IP from the
+// X-Forwarded-For header without throwing ERR_ERL_UNEXPECTED_X_FORWARDED_FOR.
+// In production behind multiple proxies, increase the number accordingly
+// (e.g. 2 for Render + Cloudflare). In local dev with no proxy this is a no-op.
+app.set("trust proxy", 1);
+
 // HTTP security headers
 app.use(
   helmet({
