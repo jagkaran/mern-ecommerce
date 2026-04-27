@@ -1,39 +1,53 @@
-// @ts-check
-const { test, expect } = require("@playwright/test");
-const { loginViaUI } = require("./helpers/auth");
+// e2e/account.spec.js
+const { test, expect } = require('@playwright/test');
+const { loginViaUI } = require('./helpers/auth');
 
-// ---------------------------------------------------------------------------
-// Account / Profile E2E Tests
-// Covers: profile page renders, update-password validation
-// ---------------------------------------------------------------------------
+const USER_EMAIL = process.env.TEST_USER_EMAIL || 'test@example.com';
+const USER_PASS = process.env.TEST_USER_PASS || 'Test@1234';
 
-test.describe("Account page", () => {
-  test.skip(
-    !process.env.TEST_EMAIL || !process.env.TEST_PASSWORD,
-    "Set TEST_EMAIL and TEST_PASSWORD env vars to run account tests"
-  );
-
+test.describe('Account page', () => {
   test.beforeEach(async ({ page }) => {
-    await loginViaUI(page, process.env.TEST_EMAIL, process.env.TEST_PASSWORD);
-    await page.goto("/account");
+    await loginViaUI(page, USER_EMAIL, USER_PASS);
+    await page.goto('/me');
   });
 
-  test("account page renders user info", async ({ page }) => {
-    await expect(page.getByText(/my profile|account|profile/i).first()).toBeVisible({ timeout: 10000 });
+  test('account page renders user info', async ({ page }) => {
+    await expect(
+      page
+        .getByText(new RegExp(USER_EMAIL, 'i'))
+        .or(page.getByRole('heading', { name: /profile|account|my profile/i }))
+        .first()
+    ).toBeVisible({ timeout: 8000 });
   });
 
-  test("update password page renders", async ({ page }) => {
-    await page.goto("/password/update");
-    await expect(page.getByLabel(/old password|current password/i)).toBeVisible({ timeout: 10000 });
-    await expect(page.getByLabel(/new password/i)).toBeVisible();
-    await expect(page.getByLabel(/confirm/i)).toBeVisible();
+  test('update password page renders', async ({ page }) => {
+    await page.goto('/password/update');
+    await expect(
+      page
+        .locator(
+          'input[name="oldPassword"], input[id*="old"], input[placeholder*="old" i]'
+        )
+        .first()
+    ).toBeVisible({ timeout: 8000 });
   });
 
-  test("update password shows error if new passwords don't match", async ({ page }) => {
-    await page.goto("/password/update");
-    await page.getByLabel(/new password/i).fill("NewPass@1");
-    await page.getByLabel(/confirm/i).fill("Different@1");
-    await page.getByLabel(/confirm/i).blur();
-    await expect(page.getByText(/do not match|passwords must match/i)).toBeVisible();
+  test("update password shows error if new passwords don't match", async ({
+    page,
+  }) => {
+    await page.goto('/password/update');
+    const newPass = page
+      .locator('input[name="newPassword"], input[id*="new"]')
+      .first();
+    const confirmPass = page
+      .locator('input[name="confirmPassword"], input[id*="confirm"]')
+      .first();
+    await newPass.fill('NewPass@1234');
+    await confirmPass.fill('DifferentPass@999');
+    await confirmPass.blur();
+    await expect(
+      page
+        .getByText(/passwords do not match|password mismatch|must match/i)
+        .first()
+    ).toBeVisible({ timeout: 8000 });
   });
 });
