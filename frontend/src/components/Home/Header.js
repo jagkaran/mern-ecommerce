@@ -35,7 +35,16 @@ function Header() {
   const alert = useAlert();
   const { user, isAuthenticated } = useSelector((state) => state.user);
   const [anchorEl, setAnchorEl] = React.useState(null);
+  const [scrolled, setScrolled] = React.useState(false);
   const open = Boolean(anchorEl);
+
+  // Track scroll position to add a drop-shadow once the user scrolls down
+  React.useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   const handleClick = (event) => {
     if (!isAuthenticated) {
       login();
@@ -198,7 +207,22 @@ function Header() {
   }
 
   return (
-    <header className="h-24 sm:h-32 flex items-center z-30 w-full ">
+    <header
+      className={[
+        // ── Sticky positioning ──────────────────────────────────────
+        "sticky top-0 z-50",
+        // ── Size & layout ───────────────────────────────────────────
+        "h-16 sm:h-20 flex items-center w-full",
+        // ── Background + frosted-glass blur ─────────────────────────
+        "bg-white/90 backdrop-blur-md",
+        // ── Border that only appears after scrolling ─────────────────
+        scrolled
+          ? "border-b border-gray-200 shadow-sm"
+          : "border-b border-transparent",
+        // ── Smooth transition on scroll ──────────────────────────────
+        "transition-shadow transition-colors duration-200",
+      ].join(" ")}
+    >
       <div className="container mx-auto px-6 flex items-center justify-between">
         <div className="uppercase text-gray-800 dark:text-white font-black text-3xl">
           <Link to="/">Click.it</Link>
