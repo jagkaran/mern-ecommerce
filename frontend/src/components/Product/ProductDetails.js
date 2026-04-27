@@ -53,7 +53,7 @@ function ProductDetails() {
   };
 
   const handleClickOpen = () => setOpen(true);
-  const handleClose     = () => setOpen(false);
+  const handleClose = () => setOpen(false);
 
   const reviewSubmitHandler = () => {
     const myForm = new FormData();
@@ -64,20 +64,30 @@ function ProductDetails() {
     setOpen(false);
   };
 
+  // Initial fetch + error handling
   useEffect(() => {
     if (error) {
-      return alert.error(error);
+      alert.error(error);
+      dispatch(clearErrors());
+      return;
     }
     if (reviewError) {
       alert.error(reviewError);
       dispatch(clearErrors());
+      return;
     }
+    dispatch(getProductDetails(id));
+  }, [dispatch, id, error, reviewError]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Re-fetch product after a successful review submission so the new
+  // createdAt field appears immediately without a page reload.
+  useEffect(() => {
     if (success) {
       alert.success("Review Submitted Successfully");
       dispatch({ type: "NewReviewReset" });
+      dispatch(getProductDetails(id));
     }
-    dispatch(getProductDetails(id));
-  }, [dispatch, id, error, alert, reviewError, success]);
+  }, [success]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <>

@@ -45,21 +45,23 @@ export const getProductDetails = (id) => async (dispatch) => {
   try {
     dispatch({ type: "ProductDetailsRequest" });
     const { data } = await axios.get(`/api/v1/product/${id}`);
-    dispatch({ type: "ProductDetailsSuccess", payload: data });
+    // JSON round-trip converts all Date objects (e.g. review.createdAt returned
+    // by Mongoose) into plain ISO strings. Without this, Immer wraps the Date
+    // in a Proxy, new Date(proxy) returns Invalid Date, and the date label
+    // never renders in Reviewcard.
+    const safeData = JSON.parse(JSON.stringify(data));
+    dispatch({ type: "ProductDetailsSuccess", payload: safeData });
   } catch (error) {
     dispatch({ type: "ProductDetailsFailure", payload: error.response.data.message });
   }
 };
 
-// NEW REVIEW — send as plain JSON (not FormData) so body-parser can read it
-// and the createdAt timestamp is reliably saved in the subdocument.
+// NEW REVIEW — send as plain JSON (not FormData) so body-parser can read it.
 export const newReview = (reviewData) => async (dispatch) => {
   try {
     dispatch({ type: "NewReviewRequest" });
 
-    // Convert FormData → plain object so we can send as JSON.
-    // The original code sent FormData with Content-Type: application/json
-    // which caused body-parser to silently drop the fields.
+    // FormData cannot be serialised as JSON — convert to plain object first.
     let payload;
     if (reviewData instanceof FormData) {
       payload = Object.fromEntries(reviewData.entries());
