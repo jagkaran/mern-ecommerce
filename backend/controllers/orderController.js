@@ -22,12 +22,16 @@ exports.createOrder = catchAsyncErrors(async (req, res, _next) => {
   res.status(201).json({ success: true, order });
 });
 
-// Get single order details
+// Get single order details — owner or admin only
 exports.getOrderDetails = catchAsyncErrors(async (req, res, next) => {
   const order = await Order.findById(req.params.id).populate("user", "name email");
 
   if (!order) {
     return next(new ErrorHandler("Order not found", 404));
+  }
+
+  if (order.user._id.toString() !== req.user._id.toString() && req.user.role !== "admin") {
+    return next(new ErrorHandler("You are not authorized to view this order", 403));
   }
 
   res.status(200).json({ success: true, order });
