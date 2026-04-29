@@ -18,6 +18,8 @@ dist/
 # ─── Test & Coverage ──────────────────────────────────────────────────────────
 coverage/
 frontend/coverage/
+test-results/
+playwright-report/
 # Temp file written by MongoMemoryServer bridge between Jest processes
 backend/__tests__/.mongo-uri
 
