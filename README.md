@@ -2,7 +2,6 @@
 
 > Full-stack e-commerce platform built with MongoDB, Express, React and Node.js with enterprise-grade security, SDLC automation, and comprehensive testing.
 
-![GitHub Actions continuous integration badge displaying the current build status for the project](https://github.com/jagkaran/mern-ecommerce/actions/workflows/ci.yml/badge.svg)
 ![Node Version](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
@@ -10,16 +9,16 @@
 
 ## 📦 Tech Stack
 
-| Layer      | Technology |
-|------------|------------|
-| Frontend   | React 17, Redux Toolkit, Material UI, Tailwind CSS |
-| Backend    | Node.js v20+, Express 4, Mongoose 8 |
-| Database   | MongoDB Atlas |
-| Auth       | JWT (httpOnly + secure + sameSite=strict cookie) |
-| Storage    | Cloudinary |
-| Payments   | Stripe |
-| Testing    | Jest + Supertest + mongodb-memory-server (unit/integration), Playwright (E2E) |
-| CI/CD      | GitHub Actions → Render |
+| Layer    | Technology                                                                    |
+| -------- | ----------------------------------------------------------------------------- |
+| Frontend | React 17, Redux Toolkit, Material UI, Tailwind CSS                            |
+| Backend  | Node.js v20+, Express 4, Mongoose 8                                           |
+| Database | MongoDB Atlas                                                                 |
+| Auth     | JWT (httpOnly + secure + sameSite=strict cookie)                              |
+| Storage  | Cloudinary                                                                    |
+| Payments | Stripe                                                                        |
+| Testing  | Jest + Supertest + mongodb-memory-server (unit/integration), Playwright (E2E) |
+| CI/CD    | GitHub Actions → Render                                                       |
 
 ---
 
@@ -91,68 +90,73 @@ node agents/orchestrator.js                        # full pipeline
 node agents/orchestrator.js --agents=security,test  # selective
 ```
 
-| Agent | Purpose | Critical |
-|-------|---------|----------|
-| security | npm audit, middleware checks, JWT flags, secret scan | ✅ |
-| dev | Auto-patch known bugs (idempotent, safe to re-run) | ✅ |
-| quality | ESLint v9 flat config + Prettier | ⚠️ |
-| test | Jest + mongodb-memory-server (no real DB needed) | ✅ |
-| coverage | Line coverage threshold ≥65% | ⚠️ |
-| perf | Static scan for performance anti-patterns | ⚠️ |
-| critic | Architecture & HTTP status code review | ⚠️ |
-| readme | Regenerates this file | ⚠️ |
+| Agent    | Purpose                                              | Critical |
+| -------- | ---------------------------------------------------- | -------- |
+| security | npm audit, middleware checks, JWT flags, secret scan | ✅       |
+| dev      | Auto-patch known bugs (idempotent, safe to re-run)   | ✅       |
+| quality  | ESLint v9 flat config + Prettier                     | ⚠️       |
+| test     | Jest + mongodb-memory-server (no real DB needed)     | ✅       |
+| coverage | Line coverage threshold ≥65%                         | ⚠️       |
+| perf     | Static scan for performance anti-patterns            | ⚠️       |
+| critic   | Architecture & HTTP status code review               | ⚠️       |
+| readme   | Regenerates this file                                | ⚠️       |
 
 ---
 
 ## 🔑 Key API Routes
 
 ### Authentication
-| Method | Route | Description |
-|--------|-------|-------------|
-| POST | /api/v1/register | Register user |
-| POST | /api/v1/login | Login (rate-limited: 20 req/15 min) |
-| GET | /api/v1/logout | Logout |
-| GET | /api/v1/me | Get own profile |
-| PUT | /api/v1/password/update | Change password |
-| POST | /api/v1/password/forgot | Forgot password (email link) |
-| PUT | /api/v1/password/reset/:token | Reset password |
+
+| Method | Route                         | Description                         |
+| ------ | ----------------------------- | ----------------------------------- |
+| POST   | /api/v1/register              | Register user                       |
+| POST   | /api/v1/login                 | Login (rate-limited: 20 req/15 min) |
+| GET    | /api/v1/logout                | Logout                              |
+| GET    | /api/v1/me                    | Get own profile                     |
+| PUT    | /api/v1/password/update       | Change password                     |
+| POST   | /api/v1/password/forgot       | Forgot password (email link)        |
+| PUT    | /api/v1/password/reset/:token | Reset password                      |
 
 ### Products
-| Method | Route | Description |
-|--------|-------|-------------|
-| GET | /api/v1/products | All products (paginated, filterable, cached) |
-| GET | /api/v1/products/categories | Get active categories (cached) |
-| GET | /api/v1/product/:id | Product detail (cached) |
-| POST | /api/v1/admin/product/new | Create product (admin) |
-| PUT | /api/v1/admin/product/:id | Update product (admin) |
-| DELETE | /api/v1/admin/product/:id | Delete product (admin) |
-| PUT | /api/v1/review | Add/update review |
-| GET | /api/v1/reviews | Get product reviews |
-| DELETE | /api/v1/reviews | Delete review |
+
+| Method | Route                       | Description                                  |
+| ------ | --------------------------- | -------------------------------------------- |
+| GET    | /api/v1/products            | All products (paginated, filterable, cached) |
+| GET    | /api/v1/products/categories | Get active categories (cached)               |
+| GET    | /api/v1/product/:id         | Product detail (cached)                      |
+| POST   | /api/v1/admin/product/new   | Create product (admin)                       |
+| PUT    | /api/v1/admin/product/:id   | Update product (admin)                       |
+| DELETE | /api/v1/admin/product/:id   | Delete product (admin)                       |
+| PUT    | /api/v1/review              | Add/update review                            |
+| GET    | /api/v1/reviews             | Get product reviews                          |
+| DELETE | /api/v1/reviews             | Delete review                                |
 
 ### Orders
-| Method | Route | Description |
-|--------|-------|-------------|
-| POST | /api/v1/order/new | Create order (with transaction) |
-| GET | /api/v1/order/:id | Order detail |
-| GET | /api/v1/orders/me | My orders (paginated) |
-| GET | /api/v1/admin/orders | All orders (admin, paginated) |
-| PUT | /api/v1/admin/order/:id | Update order status (admin) |
-| DELETE | /api/v1/admin/order/:id | Delete order (admin) |
+
+| Method | Route                   | Description                     |
+| ------ | ----------------------- | ------------------------------- |
+| POST   | /api/v1/order/new       | Create order (with transaction) |
+| GET    | /api/v1/order/:id       | Order detail                    |
+| GET    | /api/v1/orders/me       | My orders (paginated)           |
+| GET    | /api/v1/admin/orders    | All orders (admin, paginated)   |
+| PUT    | /api/v1/admin/order/:id | Update order status (admin)     |
+| DELETE | /api/v1/admin/order/:id | Delete order (admin)            |
 
 ### Payments
-| Method | Route | Description |
-|--------|-------|-------------|
-| POST | /api/v1/payment/process | Process payment (Stripe) |
-| GET | /api/v1/getstripeapikey | Get Stripe publishable key |
+
+| Method | Route                   | Description                |
+| ------ | ----------------------- | -------------------------- |
+| POST   | /api/v1/payment/process | Process payment (Stripe)   |
+| GET    | /api/v1/getstripeapikey | Get Stripe publishable key |
 
 ### Users (Admin)
-| Method | Route | Description |
-|--------|-------|-------------|
-| GET | /api/v1/admin/users | Get all users (paginated) |
-| GET | /api/v1/admin/user/:id | Get single user |
-| PUT | /api/v1/admin/user/:id | Update user role |
-| DELETE | /api/v1/admin/user/:id | Delete user |
+
+| Method | Route                  | Description               |
+| ------ | ---------------------- | ------------------------- |
+| GET    | /api/v1/admin/users    | Get all users (paginated) |
+| GET    | /api/v1/admin/user/:id | Get single user           |
+| PUT    | /api/v1/admin/user/:id | Update user role          |
+| DELETE | /api/v1/admin/user/:id | Delete user               |
 
 ---
 
@@ -191,15 +195,16 @@ npm run e2e:ui
 npm run e2e:ci
 ```
 
-*Jest tests use an in-memory MongoDB — no local database required.*
+_Jest tests use an in-memory MongoDB — no local database required._
 
-*Playwright E2E tests cover auth, products, cart, checkout, and admin flows.*
+_Playwright E2E tests cover auth, products, cart, checkout, and admin flows._
 
 ---
 
 ## 📊 Coverage
 
 Current coverage thresholds:
+
 - Statements: 65%
 - Branches: 30%
 - Functions: 40%
@@ -280,24 +285,28 @@ SMTP_PASSWORD=your-app-password
 ## ✨ Recent Improvements
 
 ### Performance
+
 - Added database indexes for frequently queried fields
 - Optimized product listing queries with parallel execution
 - Implemented in-memory caching for frequently accessed data
 - Added query projection and lean queries for better performance
 
 ### Security
+
 - Fixed race conditions in stock updates using atomic operations
 - Added transaction support to order creation
 - Implemented comprehensive input validation on all endpoints
 - Added rate limiting to product endpoints
 
 ### Code Quality
+
 - Added proper error handling to Cloudinary operations
 - Fixed missing null checks in controllers
 - Implemented transaction utilities for data consistency
 - Added comprehensive validation middleware
 
 ### Testing
+
 - Enhanced test coverage with mongodb-memory-server
 - Added E2E tests with Playwright
 - Implemented automated SDLC agent pipeline
@@ -307,27 +316,33 @@ SMTP_PASSWORD=your-app-password
 ## 🐛 Troubleshooting
 
 ### MongoDB Connection Issues
+
 - Ensure `DB_URI` is correctly set
 - Check IP whitelist in MongoDB Atlas
 - Verify connection string format
 
 ### Cloudinary Upload Issues
+
 - Ensure API credentials are correct
 - Check folder permissions
 - Verify image format and size
 
 ### Test Failures
+
 - Ensure `mongodb-memory-server` is installed
 - Check that all mocks are properly configured
 - Verify test environment variables
 
 ### Rate Limiting Issues
+
 - Adjust rate limits in `backend/app.js`
 - Check `trust proxy` setting
 - Verify client IP forwarding
 
 ### Package Installation Issues
+
 If you encounter permission issues with npm:
+
 ```bash
 sudo chown -R $(whoami) ~/.npm
 npm install
@@ -345,6 +360,7 @@ npm install
 6. Open a Pull Request
 
 ### Development Guidelines
+
 - Run the SDLC agent pipeline before committing
 - Ensure all tests pass
 - Follow code conventions
@@ -368,4 +384,4 @@ This project is licensed under the MIT License.
 
 ---
 
-*Generated by readme-agent v1.0.0 — 2026-04-30*
+_Generated by readme-agent v1.0.0 — 2026-04-30_
