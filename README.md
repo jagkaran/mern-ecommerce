@@ -2,7 +2,7 @@
 
 > Full-stack e-commerce platform built with MongoDB, Express, React and Node.js with enterprise-grade security, SDLC automation, and comprehensive testing.
 
-![CI](https://github.com/jagkaran/mern-ecommerce/actions/workflows/ci.yml/badge.svg)
+![GitHub Actions continuous integration badge displaying the current build status for the project](https://github.com/jagkaran/mern-ecommerce/actions/workflows/ci.yml/badge.svg)
 ![Node Version](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
