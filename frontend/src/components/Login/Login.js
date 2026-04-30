@@ -52,8 +52,13 @@ function Login() {
       dispatch(clearErrors());
     }
     if (isAuthenticated) {
-      history(`/${redirect}`);
-      window.location.reload();
+      // React Router navigate is sufficient — the login action already wrote
+      // the authenticated user into Redux, so the Navbar and any
+      // ProtectedRoute components re-render automatically via their
+      // useSelector subscriptions. A hard reload is not needed and would
+      // destroy Redux state, trigger an extra loadUser round-trip, and cause
+      // a jarring white flash.
+      history(`/${redirect}`, { replace: true });
     }
   }, [error, alert, history, redirect, isAuthenticated, dispatch]);
 
@@ -124,7 +129,6 @@ function Login() {
                     helperText: errors.password,
                   })}
                   InputProps={{
-                    // <-- This is where the toggle button is added.
                     endAdornment: (
                       <InputAdornment position="end">
                         <IconButton
