@@ -6,26 +6,25 @@ import {
   Paper,
   Typography,
 } from "@mui/material";
-import React, { useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import React from "react";
+import { useSelector } from "react-redux";
 import Link from "@mui/material/Link";
 import CheckIcon from "@mui/icons-material/Check";
 import { createOrderNumber } from "../Order/MyOrders";
-import { myOrders } from "../../actions/orderAction";
 import Seo from "../Seo";
 import Copyright from "../Copyright";
 
 function Success() {
-  const dispatch = useDispatch();
-  const { orders } = useSelector((state) => state.myOrders);
+  // Read the order that was just created — this is populated by createOrder
+  // before Shipping.js navigates here, so it always reflects the new order.
+  // Previously this page fetched ALL orders and picked the last one, which
+  // caused a race: the new order often hadn't arrived yet so it showed the
+  // previous order instead.
+  const { order } = useSelector((state) => state.newOrder);
 
-  const recentOrder = (orders) => {
-    return orders[orders.length - 1];
-  };
+  const orderId = order?._id;
+  const orderCountry = order?.shippingInfo?.country || "IN";
 
-  useEffect(() => {
-    dispatch(myOrders());
-  }, [dispatch]);
   return (
     <React.Fragment>
       <Container component="main" maxWidth="sm" sx={{ mb: 4 }}>
@@ -44,34 +43,18 @@ function Success() {
           <Typography component="div" variant="subtitle1">
             <Box sx={{ alignItems: "baseline" }}>
               Your order number is
-              <Link
-                href={
-                  recentOrder(orders) && `/order/${recentOrder(orders)._id}`
-                }
-              >
+              <Link href={orderId ? `/order/${orderId}` : undefined}>
                 {` ${
-                  recentOrder(orders) === undefined
-                    ? " "
-                    : createOrderNumber(
-                        recentOrder(orders)._id,
-                        recentOrder(orders).shippingInfo.country
-                          ? recentOrder(orders).shippingInfo.country
-                          : "IN"
-                      )
+                  orderId
+                    ? createOrderNumber(orderId, orderCountry)
+                    : "loading…"
                 }. `}
               </Link>
               We have emailed your order confirmation, and will send you an
               update when your order has shipped.
               <Seo
                 title={`Order Confirmation - ${
-                  recentOrder(orders) === undefined
-                    ? " "
-                    : createOrderNumber(
-                        recentOrder(orders)._id,
-                        recentOrder(orders).shippingInfo.country
-                          ? recentOrder(orders).shippingInfo.country
-                          : "IN"
-                      )
+                  orderId ? createOrderNumber(orderId, orderCountry) : ""
                 } - Click.it Store`}
                 description="Congratulations!!! You have successfully created an order."
                 path="/success"

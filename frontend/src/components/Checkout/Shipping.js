@@ -155,12 +155,21 @@ function Shipping() {
             id: result.paymentIntent.id,
             status: result.paymentIntent.status,
           };
-          dispatch(createOrder(orderData));
+
+          // Await the order creation so Redux state is populated before
+          // navigating. Without await the navigate fired before the POST
+          // /api/v1/order/new completed, and the subsequent reload wiped
+          // all Redux state so the Success page never saw the new order.
+          await dispatch(createOrder(orderData));
+
           sessionStorage.removeItem("orderInfo");
           localStorage.removeItem("shippingInfo");
           localStorage.removeItem("cartItems");
+
+          // Navigate to the success screen — state.newOrder.order now holds
+          // the freshly created order. Do NOT call window.location.reload()
+          // here: a hard reload destroys Redux state before Success can read it.
           history("/success");
-          window.location.reload();
         } else {
           alert.error("There's some issue while processing payment");
           setSubmitLoading(false);

@@ -8,11 +8,15 @@ export const createOrder = (order) => async (dispatch) => {
 
     const config = { headers: { "Content-Type": "application/json" } };
     const { data } = await axios.post("/api/v1/order/new", order, config);
-    console.log("Data from API", data);
+
     dispatch({
       type: "CreateOrderSuccess",
-      payload: data,
+      // Store only the order document — not the whole {success, order} envelope
+      payload: data.order,
     });
+
+    // Return the order so callers can await the dispatch and read the id
+    return data.order;
   } catch (error) {
     dispatch({
       type: "CreateOrderFail",
