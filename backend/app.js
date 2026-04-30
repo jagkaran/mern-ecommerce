@@ -67,6 +67,18 @@ app.use("/api/v1/login", authLimiter);
 app.use("/api/v1/register", authLimiter);
 app.use("/api/v1/password/forgot", authLimiter);
 
+// Rate limiting on product endpoints (general access)
+const productLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: { success: false, message: "Too many requests, please try again later." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use("/api/v1/products", productLimiter);
+app.use("/api/v1/product/:id", productLimiter);
+app.use("/api/v1/products/categories", productLimiter);
+
 // Body parsing (Express 4.16+ built-in — body-parser not needed)
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));

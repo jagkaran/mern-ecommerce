@@ -12,15 +12,23 @@ const {
   getActiveCategories,
 } = require("../controllers/productController");
 const { isAuthenticatedUser, authorizeRoles } = require("../middleware/auth");
+const {
+  validateCreateProduct,
+  validateUpdateProduct,
+  validateProductReview,
+  validateProductId,
+  validatePagination,
+} = require("../middleware/validation");
+const { cache, invalidatePattern } = require("../middleware/cache");
 
 const router = express.Router();
 
-// Public routes
-router.route("/products").get(getAllProducts);
+// Public routes with caching
+router.route("/products").get(validatePagination, cache(300), getAllProducts);
 
 // IMPORTANT: /products/categories must be declared BEFORE /product/:id
 // otherwise Express would try to match "categories" as an :id param.
-router.route("/products/categories").get(getActiveCategories);
+router.route("/products/categories").get(cache(600), getActiveCategories);
 
 router
   .route("/admin/products")
@@ -28,20 +36,49 @@ router
 
 router
   .route("/admin/product/new")
-  .post(isAuthenticatedUser, authorizeRoles("admin"), createProduct);
+  .post(
+    isAuthenticatedUser,
+    authorizeRoles("admin"),
+    validateCreateProduct,
+    invalidatePattern("products"),
+    createProduct
+  );
 
 router
   .route("/admin/product/:id")
-  .put(isAuthenticatedUser, authorizeRoles("admin"), updateProduct)
-  .delete(isAuthenticatedUser, authorizeRoles("admin"), deleteProduct);
+  .put(
+    isAuthenticatedUser,
+    authorizeRoles("admin"),
+    validateUpdateProduct,
+    invalidatePattern("products"),
+    updateProduct
+  )
+  .delete(
+    isAuthenticatedUser,
+    authorizeRoles("admin"),
+    validateProductId,
+    invalidatePattern("products"),
+    deleteProduct
+  );
 
-router.route("/product/:id").get(getProductDetails);
+router.route("/product/:id").get(validateProductId, cache(300), getProductDetails);
 
-router.route("/review").put(isAuthenticatedUser, createProductReview);
+router
+  .route("/review")
+  .put(
+    isAuthenticatedUser,
+    validateProductReview,
+    invalidatePattern("products"),
+    createProductReview
+  );
 
 router
   .route("/reviews")
   .get(getProductReviews)
-  .delete(isAuthenticatedUser, deleteProductReview);
+  .delete(
+    isAuthenticatedUser,
+    invalidatePattern("products"),
+    deleteProductReview
+  );
 
 module.exports = router;

@@ -48,32 +48,77 @@ exports.getActiveCategories = catchAsyncErrors(async (req, res) => {
 
 // ─── Get All Products (search / filter / pagination) ─────────────────────────
 exports.getAllProducts = catchAsyncErrors(async (req, res) => {
-  const resultPerPage  = 8;
-  const productCount   = await Product.countDocuments();
-  const apiFeature     = new ApiFeatures(Product.find(), req.query)
+  const resultPerPage = 8;
+  const page = Number(req.query.page) || 1;
+  const skip = (page - 1) * resultPerPage;
+
+  // Build base query with search and filter
+  const apiFeature = new ApiFeatures(Product.find(), req.query)
     .search()
     .filter();
 
-  let products = await apiFeature.query;
-  const filteredProductsCount = products.length;
+  // Get the filter object for counting
+  const filterQuery = apiFeature.query.getFilter();
 
-  apiFeature.pagination(resultPerPage);
-  products = await apiFeature.query.clone();
+  // Execute count and product query in parallel
+  const [products, productCount, filteredCount] = await Promise.all([
+    // Use lean() for better performance and select only needed fields
+    apiFeature.query
+      .select('name price ratings images category stock numOfReviews description')
+      .lean()
+      .skip(skip)
+      .limit(resultPerPage)
+      .sort({ createdAt: -1 }),
+    // Count total products (for overall stats)
+    Product.countDocuments(),
+    // Count filtered products (for accurate pagination)
+    Product.countDocuments(filterQuery)
+  ]);
+
+  const filteredProductsCount = filteredCount;
+  const totalPages = Math.ceil(filteredProductsCount / resultPerPage);
 
   res.status(200).json({
     success: true,
     productCount,
+    filteredProductsCount,
     products,
     resultPerPage,
-    filteredProductsCount,
+    page,
+    totalPages,
+    hasNextPage: page < totalPages,
+    hasPrevPage: page > 1,
   });
 });
 
 // ─── Get All Products (Admin — NO pagination, returns every product) ──────────
 exports.getAdminProducts = catchAsyncErrors(async (req, res, _next) => {
-  const products      = await Product.find().sort({ createdAt: -1 });
-  const productCount  = products.length;
-  res.status(200).json({ success: true, productCount, products });
+  const page = Math.max(1, Number(req.query.page) || 1);
+  const limit = Math.min(100, Number(req.query.limit) || 20);
+  const skip = (page - 1) * limit;
+
+  const [products, productCount] = await Promise.all([
+    Product.find()
+      .select('name price ratings images category stock numOfReviews createdAt')
+      .lean()
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit),
+    Product.countDocuments()
+  ]);
+
+  const totalPages = Math.ceil(productCount / limit);
+
+  res.status(200).json({
+    success: true,
+    productCount,
+    products,
+    page,
+    limit,
+    totalPages,
+    hasNextPage: page < totalPages,
+    hasPrevPage: page > 1,
+  });
 });
 
 // ─── Get Single Product ──────────────────────────────────────────────────────────

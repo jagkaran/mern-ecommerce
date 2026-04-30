@@ -9,12 +9,18 @@ const {
 } = require("../controllers/orderController");
 const router = express.Router();
 const { isAuthenticatedUser, authorizeRoles } = require("../middleware/auth");
+const {
+  validateCreateOrder,
+  validateUpdateOrder,
+  validateOrderId,
+  validatePagination,
+} = require("../middleware/validation");
 
-router.route("/order/new").post(isAuthenticatedUser, createOrder);
+router.route("/order/new").post(isAuthenticatedUser, validateCreateOrder, createOrder);
 
-router.route("/order/:id").get(isAuthenticatedUser, getOrderDetails);
+router.route("/order/:id").get(isAuthenticatedUser, validateOrderId, getOrderDetails);
 
-router.route("/orders/me").get(isAuthenticatedUser, getMyOrders);
+router.route("/orders/me").get(isAuthenticatedUser, validatePagination, getMyOrders);
 
 router
   .route("/admin/orders")
@@ -22,7 +28,7 @@ router
 
 router
   .route("/admin/order/:id")
-  .put(isAuthenticatedUser, authorizeRoles("admin"), updateOrder)
-  .delete(isAuthenticatedUser, authorizeRoles("admin"), deleteOrder);
+  .put(isAuthenticatedUser, authorizeRoles("admin"), validateUpdateOrder, updateOrder)
+  .delete(isAuthenticatedUser, authorizeRoles("admin"), validateOrderId, deleteOrder);
 
 module.exports = router;
