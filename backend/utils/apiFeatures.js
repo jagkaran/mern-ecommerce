@@ -39,6 +39,23 @@ class ApiFeatures {
     return this;
   }
 
+  /**
+   * Get the filter object for counting
+   * @returns {Object} The filter object
+   */
+  getFilter() {
+    const queryFilter = { ...this.queryStr };
+
+    // Strip pagination / search fields before passing to MongoDB
+    ["keyword", "page", "limit"].forEach((key) => delete queryFilter[key]);
+
+    // Convert gt/gte/lt/lte to MongoDB $ operators
+    let queryStr = JSON.stringify(queryFilter);
+    queryStr = queryStr.replace(/\b(gt|gte|lt|lte)\b/g, (key) => `$${key}`);
+
+    return JSON.parse(queryStr);
+  }
+
   pagination(resultPerPage) {
     const currentPage = Number(this.queryStr.page) || 1;
     const skip        = resultPerPage * (currentPage - 1);

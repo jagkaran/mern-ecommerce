@@ -3,7 +3,7 @@
  * Provides input validation for API endpoints using express-validator
  */
 
-const { body, validationResult, param } = require("express-validator");
+const { body, validationResult, param, query } = require("express-validator");
 const ErrorHandler = require("../utils/errorHandler");
 
 /**
