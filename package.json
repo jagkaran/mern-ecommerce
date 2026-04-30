@@ -10,6 +10,7 @@
   "scripts": {
     "test": "jest --runInBand --forceExit",
     "start": "node backend/server.js",
+    "predev": "lsof -ti :10000 | xargs kill -9 || true",
     "dev": "nodemon backend/server.js",
     "build": "npm install --prefix frontend && npm run build --prefix frontend",
     "heroku-postbuild": "npm install --prefix frontend && npm run build --prefix frontend",
