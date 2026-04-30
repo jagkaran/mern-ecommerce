@@ -112,7 +112,8 @@ function Shipping() {
   const orderData = {
     shippingInfo,
     orderItems: cartItems,
-    itemsPrice: orderInfo?.subTotal,
+    // Field name MUST match the backend schema: `itemPrice` (no trailing 's')
+    itemPrice: orderInfo?.subTotal,
     taxPrice: orderInfo?.tax,
     shippingPrice: orderInfo?.shippingCharges,
     totalPrice: orderInfo?.totalPrice,
