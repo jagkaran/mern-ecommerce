@@ -12,12 +12,10 @@ export const getProduct =
     try {
       dispatch({ type: "ProductRequest" });
 
-      let link = `/api/v1/products?keyword=${keyword}&page=${currentPage}
-                  &price[gte]=${price[0]}&price[lte]=${price[1]}&ratings[gte]=${ratingValue}`;
+      let link = `/api/v1/products?keyword=${keyword}&page=${currentPage}&price[gte]=${price[0]}&price[lte]=${price[1]}&ratings[gte]=${ratingValue}`;
 
       if (category) {
-        link = `/api/v1/products?keyword=${keyword}&page=${currentPage}
-                &price[gte]=${price[0]}&price[lte]=${price[1]}&category=${category}&ratings[gte]=${ratingValue}`;
+        link = `/api/v1/products?keyword=${keyword}&page=${currentPage}&price[gte]=${price[0]}&price[lte]=${price[1]}&category=${category}&ratings[gte]=${ratingValue}`;
       }
 
       const { data } = await axios.get(link);
