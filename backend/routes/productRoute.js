@@ -19,20 +19,10 @@ const {
   validateProductId,
   validatePagination,
 } = require("../middleware/validation");
-const { cache } = require("../middleware/cache");
+const { cache, invalidateCache } = require("../middleware/cache");
 
-// Cache invalidation middleware for product modifications
-const invalidateProductCache = (req, res, next) => {
-  // Invalidate all product-related cache keys
-  const cache = require("../middleware/cache");
-  const keys = cache.getKeys();
-  keys.forEach((key) => {
-    if (key.includes("products") || key.includes("product")) {
-      cache.del(key);
-    }
-  });
-  next();
-};
+// Cache invalidation middleware — clears all product-related cache keys
+const invalidateProductCache = invalidateCache("product");
 
 const router = express.Router();
 
