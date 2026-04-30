@@ -8,12 +8,18 @@ const cloudinary        = require("cloudinary").v2;
 const logger            = require("../utils/logger");
 
 // Register a user
-exports.registerUser = catchAsyncErrors(async (req, res, _next) => {
-  const myCloud = await cloudinary.uploader.upload(req.body.avatar, {
-    folder: "avatars",
-    width:  200,
-    crop:   "scale",
-  });
+exports.registerUser = catchAsyncErrors(async (req, res, next) => {
+  let myCloud;
+  try {
+    myCloud = await cloudinary.uploader.upload(req.body.avatar, {
+      folder: "avatars",
+      width:  200,
+      crop:   "scale",
+    });
+  } catch (uploadError) {
+    logger.error(`Cloudinary upload failed: ${uploadError.message}`);
+    return next(new ErrorHandler("Image upload failed. Please try again.", 500));
+  }
 
   const { name, email, password } = req.body;
   const user = await User.create({
@@ -159,12 +165,26 @@ exports.updateProfile = catchAsyncErrors(async (req, res, next) => {
     if (!user) {
       return next(new ErrorHandler("User not found", 404));
     }
-    await cloudinary.uploader.destroy(user.profilePic.public_id);
-    const myCloud = await cloudinary.uploader.upload(req.body.avatar, {
-      folder: "avatars",
-      width:  200,
-      crop:   "scale",
-    });
+
+    try {
+      await cloudinary.uploader.destroy(user.profilePic.public_id);
+    } catch (destroyError) {
+      logger.warn(`Failed to destroy old avatar: ${destroyError.message}`);
+      // Continue with upload even if destroy fails
+    }
+
+    let myCloud;
+    try {
+      myCloud = await cloudinary.uploader.upload(req.body.avatar, {
+        folder: "avatars",
+        width:  200,
+        crop:   "scale",
+      });
+    } catch (uploadError) {
+      logger.error(`Cloudinary upload failed: ${uploadError.message}`);
+      return next(new ErrorHandler("Image upload failed. Please try again.", 500));
+    }
+
     newUserData.profilePic = {
       public_id: myCloud.public_id,
       url:       myCloud.secure_url,
@@ -174,6 +194,10 @@ exports.updateProfile = catchAsyncErrors(async (req, res, next) => {
   const user = await User.findByIdAndUpdate(req.user.id, newUserData, {
     new: true, runValidators: true,
   });
+
+  if (!user) {
+    return next(new ErrorHandler("User not found", 404));
+  }
 
   res.status(200).json({ success: true, user });
 });
@@ -230,7 +254,13 @@ exports.deleteUser = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler(`User does not exist with ID: ${req.params.id}`, 404));
   }
 
-  await cloudinary.uploader.destroy(user.profilePic.public_id);
+  try {
+    await cloudinary.uploader.destroy(user.profilePic.public_id);
+  } catch (destroyError) {
+    logger.warn(`Failed to destroy user avatar: ${destroyError.message}`);
+    // Continue with deletion even if destroy fails
+  }
+
   await user.deleteOne();
 
   logger.info(`User deleted: ${req.params.id} by admin ${req.user._id}`);

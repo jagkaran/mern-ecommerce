@@ -90,4 +90,11 @@ const productSchema = new mongoose.Schema({
   },
 });
 
+// Database indexes for performance
+productSchema.index({ category: 1 }); // For category filtering
+productSchema.index({ createdAt: -1 }); // For sorting by creation date
+productSchema.index({ name: "text", description: "text" }); // For full-text search
+productSchema.index({ ratings: -1 }); // For sorting by ratings
+productSchema.index({ price: 1 }); // For price filtering
+
 module.exports = mongoose.model("Product", productSchema);

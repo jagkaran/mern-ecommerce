@@ -45,6 +45,10 @@ const userSchema = new mongoose.Schema({
   resetPasswordExpire: Date,
 });
 
+// Database indexes for performance
+userSchema.index({ email: 1 }); // Unique index for email lookups
+userSchema.index({ createdAt: -1 }); // For sorting by creation date
+
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) {
     next();

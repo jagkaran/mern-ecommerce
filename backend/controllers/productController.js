@@ -6,7 +6,7 @@ const cloudinary    = require("cloudinary").v2;
 const logger        = require("../utils/logger");
 
 // ─── Create Product — ADMIN ────────────────────────────────────────────────
-exports.createProduct = catchAsyncErrors(async (req, res, _next) => {
+exports.createProduct = catchAsyncErrors(async (req, res, next) => {
   let images = [];
   if (typeof req.body.images === "string") {
     images.push(req.body.images);
@@ -14,13 +14,19 @@ exports.createProduct = catchAsyncErrors(async (req, res, _next) => {
     images = req.body.images || [];
   }
 
-  const imagesLinks = await Promise.all(
-    images.map((img) =>
-      cloudinary.uploader
-        .upload(img, { folder: "products" })
-        .then((r) => ({ public_id: r.public_id, url: r.secure_url }))
-    )
-  );
+  let imagesLinks;
+  try {
+    imagesLinks = await Promise.all(
+      images.map((img) =>
+        cloudinary.uploader
+          .upload(img, { folder: "products" })
+          .then((r) => ({ public_id: r.public_id, url: r.secure_url }))
+      )
+    );
+  } catch (uploadError) {
+    logger.error(`Cloudinary image upload failed: ${uploadError.message}`);
+    return next(new ErrorHandler("Image upload failed. Please try again.", 500));
+  }
 
   req.body.images    = imagesLinks;
   req.body.user      = req.user.id;
@@ -97,16 +103,28 @@ exports.updateProduct = catchAsyncErrors(async (req, res, next) => {
   }
 
   if (images.length > 0) {
-    await Promise.all(
-      product.images.map((img) => cloudinary.uploader.destroy(img.public_id))
-    );
-    const imagesLinks = await Promise.all(
-      images.map((img) =>
-        cloudinary.uploader
-          .upload(img, { folder: "products" })
-          .then((r) => ({ public_id: r.public_id, url: r.secure_url }))
-      )
-    );
+    try {
+      await Promise.all(
+        product.images.map((img) => cloudinary.uploader.destroy(img.public_id))
+      );
+    } catch (destroyError) {
+      logger.warn(`Failed to destroy old product images: ${destroyError.message}`);
+      // Continue with upload even if destroy fails
+    }
+
+    let imagesLinks;
+    try {
+      imagesLinks = await Promise.all(
+        images.map((img) =>
+          cloudinary.uploader
+            .upload(img, { folder: "products" })
+            .then((r) => ({ public_id: r.public_id, url: r.secure_url }))
+        )
+      );
+    } catch (uploadError) {
+      logger.error(`Cloudinary image upload failed: ${uploadError.message}`);
+      return next(new ErrorHandler("Image upload failed. Please try again.", 500));
+    }
     req.body.images = imagesLinks;
   }
 
@@ -131,9 +149,14 @@ exports.deleteProduct = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler("Product not found", 404));
   }
 
-  await Promise.all(
-    product.images.map((img) => cloudinary.uploader.destroy(img.public_id))
-  );
+  try {
+    await Promise.all(
+      product.images.map((img) => cloudinary.uploader.destroy(img.public_id))
+    );
+  } catch (destroyError) {
+    logger.warn(`Failed to destroy product images: ${destroyError.message}`);
+    // Continue with deletion even if destroy fails
+  }
 
   await product.deleteOne();
   logger.info(`Product deleted: ${req.params.id} by user ${req.user.id}`);
