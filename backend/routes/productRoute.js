@@ -19,7 +19,20 @@ const {
   validateProductId,
   validatePagination,
 } = require("../middleware/validation");
-const { cache, invalidatePattern } = require("../middleware/cache");
+const { cache } = require("../middleware/cache");
+
+// Cache invalidation middleware for product modifications
+const invalidateProductCache = (req, res, next) => {
+  // Invalidate all product-related cache keys
+  const cache = require("../middleware/cache");
+  const keys = cache.getKeys();
+  keys.forEach((key) => {
+    if (key.includes("products") || key.includes("product")) {
+      cache.del(key);
+    }
+  });
+  next();
+};
 
 const router = express.Router();
 
@@ -40,7 +53,7 @@ router
     isAuthenticatedUser,
     authorizeRoles("admin"),
     validateCreateProduct,
-    invalidatePattern("products"),
+    invalidateProductCache,
     createProduct
   );
 
@@ -50,14 +63,14 @@ router
     isAuthenticatedUser,
     authorizeRoles("admin"),
     validateUpdateProduct,
-    invalidatePattern("products"),
+    invalidateProductCache,
     updateProduct
   )
   .delete(
     isAuthenticatedUser,
     authorizeRoles("admin"),
     validateProductId,
-    invalidatePattern("products"),
+    invalidateProductCache,
     deleteProduct
   );
 
@@ -68,7 +81,7 @@ router
   .put(
     isAuthenticatedUser,
     validateProductReview,
-    invalidatePattern("products"),
+    invalidateProductCache,
     createProductReview
   );
 
@@ -77,7 +90,7 @@ router
   .get(getProductReviews)
   .delete(
     isAuthenticatedUser,
-    invalidatePattern("products"),
+    invalidateProductCache,
     deleteProductReview
   );
 

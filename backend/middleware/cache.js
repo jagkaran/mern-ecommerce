@@ -87,12 +87,17 @@ exports.invalidateKey = (key) => {
  * @param {string} pattern - Pattern to match
  */
 exports.invalidatePattern = (pattern) => {
-  const keys = cache.keys();
-  keys.forEach((key) => {
-    if (key.includes(pattern)) {
-      cache.del(key);
-    }
-  });
+  return (req, res, next) => {
+    // Invalidate cache keys matching pattern
+    const keys = cache.keys();
+    keys.forEach((key) => {
+      if (key.includes(pattern)) {
+        cache.del(key);
+      }
+    });
+
+    next();
+  };
 };
 
 /**
