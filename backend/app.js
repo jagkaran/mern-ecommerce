@@ -39,6 +39,14 @@ app.use(
         styleSrc: ["'self'", "'unsafe-inline'"],
       },
     },
+    // Task 8.1 — HSTS: tell browsers to always use HTTPS for this domain.
+    // max-age = 1 year (seconds). includeSubDomains covers any subdomains.
+    // NOTE: only enable once you are 100% on HTTPS — cannot easily undo once
+    // browsers cache it. Remove this block if you need to test over HTTP.
+    strictTransportSecurity: {
+      maxAge: 31_536_000,
+      includeSubDomains: true,
+    },
   })
 );
 
@@ -79,11 +87,24 @@ app.use("/api/v1/products", productLimiter);
 app.use("/api/v1/product/:id", productLimiter);
 app.use("/api/v1/products/categories", productLimiter);
 
-// Body parsing (Express 4.16+ built-in — body-parser not needed)
-app.use(express.json({ limit: "50mb" }));
-app.use(express.urlencoded({ limit: "50mb", extended: true }));
+// Task 8.4 — Request size limits.
+// 50 mb was dangerously large — a single malformed request could spike memory.
+// 1 mb is sufficient for JSON payloads (images are sent as base64 in req.body
+// which adds ~33% overhead, so real image data cap is ~750 KB here).
+// Images larger than 5 MB must be rejected before hitting Cloudinary (Task 1.4).
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ limit: "1mb", extended: true }));
 app.use(cookieParser());
-app.use(fileUpload());
+
+// Task 8.4 / Task 1.4 — cap multipart file uploads at 5 MB.
+// abortOnLimit returns a 400 instead of silently dropping large files.
+app.use(
+  fileUpload({
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
+    abortOnLimit: true,
+    responseOnLimit: JSON.stringify({ success: false, message: "File too large. Maximum size is 5 MB." }),
+  })
+);
 
 // Data sanitisation
 app.use(mongoSanitize());

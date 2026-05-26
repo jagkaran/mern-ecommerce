@@ -39,7 +39,10 @@ const userSchema = new mongoose.Schema({
   },
   createdAt: {
     type: Date,
-    default: Date.now(),
+    // FIX Task 1.2: was Date.now() — invoked once at module load so every user
+    // got the same timestamp. Date.now (no parentheses) is a function reference
+    // that Mongoose calls per-document at insert time.
+    default: Date.now,
   },
   resetPasswordToken: String,
   resetPasswordExpire: Date,
