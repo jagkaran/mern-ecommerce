@@ -14,6 +14,11 @@ const userSchema = new mongoose.Schema({
   email: {
     type: String,
     required: [true, "Please enter your email"],
+    // unique:true already creates an index on this field internally.
+    // Do NOT add a separate userSchema.index({ email: 1 }) — that would
+    // create a second identical index, triggering the Mongoose duplicate
+    // index warning on every startup and forcing the DB to maintain two
+    // redundant structures for every write.
     unique: true,
     validate: [validator.isEmail, "Please enter a valid email"],
   },
@@ -39,17 +44,17 @@ const userSchema = new mongoose.Schema({
   },
   createdAt: {
     type: Date,
-    // FIX Task 1.2: was Date.now() — invoked once at module load so every user
-    // got the same timestamp. Date.now (no parentheses) is a function reference
-    // that Mongoose calls per-document at insert time.
+    // Date.now (no parentheses) is a function reference that Mongoose calls
+    // per-document at insert time. Date.now() would be evaluated once at
+    // module load and every user would get the same timestamp.
     default: Date.now,
   },
   resetPasswordToken: String,
   resetPasswordExpire: Date,
 });
 
-// Database indexes for performance
-userSchema.index({ email: 1 }); // Unique index for email lookups
+// Only non-unique secondary indexes go here.
+// The email unique index is managed by the schema field definition above.
 userSchema.index({ createdAt: -1 }); // For sorting by creation date
 
 userSchema.pre("save", async function (next) {
@@ -76,7 +81,8 @@ userSchema.methods.getResetPasswordToken = function () {
   // Generating token
   const resetToken = crypto.randomBytes(20).toString("hex");
 
-  // Hashing and adding to userSchema
+  // Hash the token before storing — plain-text tokens in the DB would be
+  // exploitable if the collection is ever read by an attacker.
   this.resetPasswordToken = crypto
     .createHash("sha256")
     .update(resetToken)
