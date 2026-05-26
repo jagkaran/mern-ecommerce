@@ -87,11 +87,19 @@ app.use("/api/v1/products", productLimiter);
 app.use("/api/v1/product/:id", productLimiter);
 app.use("/api/v1/products/categories", productLimiter);
 
-// Task 8.4 — Request size limits.
-// 50 mb was dangerously large — a single malformed request could spike memory.
-// 1 mb is sufficient for JSON payloads (images are sent as base64 in req.body
-// which adds ~33% overhead, so real image data cap is ~750 KB here).
-// Images larger than 5 MB must be rejected before hitting Cloudinary (Task 1.4).
+// Per-route body size overrides for image-upload endpoints.
+// Base64 encoding adds ~33% overhead, so a 5 MB image becomes ~6.7 MB in JSON.
+// We allow 10 MB here to give a comfortable ceiling while still protecting
+// all other routes with the tight 1 MB global limit below.
+const uploadJsonParser = express.json({ limit: "10mb" });
+const uploadUrlencodedParser = express.urlencoded({ limit: "10mb", extended: true });
+
+app.use("/api/v1/register", uploadJsonParser, uploadUrlencodedParser);
+app.use("/api/v1/me/update", uploadJsonParser, uploadUrlencodedParser);
+app.use("/api/v1/admin/product/new", uploadJsonParser, uploadUrlencodedParser);
+app.use("/api/v1/admin/product/:id", uploadJsonParser, uploadUrlencodedParser);
+
+// Global limit for all other routes — kept tight to prevent memory spikes.
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ limit: "1mb", extended: true }));
 app.use(cookieParser());
@@ -102,7 +110,10 @@ app.use(
   fileUpload({
     limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
     abortOnLimit: true,
-    responseOnLimit: JSON.stringify({ success: false, message: "File too large. Maximum size is 5 MB." }),
+    responseOnLimit: JSON.stringify({
+      success: false,
+      message: "File too large. Maximum size is 5 MB.",
+    }),
   })
 );
 
@@ -112,8 +123,8 @@ app.use(xss());
 
 // API Routes
 const product = require("./routes/productRoute");
-const user    = require("./routes/userRoute");
-const order   = require("./routes/orderRoute");
+const user = require("./routes/userRoute");
+const order = require("./routes/orderRoute");
 const payment = require("./routes/paymentRoute");
 
 app.use("/api/v1/", product);
