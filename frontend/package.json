@@ -39,9 +39,6 @@
     "tailwindcss": "^3.2.7",
     "web-vitals": "^1.0.1"
   },
-  "overrides": {
-    "axios": "^1.7.9"
-  },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
