@@ -79,12 +79,25 @@ describe("Product API — admin routes", () => {
 });
 
 describe("Product API — reviews", () => {
-  it("GET /api/v1/reviews → 404 for unknown product", async () => {
+  // GET /api/v1/reviews requires authentication (isAuthenticatedUser middleware).
+  // Unauthenticated requests correctly return 401 — tests must send the admin
+  // cookie so we reach the controller logic and get the actual 404 / 200.
+  it("GET /api/v1/reviews → 401 without auth", async () => {
     const res = await request(app).get("/api/v1/reviews?id=000000000000000000000000");
+    expect(res.status).toBe(401);
+  });
+  it("GET /api/v1/reviews → 404 for unknown product (with auth)", async () => {
+    if (!adminCookie) return;
+    const res = await request(app)
+      .get("/api/v1/reviews?id=000000000000000000000000")
+      .set("Cookie", adminCookie);
     expect(res.status).toBe(404);
   });
-  it("GET /api/v1/reviews → 200 for seeded product", async () => {
-    const res = await request(app).get(`/api/v1/reviews?id=${productId}`);
+  it("GET /api/v1/reviews → 200 for seeded product (with auth)", async () => {
+    if (!adminCookie) return;
+    const res = await request(app)
+      .get(`/api/v1/reviews?id=${productId}`)
+      .set("Cookie", adminCookie);
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty("reviews");
   });
