@@ -39,10 +39,10 @@ app.use(
         styleSrc: ["'self'", "'unsafe-inline'"],
       },
     },
-    // Task 8.1 — HSTS: tell browsers to always use HTTPS for this domain.
+    // HSTS: tell browsers to always use HTTPS for this domain.
     // max-age = 1 year (seconds). includeSubDomains covers any subdomains.
     // NOTE: only enable once you are 100% on HTTPS — cannot easily undo once
-    // browsers cache it. Remove this block if you need to test over HTTP.
+    // browsers cache it.
     strictTransportSecurity: {
       maxAge: 31_536_000,
       includeSubDomains: true,
@@ -94,8 +94,8 @@ app.use("/api/v1/products/categories", productLimiter);
 const uploadJsonParser = express.json({ limit: "10mb" });
 const uploadUrlencodedParser = express.urlencoded({ limit: "10mb", extended: true });
 
-app.use("/api/v1/register", uploadJsonParser, uploadUrlencodedParser);
-app.use("/api/v1/me/update", uploadJsonParser, uploadUrlencodedParser);
+app.use("/api/v1/register",          uploadJsonParser, uploadUrlencodedParser);
+app.use("/api/v1/me/update",         uploadJsonParser, uploadUrlencodedParser);
 app.use("/api/v1/admin/product/new", uploadJsonParser, uploadUrlencodedParser);
 app.use("/api/v1/admin/product/:id", uploadJsonParser, uploadUrlencodedParser);
 
@@ -104,7 +104,7 @@ app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ limit: "1mb", extended: true }));
 app.use(cookieParser());
 
-// Task 8.4 / Task 1.4 — cap multipart file uploads at 5 MB.
+// Cap multipart file uploads at 5 MB.
 // abortOnLimit returns a 400 instead of silently dropping large files.
 app.use(
   fileUpload({
@@ -123,10 +123,12 @@ app.use(xss());
 
 // API Routes
 const product = require("./routes/productRoute");
-const user = require("./routes/userRoute");
-const order = require("./routes/orderRoute");
+const user    = require("./routes/userRoute");
+const order   = require("./routes/orderRoute");
 const payment = require("./routes/paymentRoute");
+const health  = require("./routes/healthRoute");
 
+app.use("/api/v1/", health);   // /api/v1/health — no auth, no rate-limit
 app.use("/api/v1/", product);
 app.use("/api/v1/", user);
 app.use("/api/v1/", order);

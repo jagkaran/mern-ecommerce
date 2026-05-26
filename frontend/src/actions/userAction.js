@@ -72,6 +72,11 @@ export const logoutUser = () => async (dispatch) => {
   try {
     await axios.get(`/api/v1/logout`);
 
+    // Wipe cart items and shipping PII from all storage on logout.
+    // This must happen before dispatching LogoutUserSuccess so that
+    // any component re-renders triggered by the logout see an empty cart.
+    dispatch({ type: "ClearCart" });
+
     dispatch({
       type: "LogoutUserSuccess",
     });

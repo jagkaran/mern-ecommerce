@@ -1,4 +1,5 @@
 const express = require("express");
+const router = express.Router();
 const {
   getAllProducts,
   createProduct,
@@ -11,77 +12,63 @@ const {
   getAdminProducts,
   getActiveCategories,
 } = require("../controllers/productController");
-const { isAuthenticatedUser, authorizeRoles } = require("../middleware/auth");
-const {
-  validateCreateProduct,
-  validateUpdateProduct,
-  validateProductReview,
-  validateProductId,
-  validatePagination,
-} = require("../middleware/validation");
-const { cache, invalidateCache } = require("../middleware/cache");
 
-// Cache invalidation middleware — clears all product-related cache keys
+const { isAuthenticatedUser, authorizeRoles } = require("../middleware/auth");
+const { cache, invalidateCache } = require("../middleware/cache");
+const { validateProductImages } = require("../middleware/validateImageUpload");
+
+// Invalidate all product-related cache entries after any mutation.
+// Delegates to the tested helper in cache.js — do NOT re-require or
+// re-implement cache here (caused the getKeys TypeError in production).
 const invalidateProductCache = invalidateCache("product");
 
-const router = express.Router();
+// ─── Public routes ─────────────────────────────────────────────────────────
+router.get("/products/categories", cache("product-categories", 3600), getActiveCategories);
+router.get("/products", cache("product", 300), getAllProducts);
+router.get("/product/:id", cache("product", 300), getProductDetails);
 
-// Public routes with caching
-router.route("/products").get(validatePagination, cache(300), getAllProducts);
+// ─── Authenticated user routes ──────────────────────────────────────────────
+router.put(
+  "/review",
+  isAuthenticatedUser,
+  invalidateProductCache,
+  createProductReview
+);
+router.get("/reviews",  isAuthenticatedUser, getProductReviews);
+router.delete("/review", isAuthenticatedUser, invalidateProductCache, deleteProductReview);
 
-// IMPORTANT: /products/categories must be declared BEFORE /product/:id
-// otherwise Express would try to match "categories" as an :id param.
-router.route("/products/categories").get(cache(600), getActiveCategories);
+// ─── Admin routes ───────────────────────────────────────────────────────────
+router.get(
+  "/admin/products",
+  isAuthenticatedUser,
+  authorizeRoles("admin"),
+  getAdminProducts
+);
 
-router
-  .route("/admin/products")
-  .get(isAuthenticatedUser, authorizeRoles("admin"), getAdminProducts);
+router.post(
+  "/admin/product/new",
+  isAuthenticatedUser,
+  authorizeRoles("admin"),
+  validateProductImages,
+  invalidateProductCache,
+  createProduct
+);
 
-router
-  .route("/admin/product/new")
-  .post(
-    isAuthenticatedUser,
-    authorizeRoles("admin"),
-    validateCreateProduct,
-    invalidateProductCache,
-    createProduct
-  );
+router.put(
+  "/admin/product/:id",
+  isAuthenticatedUser,
+  authorizeRoles("admin"),
+  validateProductImages,
+  invalidateProductCache,
+  updateProduct
+);
 
-router
-  .route("/admin/product/:id")
-  .put(
-    isAuthenticatedUser,
-    authorizeRoles("admin"),
-    validateUpdateProduct,
-    invalidateProductCache,
-    updateProduct
-  )
-  .delete(
-    isAuthenticatedUser,
-    authorizeRoles("admin"),
-    validateProductId,
-    invalidateProductCache,
-    deleteProduct
-  );
-
-router.route("/product/:id").get(validateProductId, cache(300), getProductDetails);
-
-router
-  .route("/review")
-  .put(
-    isAuthenticatedUser,
-    validateProductReview,
-    invalidateProductCache,
-    createProductReview
-  );
-
-router
-  .route("/reviews")
-  .get(getProductReviews)
-  .delete(
-    isAuthenticatedUser,
-    invalidateProductCache,
-    deleteProductReview
-  );
+router.delete(
+  "/admin/product/:id",
+  isAuthenticatedUser,
+  authorizeRoles("admin"),
+  invalidateProductCache,
+  deleteProduct
+);
 
 module.exports = router;
