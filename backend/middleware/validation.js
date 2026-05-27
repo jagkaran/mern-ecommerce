@@ -330,22 +330,24 @@ exports.validateCreateOrder = [
     .trim()
     .notEmpty()
     .withMessage("City is required")
-    .isLength({ min: 2, max: 50 })
-    .withMessage("City must be between 2 and 50 characters"),
+    .isLength({ min: 2, max: 100 })
+    .withMessage("City must be between 2 and 100 characters"),
 
+  // State is optional — not all countries have states/provinces.
+  // When present, min is 1 because country-state-city returns single-character
+  // ISO codes for some countries (e.g. Austria: "1" through "9").
   body("shippingInfo.state")
+    .optional({ checkFalsy: true })
     .trim()
-    .notEmpty()
-    .withMessage("State is required")
-    .isLength({ min: 2, max: 50 })
-    .withMessage("State must be between 2 and 50 characters"),
+    .isLength({ min: 1, max: 100 })
+    .withMessage("State must be between 1 and 100 characters"),
 
   body("shippingInfo.country")
     .trim()
     .notEmpty()
     .withMessage("Country is required")
-    .isLength({ min: 2, max: 50 })
-    .withMessage("Country must be between 2 and 50 characters"),
+    .isLength({ min: 2, max: 100 })
+    .withMessage("Country must be between 2 and 100 characters"),
 
   body("shippingInfo.zip")
     .notEmpty()
