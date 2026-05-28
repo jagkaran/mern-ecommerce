@@ -5,7 +5,16 @@ const ApiFeatures   = require("../utils/apiFeatures");
 const cloudinary    = require("cloudinary").v2;
 const logger        = require("../utils/logger");
 
-// ─── Create Product — ADMIN ────────────────────────────────────────────────
+/**
+ * Create a new product (Admin only).
+ * Uploads all provided images to Cloudinary before persisting.
+ *
+ * @param {import('express').Request}  req - Body: { name, description, price, category, stock, images[] }
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ * @returns {Promise<void>} 201 { success, product }
+ * @throws {ErrorHandler} 500 if Cloudinary upload fails
+ */
 exports.createProduct = catchAsyncErrors(async (req, res, next) => {
   let images = [];
   if (typeof req.body.images === "string") {
@@ -37,7 +46,13 @@ exports.createProduct = catchAsyncErrors(async (req, res, next) => {
   res.status(201).json({ success: true, product });
 });
 
-// ─── Get Active Categories (distinct categories that have at least 1 product) ─
+/**
+ * Get distinct active categories (categories with at least one product).
+ *
+ * @param {import('express').Request}  req
+ * @param {import('express').Response} res
+ * @returns {Promise<void>} 200 { success, categories: string[] }
+ */
 exports.getActiveCategories = catchAsyncErrors(async (req, res) => {
   const categories = await Product.distinct("category");
   const clean = categories
@@ -46,32 +61,32 @@ exports.getActiveCategories = catchAsyncErrors(async (req, res) => {
   res.status(200).json({ success: true, categories: clean });
 });
 
-// ─── Get All Products (search / filter / pagination) ─────────────────────────
+/**
+ * Get all products with search, filter, and pagination support.
+ *
+ * @param {import('express').Request}  req - Query: { keyword, page, category, price[gte], price[lte], ratings[gte] }
+ * @param {import('express').Response} res
+ * @returns {Promise<void>} 200 { success, productCount, filteredProductsCount, products, resultPerPage, page, totalPages, hasNextPage, hasPrevPage }
+ */
 exports.getAllProducts = catchAsyncErrors(async (req, res) => {
   const resultPerPage = 8;
   const page = Number(req.query.page) || 1;
   const skip = (page - 1) * resultPerPage;
 
-  // Build base query with search and filter
   const apiFeature = new ApiFeatures(Product.find(), req.query)
     .search()
     .filter();
 
-  // Get the filter object for counting
   const filterQuery = apiFeature.query.getFilter();
 
-  // Execute count and product query in parallel
   const [products, productCount, filteredCount] = await Promise.all([
-    // Use lean() for better performance and select only needed fields
     apiFeature.query
       .select('name price ratings images category stock numOfReviews description')
       .lean()
       .skip(skip)
       .limit(resultPerPage)
       .sort({ createdAt: -1 }),
-    // Count total products (for overall stats)
     Product.countDocuments(),
-    // Count filtered products (for accurate pagination)
     Product.countDocuments(filterQuery)
   ]);
 
@@ -91,7 +106,13 @@ exports.getAllProducts = catchAsyncErrors(async (req, res) => {
   });
 });
 
-// ─── Get All Products (Admin — NO pagination, returns every product) ──────────
+/**
+ * Get all products for admin panel (paginated, no search filter).
+ *
+ * @param {import('express').Request}  req - Query: { page, limit }
+ * @param {import('express').Response} res
+ * @returns {Promise<void>} 200 { success, productCount, products, page, limit, totalPages, hasNextPage, hasPrevPage }
+ */
 exports.getAdminProducts = catchAsyncErrors(async (req, res, _next) => {
   const page = Math.max(1, Number(req.query.page) || 1);
   const limit = Math.min(100, Number(req.query.limit) || 20);
@@ -121,7 +142,15 @@ exports.getAdminProducts = catchAsyncErrors(async (req, res, _next) => {
   });
 });
 
-// ─── Get Single Product ──────────────────────────────────────────────────────────
+/**
+ * Get a single product by ID.
+ *
+ * @param {import('express').Request}  req - Params: { id }
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ * @returns {Promise<void>} 200 { success, product }
+ * @throws {ErrorHandler} 404 if product not found
+ */
 exports.getProductDetails = catchAsyncErrors(async (req, res, next) => {
   const product = await Product.findById(req.params.id);
 
@@ -132,7 +161,17 @@ exports.getProductDetails = catchAsyncErrors(async (req, res, next) => {
   res.status(200).json({ success: true, product });
 });
 
-// ─── Update Product — ADMIN ───────────────────────────────────────────────────
+/**
+ * Update a product by ID (Admin only).
+ * Re-uploads images to Cloudinary if new ones are provided.
+ *
+ * @param {import('express').Request}  req - Params: { id }; Body: product fields
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ * @returns {Promise<void>} 200 { success, product }
+ * @throws {ErrorHandler} 404 if product not found
+ * @throws {ErrorHandler} 500 if image upload fails
+ */
 exports.updateProduct = catchAsyncErrors(async (req, res, next) => {
   let product = await Product.findById(req.params.id);
 
@@ -154,7 +193,6 @@ exports.updateProduct = catchAsyncErrors(async (req, res, next) => {
       );
     } catch (destroyError) {
       logger.warn(`Failed to destroy old product images: ${destroyError.message}`);
-      // Continue with upload even if destroy fails
     }
 
     let imagesLinks;
@@ -186,7 +224,16 @@ exports.updateProduct = catchAsyncErrors(async (req, res, next) => {
   res.status(200).json({ success: true, product });
 });
 
-// ─── Delete Product — ADMIN ───────────────────────────────────────────────────
+/**
+ * Delete a product by ID (Admin only).
+ * Destroys associated Cloudinary images before removing the DB document.
+ *
+ * @param {import('express').Request}  req - Params: { id }
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ * @returns {Promise<void>} 200 { success, message }
+ * @throws {ErrorHandler} 404 if product not found
+ */
 exports.deleteProduct = catchAsyncErrors(async (req, res, next) => {
   const product = await Product.findById(req.params.id);
 
@@ -200,7 +247,6 @@ exports.deleteProduct = catchAsyncErrors(async (req, res, next) => {
     );
   } catch (destroyError) {
     logger.warn(`Failed to destroy product images: ${destroyError.message}`);
-    // Continue with deletion even if destroy fails
   }
 
   await product.deleteOne();
@@ -208,7 +254,18 @@ exports.deleteProduct = catchAsyncErrors(async (req, res, next) => {
   res.status(200).json({ success: true, message: "Product Deleted Successfully" });
 });
 
-// ─── Create / Update Product Review ───────────────────────────────────────────
+/**
+ * Create or update the authenticated user's review for a product.
+ * If a review from this user already exists it is updated in-place;
+ * otherwise a new review is appended and numOfReviews incremented.
+ * The average rating is recalculated on every save.
+ *
+ * @param {import('express').Request}  req - Body: { rating, comment, productId }
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ * @returns {Promise<void>} 200 { success: true }
+ * @throws {ErrorHandler} 404 if product not found
+ */
 exports.createProductReview = catchAsyncErrors(async (req, res, next) => {
   const { rating, comment, productId } = req.body;
 
@@ -223,12 +280,9 @@ exports.createProductReview = catchAsyncErrors(async (req, res, next) => {
   );
 
   if (existingReview) {
-    // Update rating and comment — preserve the original createdAt so the
-    // review timestamp reflects when it was first written, not last edited.
     existingReview.rating  = Number(rating);
     existingReview.comment = comment;
   } else {
-    // New review — stamp createdAt at the moment of submission.
     product.reviews.push({
       user:       req.user.id,
       profileImg: req.user.profilePic.url,
@@ -247,7 +301,15 @@ exports.createProductReview = catchAsyncErrors(async (req, res, next) => {
   res.status(200).json({ success: true });
 });
 
-// ─── Get All Reviews for a Product ────────────────────────────────────────────
+/**
+ * Get all reviews for a specific product.
+ *
+ * @param {import('express').Request}  req - Query: { id } — product ID
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ * @returns {Promise<void>} 200 { success, reviews }
+ * @throws {ErrorHandler} 404 if product not found
+ */
 exports.getProductReviews = catchAsyncErrors(async (req, res, next) => {
   const product = await Product.findById(req.query.id);
 
@@ -258,7 +320,16 @@ exports.getProductReviews = catchAsyncErrors(async (req, res, next) => {
   res.status(200).json({ success: true, reviews: product.reviews });
 });
 
-// ─── Delete a Review ──────────────────────────────────────────────────────────────────
+/**
+ * Delete a single review from a product (by review ID).
+ * Recalculates the product's average rating after removal.
+ *
+ * @param {import('express').Request}  req - Query: { id: reviewId, productId }
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ * @returns {Promise<void>} 200 { success: true }
+ * @throws {ErrorHandler} 404 if product not found
+ */
 exports.deleteProductReview = catchAsyncErrors(async (req, res, next) => {
   const product = await Product.findById(req.query.productId);
 

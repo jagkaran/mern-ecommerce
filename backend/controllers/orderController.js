@@ -5,14 +5,24 @@ const catchAsyncErrors = require("../middleware/catchAsyncErrors");
 const logger = require("../utils/logger");
 const { withTransaction } = require("../utils/transaction");
 
-// Create a new order
+/**
+ * Create a new order for the authenticated user.
+ * Validates stock availability for each item, then deducts stock and
+ * persists the order atomically inside a MongoDB transaction.
+ *
+ * @param {import('express').Request}  req - Body: { shippingInfo, orderItems, paymentInfo, itemPrice, taxPrice, shippingPrice, totalPrice }
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ * @returns {Promise<void>} 201 { success, order }
+ * @throws {ErrorHandler} 404 if any ordered product is not found
+ * @throws {ErrorHandler} 400 if any product has insufficient stock
+ */
 exports.createOrder = catchAsyncErrors(async (req, res, next) => {
   const {
     shippingInfo, orderItems, paymentInfo,
     itemPrice, taxPrice, shippingPrice, totalPrice,
   } = req.body;
 
-  // Validate stock before creating order
   for (const item of orderItems) {
     const product = await Product.findById(item.product);
     if (!product) {
@@ -23,9 +33,7 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
     }
   }
 
-  // Create order within transaction
   const order = await withTransaction(async (session) => {
-    // Create order
     const newOrder = await Order.create(
       [{
         shippingInfo, orderItems, paymentInfo,
@@ -36,7 +44,6 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
       { session }
     );
 
-    // Update stock for each product
     for (const item of orderItems) {
       await Product.findByIdAndUpdate(
         item.product,
@@ -52,7 +59,17 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
   res.status(201).json({ success: true, order });
 });
 
-// Get single order details — owner or admin only
+/**
+ * Get details of a specific order.
+ * Only the order owner or an admin may access.
+ *
+ * @param {import('express').Request}  req - Params: { id }
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ * @returns {Promise<void>} 200 { success, order }
+ * @throws {ErrorHandler} 404 if order not found
+ * @throws {ErrorHandler} 403 if requester is neither owner nor admin
+ */
 exports.getOrderDetails = catchAsyncErrors(async (req, res, next) => {
   const order = await Order.findById(req.params.id).populate("user", "name email");
 
@@ -67,7 +84,13 @@ exports.getOrderDetails = catchAsyncErrors(async (req, res, next) => {
   res.status(200).json({ success: true, order });
 });
 
-// Get orders for logged-in user (paginated)
+/**
+ * Get all orders belonging to the authenticated user, paginated.
+ *
+ * @param {import('express').Request}  req - Query: { page, limit }
+ * @param {import('express').Response} res
+ * @returns {Promise<void>} 200 { success, orderCount, page, limit, totalPages, hasNextPage, hasPrevPage, orders }
+ */
 exports.getMyOrders = catchAsyncErrors(async (req, res, _next) => {
   const page = Math.max(1, Number(req.query.page) || 1);
   const limit = Math.min(50, Number(req.query.limit) || 10);
@@ -97,15 +120,19 @@ exports.getMyOrders = catchAsyncErrors(async (req, res, _next) => {
   });
 });
 
-// Get all orders — Admin (NO pagination: admins need to see every order)
+/**
+ * Get all orders — Admin only, paginated.
+ * Also returns the total revenue across ALL orders (not just the current page).
+ *
+ * @param {import('express').Request}  req - Query: { page, limit }
+ * @param {import('express').Response} res
+ * @returns {Promise<void>} 200 { success, orderCount, totalAmount, orders, page, limit, totalPages, hasNextPage, hasPrevPage }
+ */
 exports.getAllOrders = catchAsyncErrors(async (req, res, _next) => {
   const page = Math.max(1, Number(req.query.page) || 1);
   const limit = Math.min(100, Number(req.query.limit) || 20);
   const skip = (page - 1) * limit;
 
-  // Return orders sorted newest-first with pagination.
-  // totalAmount is computed in the DB aggregation so it reflects ALL orders,
-  // not just whatever subset might be on a page.
   const [orders, orderCount, aggResult] = await Promise.all([
     Order.find()
       .select('shippingInfo orderItems paymentInfo itemPrice taxPrice shippingPrice totalPrice orderStatus paidAt deliveredAt createdAt user')
@@ -133,7 +160,18 @@ exports.getAllOrders = catchAsyncErrors(async (req, res, _next) => {
   });
 });
 
-// Update order status — Admin
+/**
+ * Update an order's status — Admin only.
+ * Deducts stock when status changes to "Shipped".
+ * Sets deliveredAt timestamp when status is "Delivered".
+ *
+ * @param {import('express').Request}  req - Params: { id }; Body: { orderStatus }
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ * @returns {Promise<void>} 200 { success, order }
+ * @throws {ErrorHandler} 404 if order not found
+ * @throws {ErrorHandler} 400 if order is already delivered
+ */
 exports.updateOrder = catchAsyncErrors(async (req, res, next) => {
   const order = await Order.findById(req.params.id);
 
@@ -145,7 +183,6 @@ exports.updateOrder = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler("You have already delivered this order", 400));
   }
 
-  // Use for..of so async errors propagate (forEach swallows them)
   if (req.body.orderStatus === "Shipped") {
     for (const item of order.orderItems) {
       await updateStock(item.product, item.quantity);
@@ -161,8 +198,16 @@ exports.updateOrder = catchAsyncErrors(async (req, res, next) => {
   res.status(200).json({ success: true, order });
 });
 
+/**
+ * Atomically decrement stock for a product by the given quantity.
+ * Rolls back the decrement if it would result in negative stock.
+ *
+ * @param {string|import('mongoose').Types.ObjectId} id       - Product ID
+ * @param {number}                                   quantity - Units to deduct
+ * @returns {Promise<void>}
+ * @throws {ErrorHandler} 400 if deduction would produce negative stock
+ */
 async function updateStock(id, quantity) {
-  // Use atomic operations to prevent race conditions
   const result = await Product.findByIdAndUpdate(
     id,
     { $inc: { stock: -quantity } },
@@ -174,16 +219,22 @@ async function updateStock(id, quantity) {
     return;
   }
 
-  // Check if stock went negative (shouldn't happen with proper validation)
   if (result.stock < 0) {
     logger.error(`Stock underflow for product ${id}. Current stock: ${result.stock}`);
-    // Rollback the stock update
     await Product.findByIdAndUpdate(id, { $inc: { stock: quantity } });
     throw new ErrorHandler("Insufficient stock for this product", 400);
   }
 }
 
-// Delete order — Admin
+/**
+ * Delete an order by ID — Admin only.
+ *
+ * @param {import('express').Request}  req - Params: { id }
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ * @returns {Promise<void>} 200 { success, message }
+ * @throws {ErrorHandler} 404 if order not found
+ */
 exports.deleteOrder = catchAsyncErrors(async (req, res, next) => {
   const order = await Order.findById(req.params.id);
 

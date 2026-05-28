@@ -5,7 +5,16 @@ const logger = require("../utils/logger");
 
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
-// Process Stripe payment intent
+/**
+ * Create a Stripe PaymentIntent and return the client secret to the frontend.
+ * The frontend uses the client secret to confirm the payment on the client side
+ * (e.g. via stripe.confirmCardPayment).
+ *
+ * @param {import('express').Request}  req - Body: { amount } — amount in smallest currency unit (cents)
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} _next
+ * @returns {Promise<void>} 200 { success, client_secret }
+ */
 exports.processPayment = catchAsyncErrors(async (req, res, _next) => {
   const myPayment = await stripe.paymentIntents.create({
     amount:   req.body.amount,
@@ -19,16 +28,39 @@ exports.processPayment = catchAsyncErrors(async (req, res, _next) => {
   });
 });
 
-// Send Stripe publishable key to client
+/**
+ * Send the Stripe publishable key to the client.
+ * The frontend needs this key to initialise the Stripe.js SDK.
+ *
+ * @param {import('express').Request}  req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} _next
+ * @returns {Promise<void>} 200 { stripeApiKey }
+ */
 exports.sendStripeApiKey = catchAsyncErrors(async (req, res, _next) => {
   res.status(200).json({ stripeApiKey: process.env.STRIPE_API_KEY });
 });
 
-// Stripe webhook — receives events from Stripe after payment is confirmed.
-// The raw request body MUST be used for signature verification — do NOT
-// parse it as JSON before this handler runs. The route in paymentRoute.js
-// uses express.raw({ type: "application/json" }) before the global
-// express.json() middleware.
+/**
+ * Handle incoming Stripe webhook events.
+ *
+ * Security model:
+ *  - This route intentionally bypasses CSRF protection — Stripe calls it
+ *    from their servers and cannot supply a browser cookie.
+ *  - Instead, every request is authenticated by verifying the
+ *    stripe-signature header against the raw request body using
+ *    HMAC-SHA256 (stripe.webhooks.constructEvent). Any tampered or
+ *    forged payload is rejected with a 401.
+ *
+ * Supported events:
+ *  - payment_intent.succeeded  → marks the matching order as paid
+ *  - payment_intent.payment_failed → marks the matching order as failed
+ *  - All others are logged and ignored (always returns 200 to Stripe).
+ *
+ * @param {import('express').Request}  req - Raw body buffer (express.raw middleware)
+ * @param {import('express').Response} res
+ * @returns {void} Always responds 200 so Stripe does not retry
+ */
 exports.stripeWebhook = (req, res) => {
   const sig = req.headers["stripe-signature"];
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -40,23 +72,16 @@ exports.stripeWebhook = (req, res) => {
 
   let event;
   try {
-    // constructEvent verifies the stripe-signature header against the raw
-    // body using HMAC-SHA256. Any tampered or forged payload will throw.
     event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
   } catch (err) {
     logger.warn(`Stripe webhook signature verification failed: ${err.message}`);
     return res.status(401).json({ success: false, message: `Webhook error: ${err.message}` });
   }
 
-  // Handle relevant event types
   switch (event.type) {
     case "payment_intent.succeeded": {
       const paymentIntent = event.data.object;
       logger.info(`Stripe payment_intent.succeeded: ${paymentIntent.id}`);
-
-      // Update the order whose paymentInfo.id matches this payment intent.
-      // Fire-and-forget is acceptable here — Stripe will retry if we return
-      // a non-2xx, so we return 200 immediately and log any DB error.
       Order.findOneAndUpdate(
         { "paymentInfo.id": paymentIntent.id },
         { "paymentInfo.status": "succeeded", paidAt: new Date() },
@@ -70,7 +95,6 @@ exports.stripeWebhook = (req, res) => {
     case "payment_intent.payment_failed": {
       const paymentIntent = event.data.object;
       logger.warn(`Stripe payment_intent.payment_failed: ${paymentIntent.id}`);
-
       Order.findOneAndUpdate(
         { "paymentInfo.id": paymentIntent.id },
         { "paymentInfo.status": "failed" },
@@ -82,10 +106,8 @@ exports.stripeWebhook = (req, res) => {
     }
 
     default:
-      // Log unhandled events at debug level — not an error, just not relevant
       logger.info(`Stripe webhook: unhandled event type ${event.type}`);
   }
 
-  // Always return 200 promptly so Stripe does not retry
   res.status(200).json({ received: true });
 };

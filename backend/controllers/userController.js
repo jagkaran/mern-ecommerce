@@ -7,7 +7,16 @@ const crypto            = require("crypto");
 const cloudinary        = require("cloudinary").v2;
 const logger            = require("../utils/logger");
 
-// Register a user
+/**
+ * Register a new user.
+ * Uploads the avatar image to Cloudinary and stores the resulting URL.
+ *
+ * @param {import('express').Request}  req - Body: { name, email, password, avatar (base64) }
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ * @returns {Promise<void>} 201 with JWT cookie
+ * @throws {ErrorHandler} 500 if Cloudinary upload fails
+ */
 exports.registerUser = catchAsyncErrors(async (req, res, next) => {
   let myCloud;
   try {
@@ -34,7 +43,16 @@ exports.registerUser = catchAsyncErrors(async (req, res, next) => {
   sendToken(user, 201, res);
 });
 
-// Login user
+/**
+ * Authenticate a user and issue a JWT cookie.
+ *
+ * @param {import('express').Request}  req - Body: { email, password }
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ * @returns {Promise<void>} 200 with JWT cookie
+ * @throws {ErrorHandler} 400 if email or password missing
+ * @throws {ErrorHandler} 401 if credentials are invalid
+ */
 exports.loginUser = catchAsyncErrors(async (req, res, next) => {
   const { email, password } = req.body;
 
@@ -57,7 +75,13 @@ exports.loginUser = catchAsyncErrors(async (req, res, next) => {
   sendToken(user, 200, res);
 });
 
-// Logout user
+/**
+ * Log out the current user by expiring the JWT cookie.
+ *
+ * @param {import('express').Request}  req
+ * @param {import('express').Response} res
+ * @returns {Promise<void>} 200 { success, message }
+ */
 exports.logout = catchAsyncErrors(async (req, res, _next) => {
   res.cookie("token", null, {
     expires:  new Date(Date.now()),
@@ -66,7 +90,16 @@ exports.logout = catchAsyncErrors(async (req, res, _next) => {
   res.status(200).json({ success: true, message: "User logged out" });
 });
 
-// Forgot password — send reset email
+/**
+ * Send a password-reset link to the user's email address.
+ *
+ * @param {import('express').Request}  req - Body: { email }
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ * @returns {Promise<void>} 200 { success, message }
+ * @throws {ErrorHandler} 404 if user not found
+ * @throws {ErrorHandler} 500 if email delivery fails
+ */
 exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
   const user = await User.findOne({ email: req.body.email });
 
@@ -91,7 +124,15 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
   }
 });
 
-// Reset password via token
+/**
+ * Reset a user's password using the token sent via email.
+ *
+ * @param {import('express').Request}  req - Params: { token }; Body: { password, confirmPassword }
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ * @returns {Promise<void>} 200 with new JWT cookie
+ * @throws {ErrorHandler} 400 if token invalid/expired or passwords do not match
+ */
 exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
   const resetPasswordToken = crypto
     .createHash("sha256")
@@ -119,7 +160,15 @@ exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
   sendToken(user, 200, res);
 });
 
-// Get own user details
+/**
+ * Get the profile of the currently authenticated user.
+ *
+ * @param {import('express').Request}  req - req.user populated by isAuthenticatedUser
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ * @returns {Promise<void>} 200 { success, user }
+ * @throws {ErrorHandler} 404 if user no longer exists in DB
+ */
 exports.getUserDetails = catchAsyncErrors(async (req, res, next) => {
   const user = await User.findById(req.user.id);
 
@@ -130,7 +179,16 @@ exports.getUserDetails = catchAsyncErrors(async (req, res, next) => {
   res.status(200).json({ success: true, user });
 });
 
-// Update own password
+/**
+ * Update the authenticated user's own password.
+ *
+ * @param {import('express').Request}  req - Body: { oldPassword, newPassword, confirmPassword }
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ * @returns {Promise<void>} 200 with refreshed JWT cookie
+ * @throws {ErrorHandler} 401 if old password is incorrect or new passwords mismatch
+ * @throws {ErrorHandler} 404 if user not found
+ */
 exports.updatePassword = catchAsyncErrors(async (req, res, next) => {
   const user = await User.findById(req.user.id).select("+password");
 
@@ -153,7 +211,17 @@ exports.updatePassword = catchAsyncErrors(async (req, res, next) => {
   sendToken(user, 200, res);
 });
 
-// Update own profile
+/**
+ * Update the authenticated user's own profile (name, email, avatar).
+ * If a new avatar is provided it replaces the old Cloudinary image.
+ *
+ * @param {import('express').Request}  req - Body: { name, email, avatar? (base64) }
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ * @returns {Promise<void>} 200 { success, user }
+ * @throws {ErrorHandler} 404 if user not found
+ * @throws {ErrorHandler} 500 if Cloudinary upload fails
+ */
 exports.updateProfile = catchAsyncErrors(async (req, res, next) => {
   const newUserData = {
     name:  req.body.name,
@@ -170,7 +238,6 @@ exports.updateProfile = catchAsyncErrors(async (req, res, next) => {
       await cloudinary.uploader.destroy(user.profilePic.public_id);
     } catch (destroyError) {
       logger.warn(`Failed to destroy old avatar: ${destroyError.message}`);
-      // Continue with upload even if destroy fails
     }
 
     let myCloud;
@@ -202,7 +269,13 @@ exports.updateProfile = catchAsyncErrors(async (req, res, next) => {
   res.status(200).json({ success: true, user });
 });
 
-// Get all users — Admin (paginated)
+/**
+ * Get all users — Admin only, paginated.
+ *
+ * @param {import('express').Request}  req - Query: { page, limit }
+ * @param {import('express').Response} res
+ * @returns {Promise<void>} 200 { success, usersCount, page, limit, users }
+ */
 exports.getAllUsers = catchAsyncErrors(async (req, res, _next) => {
   const page  = Math.max(1,   Number(req.query.page)  || 1);
   const limit = Math.min(100, Number(req.query.limit)  || 20);
@@ -216,7 +289,15 @@ exports.getAllUsers = catchAsyncErrors(async (req, res, _next) => {
   res.status(200).json({ success: true, usersCount, page, limit, users });
 });
 
-// Get single user — Admin
+/**
+ * Get a single user by ID — Admin only.
+ *
+ * @param {import('express').Request}  req - Params: { id }
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ * @returns {Promise<void>} 200 { success, user }
+ * @throws {ErrorHandler} 404 if user not found
+ */
 exports.getSingleUser = catchAsyncErrors(async (req, res, next) => {
   const user = await User.findById(req.params.id);
 
@@ -227,7 +308,15 @@ exports.getSingleUser = catchAsyncErrors(async (req, res, next) => {
   res.status(200).json({ success: true, user });
 });
 
-// Update user role — Admin
+/**
+ * Update a user's role (and name/email) — Admin only.
+ *
+ * @param {import('express').Request}  req - Params: { id }; Body: { name, email, role }
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ * @returns {Promise<void>} 200 { success: true }
+ * @throws {ErrorHandler} 404 if user not found
+ */
 exports.updateUserRole = catchAsyncErrors(async (req, res, next) => {
   const newUserData = {
     name:  req.body.name,
@@ -246,7 +335,16 @@ exports.updateUserRole = catchAsyncErrors(async (req, res, next) => {
   res.status(200).json({ success: true });
 });
 
-// Delete user — Admin
+/**
+ * Delete a user by ID — Admin only.
+ * Also destroys the user's Cloudinary avatar before removing the DB document.
+ *
+ * @param {import('express').Request}  req - Params: { id }
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ * @returns {Promise<void>} 200 { success, message }
+ * @throws {ErrorHandler} 404 if user not found
+ */
 exports.deleteUser = catchAsyncErrors(async (req, res, next) => {
   const user = await User.findById(req.params.id);
 
@@ -258,7 +356,6 @@ exports.deleteUser = catchAsyncErrors(async (req, res, next) => {
     await cloudinary.uploader.destroy(user.profilePic.public_id);
   } catch (destroyError) {
     logger.warn(`Failed to destroy user avatar: ${destroyError.message}`);
-    // Continue with deletion even if destroy fails
   }
 
   await user.deleteOne();
