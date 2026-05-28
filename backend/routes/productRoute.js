@@ -16,6 +16,12 @@ const {
 const { isAuthenticatedUser, authorizeRoles } = require("../middleware/auth");
 const { cache, invalidateCache } = require("../middleware/cache");
 const { validateProductImages } = require("../middleware/validateImageUpload");
+const {
+  validateCreateProduct,
+  validateUpdateProduct,
+  validateProductReview,
+  validateProductId,
+} = require("../middleware/validation");
 
 // Invalidate all product-related cache entries after any mutation.
 // Delegates to the tested helper in cache.js — do NOT re-require or
@@ -25,12 +31,13 @@ const invalidateProductCache = invalidateCache("product");
 // ─── Public routes ─────────────────────────────────────────────────────────
 router.get("/products/categories", cache("product-categories", 3600), getActiveCategories);
 router.get("/products", cache("product", 300), getAllProducts);
-router.get("/product/:id", cache("product", 300), getProductDetails);
+router.get("/product/:id", validateProductId, cache("product", 300), getProductDetails);
 
 // ─── Authenticated user routes ──────────────────────────────────────────────
 router.put(
   "/review",
   isAuthenticatedUser,
+  validateProductReview,
   invalidateProductCache,
   createProductReview
 );
@@ -50,6 +57,7 @@ router.post(
   isAuthenticatedUser,
   authorizeRoles("admin"),
   validateProductImages,
+  validateCreateProduct,
   invalidateProductCache,
   createProduct
 );
@@ -59,6 +67,7 @@ router.put(
   isAuthenticatedUser,
   authorizeRoles("admin"),
   validateProductImages,
+  validateUpdateProduct,
   invalidateProductCache,
   updateProduct
 );
@@ -67,6 +76,7 @@ router.delete(
   "/admin/product/:id",
   isAuthenticatedUser,
   authorizeRoles("admin"),
+  validateProductId,
   invalidateProductCache,
   deleteProduct
 );

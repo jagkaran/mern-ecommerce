@@ -3,12 +3,15 @@
  * Tests for backend/middleware/validation.js
  * Uses supertest against the real Express app so the full
  * express-validator pipeline (chain → handleValidationErrors) runs.
+ *
+ * NOTE: These tests also verify that the validators are correctly WIRED
+ * into the routes — a validator that exists but isn't mounted is useless.
  */
 const request = require("supertest");
 const app     = require("../app");
 const User    = require("../models/userModel");
 
-// ─── helpers ────────────────────────────────────────────────────────────────
+// ─── helpers ─────────────────────────────────────────────────────────────────
 
 const ts   = Date.now();
 let cookie = "";
@@ -28,10 +31,10 @@ async function seedUserCookie() {
   return cookie;
 }
 
-// ─── validateRegistration ────────────────────────────────────────────────────
+// ─── validateRegistration ─────────────────────────────────────────────────────
 
 describe("validateRegistration", () => {
-  it("400 when name is too short", async () => {
+  it("400 when name is too short (< 4 chars)", async () => {
     const res = await request(app).post("/api/v1/register").send({
       name: "Ab", email: "ab@example.com", password: "Test@12345",
     });
@@ -46,11 +49,12 @@ describe("validateRegistration", () => {
     expect(res.status).toBe(400);
   });
 
-  it("400 when password has no uppercase", async () => {
+  it("400 when password has no uppercase letter", async () => {
     const res = await request(app).post("/api/v1/register").send({
       name: "Valid Name", email: `nouc_${ts}@example.com`, password: "alllower1",
     });
     expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/uppercase/i);
   });
 
   it("201 or 500 with fully valid payload (cloudinary optional in test)", async () => {
@@ -63,7 +67,7 @@ describe("validateRegistration", () => {
   });
 });
 
-// ─── validateLogin ───────────────────────────────────────────────────────────
+// ─── validateLogin ────────────────────────────────────────────────────────────
 
 describe("validateLogin", () => {
   it("400 when email is missing", async () => {
@@ -76,13 +80,14 @@ describe("validateLogin", () => {
     expect(res.status).toBe(400);
   });
 
-  it("400 when password is too short", async () => {
+  it("400 when password is too short (< 8 chars)", async () => {
     const res = await request(app).post("/api/v1/login").send({ email: "a@b.com", password: "short" });
     expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/8 characters/i);
   });
 });
 
-// ─── validateCreateOrder — state edge cases ──────────────────────────────────
+// ─── validateCreateOrder — state edge cases ───────────────────────────────────
 
 describe("validateCreateOrder — shippingInfo.state", () => {
   const baseOrder = {
@@ -100,7 +105,7 @@ describe("validateCreateOrder — shippingInfo.state", () => {
     totalPrice: 16.5,
   };
 
-  it("400 when state is exactly 1 char (Austria-style ISO code) — MUST PASS after fix", async () => {
+  it("single-char state (Austrian ISO code) must NOT return 400", async () => {
     const ck = await seedUserCookie();
     const res = await request(app)
       .post("/api/v1/order/new")
@@ -110,18 +115,16 @@ describe("validateCreateOrder — shippingInfo.state", () => {
         shippingInfo: {
           firstName: "Test", lastName: "User",
           address: "Schulstr. 13", city: "Vienna",
-          state: "7",          // <-- single-char Austrian ISO code
+          state: "7",
           country: "AT",
           zip: "1010",
           phone: "06641234567",
         },
       });
-    // After the fix state min:1, this must NOT return 400 for a length reason.
-    // It may still return 401 (no auth in test env) or 200/201 — never 400.
     expect(res.status).not.toBe(400);
   });
 
-  it("passes when state is omitted (optional field)", async () => {
+  it("omitted state is valid (optional field)", async () => {
     const ck = await seedUserCookie();
     const res = await request(app)
       .post("/api/v1/order/new")
@@ -191,10 +194,10 @@ describe("validateCreateOrder — shippingInfo.state", () => {
   });
 });
 
-// ─── validateProductReview ───────────────────────────────────────────────────
+// ─── validateProductReview ────────────────────────────────────────────────────
 
 describe("validateProductReview", () => {
-  it("400 when rating is out of range", async () => {
+  it("400 when rating is out of range (> 5)", async () => {
     const ck = await seedUserCookie();
     const res = await request(app)
       .put("/api/v1/review")
@@ -204,21 +207,23 @@ describe("validateProductReview", () => {
     expect(res.body.message).toMatch(/1 and 5/i);
   });
 
-  it("400 when comment is too short", async () => {
+  it("400 when comment is too short (< 5 chars)", async () => {
     const ck = await seedUserCookie();
     const res = await request(app)
       .put("/api/v1/review")
       .set("Cookie", ck)
       .send({ rating: 4, comment: "Bad", productId: "507f1f77bcf86cd799439011" });
     expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/5 and 500/i);
   });
 
-  it("400 when productId is not a MongoId", async () => {
+  it("400 when productId is not a valid MongoId", async () => {
     const ck = await seedUserCookie();
     const res = await request(app)
       .put("/api/v1/review")
       .set("Cookie", ck)
       .send({ rating: 4, comment: "Nice product overall", productId: "not-a-mongo-id" });
     expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/invalid product id/i);
   });
 });
