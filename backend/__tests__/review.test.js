@@ -49,7 +49,7 @@ describe("Review API — auth guards", () => {
   it("PUT /api/v1/review → 401 without auth", async () => {
     const res = await request(app)
       .put("/api/v1/review")
-      .send({ rating: 4, comment: "nice", productId });
+      .send({ rating: 4, comment: "looks nice", productId });
     expect(res.status).toBe(401);
   });
   it("GET /api/v1/reviews → 401 without auth", async () => {
@@ -124,7 +124,8 @@ describe("Review API — update existing review", () => {
     const res = await request(app)
       .put("/api/v1/review")
       .set("Cookie", userCookie)
-      .send({ rating: 3, comment: "nope", productId: "000000000000000000000000" });
+      // comment is >=5 chars so validation passes; unknown productId reaches controller → 404
+      .send({ rating: 3, comment: "no good at all", productId: "000000000000000000000000" });
     expect(res.status).toBe(404);
   });
 });

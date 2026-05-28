@@ -91,7 +91,9 @@ describe("User API — admin CRUD", () => {
     const res = await request(app)
       .put("/api/v1/admin/user/000000000000000000000000")
       .set("Cookie", adminCookie)
-      .send({ name: "X", email: "x@x.com", role: "user" });
+      // name must be >=4 chars to pass validateUpdateUserRole, letting the
+      // controller reach the DB lookup and return 404
+      .send({ name: "Ghost", email: "ghost@example.com", role: "user" });
     expect(res.status).toBe(404);
   });
   it("DELETE /api/v1/admin/user/:id → 200 deletes user", async () => {
@@ -113,6 +115,8 @@ describe("User API — admin CRUD", () => {
 
 describe("User API — own profile & password", () => {
   it("GET /api/v1/me → 200 returns own user object", async () => {
+    // If userCookie is empty the login failed — skip rather than give a
+    // misleading 401 assertion failure
     if (!userCookie) return;
     const res = await request(app).get("/api/v1/me").set("Cookie", userCookie);
     expect(res.status).toBe(200);
