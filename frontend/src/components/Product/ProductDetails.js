@@ -56,34 +56,44 @@ function ProductDetails() {
   const handleClose = () => setOpen(false);
 
   const reviewSubmitHandler = () => {
-    const myForm = new FormData();
-    myForm.set("rating", rating);
-    myForm.set("comment", comment);
-    myForm.set("productId", id);
-    dispatch(newReview(myForm));
+    dispatch(
+      newReview({
+        rating,
+        comment,
+        productId: id,
+      })
+    );
     setOpen(false);
   };
 
-  // Initial fetch + error handling
+  // Initial product fetch — runs once on mount and whenever the product id changes.
+  useEffect(() => {
+    dispatch(getProductDetails(id));
+  }, [dispatch, id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Handle product-fetch errors separately so they don't trigger a re-fetch loop.
   useEffect(() => {
     if (error) {
       alert.error(error);
       dispatch(clearErrors());
-      return;
     }
+  }, [error]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Handle review submission errors.
+  useEffect(() => {
     if (reviewError) {
       alert.error(reviewError);
       dispatch(clearErrors());
-      return;
     }
-    dispatch(getProductDetails(id));
-  }, [dispatch, id, error, reviewError]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [reviewError]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Re-fetch product after a successful review submission so the new
-  // createdAt field appears immediately without a page reload.
+  // On successful review: show toast, reset the form, re-fetch so the new
+  // review appears immediately without a full page reload.
   useEffect(() => {
     if (success) {
       alert.success("Review Submitted Successfully");
+      setRating(0);
+      setComment("");
       dispatch({ type: "NewReviewReset" });
       dispatch(getProductDetails(id));
     }
@@ -176,6 +186,7 @@ function ProductDetails() {
                 <button
                   onClick={handleClickOpen}
                   className="mt-8 ml-auto px-4 py-2 transition ease-in duration-200 uppercase rounded-full hover:bg-gray-800 hover:text-white border-2 border-gray-900 focus:outline-none"
+                  data-testid="submit-review-btn"
                 >
                   Submit a Review
                 </button>
@@ -183,9 +194,10 @@ function ProductDetails() {
                   <DialogTitle>Submit a Review</DialogTitle>
                   <DialogContent>
                     <Rating
-                      name="half-rating-read"
+                      name="review-rating"
                       value={rating}
                       onChange={(e, newValue) => setRating(newValue)}
+                      data-testid="review-rating"
                     />
                     <TextField
                       autoFocus
@@ -197,11 +209,17 @@ function ProductDetails() {
                       label="Add a comment"
                       onChange={(e) => setComment(e.target.value)}
                       fullWidth
+                      inputProps={{ "data-testid": "review-comment" }}
                     />
                   </DialogContent>
                   <DialogActions>
                     <Button onClick={handleClose}>Cancel</Button>
-                    <Button onClick={reviewSubmitHandler}>Submit</Button>
+                    <Button
+                      onClick={reviewSubmitHandler}
+                      data-testid="review-submit-btn"
+                    >
+                      Submit
+                    </Button>
                   </DialogActions>
                 </Dialog>
               </div>
