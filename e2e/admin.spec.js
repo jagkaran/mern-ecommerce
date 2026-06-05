@@ -11,7 +11,7 @@ test.describe('Admin dashboard', () => {
   });
 
   test('admin can navigate to dashboard', async ({ page }) => {
-    await page.goto('/admin/dashboard');
+    await page.goto('/dashboard');
     await expect(
       page
         .getByRole('heading', { name: /dashboard/i })
@@ -67,7 +67,7 @@ test.describe('Admin dashboard', () => {
       await nameInput.fill('');
       await nameInput.blur();
       await expect(
-        page.getByText(/name is required|product name.*required/i).first()
+        page.getByText(/Product name must be at least 3 characters/i).first()
       ).toBeVisible({ timeout: 8000 });
     });
 
@@ -76,9 +76,7 @@ test.describe('Admin dashboard', () => {
       await priceInput.fill('-10');
       await priceInput.blur();
       await expect(
-        page
-          .getByText(/price.*positive|must be.*greater|invalid price/i)
-          .first()
+        page.getByText(/Price must be greater than 0/i).first()
       ).toBeVisible({ timeout: 8000 });
     });
 
@@ -87,9 +85,7 @@ test.describe('Admin dashboard', () => {
       await stockInput.fill('-5');
       await stockInput.blur();
       await expect(
-        page
-          .getByText(/stock.*positive|must be.*greater|invalid stock/i)
-          .first()
+        page.getByText(/Stock must be a non-negative whole number/i).first()
       ).toBeVisible({ timeout: 8000 });
     });
 
@@ -98,7 +94,7 @@ test.describe('Admin dashboard', () => {
       await desc.fill('hi');
       await desc.blur();
       await expect(
-        page.getByText(/description.*longer|at least|too short/i).first()
+        page.getByText(/Description must be at least 20 characters/i).first()
       ).toBeVisible({ timeout: 8000 });
     });
 

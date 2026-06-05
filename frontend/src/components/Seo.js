@@ -2,7 +2,7 @@ import React from "react";
 import { Helmet } from "react-helmet";
 
 function Seo({ title, description, path }) {
-  const url = `http://localhost:3000/${path}`;
+  const url = `${process.env.REACT_APP_SITE_URL || "http://localhost:3000"}/${path}`;
   return (
     <div>
       <Helmet

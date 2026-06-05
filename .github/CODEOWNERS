@@ -1,0 +1,18 @@
+# CODEOWNERS — auto-request review on matching paths
+# Format: <path> <owner>
+
+# Default owner (everything else)
+* @jagkaransingh
+
+# Backend security-relevant middleware
+/backend/middleware/ @jagkaransingh
+/backend/middleWare/ @jagkaransingh
+
+# Payment + auth logic
+/backend/controllers/paymentController.js @jagkaransingh
+/backend/controllers/userController.js @jagkaransingh
+/backend/middleware/auth.js @jagkaransingh
+/backend/config/database.js @jagkaransingh
+
+# CI configuration
+/.github/ @jagkaransingh

@@ -1,0 +1,15 @@
+title = "gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+paths = [
+  '''node_modules''',
+  '''package-lock.json''',
+  '''frontend/build''',
+  '''coverage/''',
+  '''playwright-report/''',
+  '''test-results/''',
+  '''.playwright-mcp''',
+]

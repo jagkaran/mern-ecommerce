@@ -1,8 +1,3 @@
-# CI/CD Pipeline
-# Runs on every push and pull-request to master.
-# Jobs:  lint → test → audit
-# Deployment (Render auto-deploy) is triggered on merge via render.yaml autoDeploy: true.
-
 name: CI
 
 on:
@@ -12,40 +7,29 @@ on:
     branches: [master]
 
 jobs:
-  # ─── 1. Lint ──────────────────────────────────────────────────────────────
+  # ─── 1. Lint ─────────────────────────────────────────────────────────────
   lint:
     name: Lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.1.7
+      - uses: actions/setup-node@1e60f620d9534c16a4cce0d32f397ac79ad3af9f  # v4.3.0
         with:
           node-version-file: .nvmrc
           cache: npm
+      - run: npm ci
+      - run: npm install --legacy-peer-deps --prefix frontend
+      - run: npm run lint --if-present
+      - run: npm run lint --prefix frontend --if-present
 
-      - name: Install root deps
-        run: npm ci
-
-      - name: Install frontend deps
-        run: npm install --legacy-peer-deps --prefix frontend
-
-      - name: Lint backend (eslint)
-        run: npm run lint --if-present
-
-      - name: Lint frontend (eslint)
-        run: npm run lint --prefix frontend --if-present
-
-  # ─── 2. Backend Unit + Integration Tests ──────────────────────────────────
+  # ─── 2. Backend Unit Tests (matrix across Node 18/20/22) ───────────────
   test:
     name: Backend Tests
     runs-on: ubuntu-latest
     needs: lint
-
-    # Spin up a real MongoDB instance for the test suite.
-    # mongodb-memory-server is used by Jest setup files so this service
-    # is only here as a fallback reference — the in-memory server is primary.
+    strategy:
+      matrix:
+        node-version: [18, 20, 22]
     services:
       mongodb:
         image: mongo:7
@@ -56,7 +40,6 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-
     env:
       NODE_ENV: test
       DB_URI: mongodb://localhost:27017/mern-ecommerce-test
@@ -65,69 +48,79 @@ jobs:
       CLOUDINARY_NAME: placeholder
       CLOUDINARY_API_KEY: placeholder
       CLOUDINARY_API_SECRET: placeholder
-      STRIPE_SECRET_KEY: placeholder
+      STRIPE_SECRET_KEY: sk_test_placeholder
       SMTP_HOST: placeholder
       SMTP_PORT: 465
       SMTP_SERVICE: gmail
       SMTP_MAIL: placeholder@example.com
       SMTP_PASSWORD: placeholder
-
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@1e60f620d9534c16a4cce0d32f397ac79ad3af9f
         with:
-          node-version-file: .nvmrc
+          node-version: ${{ matrix.node-version }}
           cache: npm
-
-      - name: Install deps
-        run: npm ci
-
-      - name: Run tests with coverage
-        run: npm test -- --coverage --forceExit --testTimeout=30000
-
-      - name: Upload coverage report
-        uses: actions/upload-artifact@v4
+      - run: npm ci
+      - run: npm test -- --coverage --forceExit --testTimeout=30000
+      - uses: actions/upload-artifact@ea165f08c770ca63ed9d3621d8e91c068063aa7e
         if: always()
         with:
-          name: coverage-report
+          name: coverage-${{ matrix.node-version }}
           path: coverage/
           retention-days: 7
 
-  # ─── 3. Security Audit ────────────────────────────────────────────────────
+  # ─── 3. Playwright E2E (master only — long-running) ────────────────────
+  e2e:
+    name: Playwright E2E
+    runs-on: ubuntu-latest
+    needs: lint
+    if: github.ref == 'refs/heads/master'
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@1e60f620d9534c16a4cce0d32f397ac79ad3af9f
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm install --legacy-peer-deps --prefix frontend
+      - uses: actions/cache@0c4d9d2525747a65529a8e800b457f04bcf01980
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('**/package-lock.json', 'frontend/package-lock.json') }}
+      - run: npx playwright install --with-deps chromium
+      - run: npm run e2e:ci
+        env:
+          E2E_NO_WEBSERVER: 1
+          BASE_URL: http://localhost:3000
+      - uses: actions/upload-artifact@ea165f08c770ca63ed9d3621d8e91c068063aa7e
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+  # ─── 4. Security Audit ──────────────────────────────────────────────────
   audit:
     name: Security Audit
     runs-on: ubuntu-latest
     needs: lint
-
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@1e60f620d9534c16a4cce0d32f397ac79ad3af9f
         with:
           node-version-file: .nvmrc
           cache: npm
-
-      - name: Install root deps
-        run: npm ci
-
-      - name: Install frontend deps
-        run: npm install --legacy-peer-deps --prefix frontend
-
-      # Backend audit — fail CI on HIGH or CRITICAL vulnerabilities.
-      # Backend deps are production code we fully control; the bar is strict.
-      - name: Audit backend dependencies
-        run: npm audit --audit-level=high
-
-      # Frontend audit — report only, do NOT fail CI.
-      # The frontend has dozens of transitive vulnerabilities buried inside
-      # react-scripts (CRA toolchain) that cannot be fixed without ejecting
-      # or migrating to Vite. These are build-time dev-tool vulns that never
-      # reach the production bundle delivered to users. We log them so they
-      # are visible in the Actions summary without blocking every deploy.
-      # TODO: migrate frontend from CRA to Vite to eliminate these.
-      - name: Audit frontend dependencies (informational)
-        run: npm audit --audit-level=high --prefix frontend
+      - run: npm ci
+      - run: npm install --legacy-peer-deps --prefix frontend
+      - run: npm audit --audit-level=high
+      - run: npm audit --audit-level=high --prefix frontend
         continue-on-error: true
+
+  # ─── 5. Secret Scan (gitleaks) ──────────────────────────────────────────
+  secret-scan:
+    name: Secret Scan
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: gitleaks/gitleaks@v8.30.1

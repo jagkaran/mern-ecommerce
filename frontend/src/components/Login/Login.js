@@ -44,7 +44,16 @@ function Login() {
     }
   };
 
-  const redirect = location.search ? location.search.split("=")[1] : "account";
+  const getSafeRedirect = () => {
+  const params = new URLSearchParams(location.search);
+  const redirect = params.get("redirect");
+  if (!redirect) return "/account";
+  if (/^https?:\/\//i.test(redirect) || redirect.startsWith("//")) {
+    return "/account";
+  }
+  return redirect;
+};
+const redirect = getSafeRedirect();
 
   useEffect(() => {
     if (error) {

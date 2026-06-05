@@ -29,3 +29,19 @@ jest.mock("cloudinary", () => ({
     },
   },
 }));
+
+// Storage service mock — delegates to same cloudinary inline mock so both
+// `cloudinary.uploader.upload.mock.calls` AND `storageService.uploadImage.mock.calls`
+// assertions keep working after the SOLID refactor.
+jest.mock("../services/storageService", () => ({
+  uploadImage: jest.fn().mockImplementation((_dataUri, _folder, opts) =>
+    Promise.resolve({ public_id: "test_service_id", url: "http://test.service/img.jpg" })
+  ),
+  uploadMany: jest.fn().mockImplementation((uris, _folder, opts) =>
+    Promise.resolve(uris.map((_, i) => ({ public_id: `test_svc_${i}`, url: `http://test.service/${i}.jpg` })))
+  ),
+  destroyImage: jest.fn().mockResolvedValue(undefined),
+  destroyMany: jest.fn().mockResolvedValue(undefined),
+  uploadAvatar: jest.fn().mockResolvedValue({ public_id: "test_avatar_id", url: "http://test.service/avatar.jpg" }),
+  uploadProductImage: jest.fn().mockResolvedValue({ public_id: "test_prod_id", url: "http://test.service/prod.jpg" }),
+}));

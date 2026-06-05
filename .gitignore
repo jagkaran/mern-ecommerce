@@ -20,8 +20,13 @@ coverage/
 frontend/coverage/
 test-results/
 playwright-report/
+.playwright-mcp/
 # Temp file written by MongoMemoryServer bridge between Jest processes
 backend/__tests__/.mongo-uri
+
+# E2E analysis docs (local only)
+E2E_FAILURES_ANALYSIS.md
+E2E_FIX_PLAN.md
 
 # ─── Logs ─────────────────────────────────────────────────────────────────────
 npm-debug.log*

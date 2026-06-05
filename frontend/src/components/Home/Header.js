@@ -146,18 +146,18 @@ function Header() {
 
         <div className="flex items-center">
           <nav className="font-sen text-gray-800 uppercase text-lg lg:flex items-center hidden">
-            <a href="/aboutus" className="py-2 px-6 flex">About Us</a>
-            <a href="/products" className="py-2 px-6 flex">Products</a>
-            <a href="/search" className="py-2 px-2 flex"><SearchIcon /></a>
-            <a href="/cart" className="py-2 px-2 flex">
-              <Badge
-                anchorOrigin={{ vertical: "top", horizontal: "right" }}
-                badgeContent={cartItems.reduce((a, i) => a + i.quantity, 0)}
-                color="primary"
-              >
-                <ShoppingCartIcon />
-              </Badge>
-            </a>
+        <Link to="/aboutus" className="py-2 px-6 flex">About Us</Link>
+        <Link to="/products" className="py-2 px-6 flex">Products</Link>
+        <Link to="/search" className="py-2 px-2 flex"><SearchIcon /></Link>
+        <Link to="/cart" className="py-2 px-2 flex">
+          <Badge
+            anchorOrigin={{ vertical: "top", horizontal: "right" }}
+            badgeContent={cartItems.reduce((a, i) => a + i.quantity, 0)}
+            color="primary"
+          >
+            <ShoppingCartIcon />
+          </Badge>
+        </Link>
 
             {isAuthenticated ? (
               <>

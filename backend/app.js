@@ -29,7 +29,7 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'", "https://js.stripe.com"],
+        scriptSrc: ["'self'", "https://js.stripe.com"],
         frameSrc: ["'self'", "https://js.stripe.com"],
         connectSrc: ["'self'", "https://api.stripe.com"],
         imgSrc: ["'self'", "data:", "https://res.cloudinary.com"],
@@ -138,6 +138,12 @@ if (process.env.NODE_ENV?.toLowerCase() !== "test") {
   app.get("/api/v1/csrf-token", generateCsrfToken);
   app.use(csrfProtection);
 }
+
+// ─── Request logging ──────────────────────────────────────────────────────────
+// Structured timing + method + IP logging via Winston. Redacts sensitive body
+// fields. Covers every request before it hits any route.
+const requestLogger = require("./middleware/logger");
+app.use(requestLogger);
 
 // ─── API Routes ───────────────────────────────────────────────────────────────
 const product = require("./routes/productRoute");
