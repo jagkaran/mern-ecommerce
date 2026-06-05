@@ -12,8 +12,8 @@ jobs:
     name: Lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.1.7
-      - uses: actions/setup-node@1e60f620d9534c16a4cce0d32f397ac79ad3af9f  # v4.3.0
+      - uses: actions/checkout@v4 # v4.1.7
+      - uses: actions/setup-node@v4  # v4.3.0
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -55,14 +55,14 @@ jobs:
       SMTP_MAIL: placeholder@example.com
       SMTP_PASSWORD: placeholder
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-      - uses: actions/setup-node@1e60f620d9534c16a4cce0d32f397ac79ad3af9f
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
       - run: npm ci
       - run: npm test -- --coverage --forceExit --testTimeout=30000
-      - uses: actions/upload-artifact@ea165f08c770ca63ed9d3621d8e91c068063aa7e
+      - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: coverage-${{ matrix.node-version }}
@@ -76,14 +76,14 @@ jobs:
     needs: lint
     if: github.ref == 'refs/heads/master'
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-      - uses: actions/setup-node@1e60f620d9534c16a4cce0d32f397ac79ad3af9f
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
       - run: npm install --legacy-peer-deps --prefix frontend
-      - uses: actions/cache@0c4d9d2525747a65529a8e800b457f04bcf01980
+      - uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('**/package-lock.json', 'frontend/package-lock.json') }}
@@ -92,7 +92,7 @@ jobs:
         env:
           E2E_NO_WEBSERVER: 1
           BASE_URL: http://localhost:3000
-      - uses: actions/upload-artifact@ea165f08c770ca63ed9d3621d8e91c068063aa7e
+      - uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: playwright-report
@@ -105,8 +105,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: lint
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-      - uses: actions/setup-node@1e60f620d9534c16a4cce0d32f397ac79ad3af9f
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -122,5 +122,5 @@ jobs:
     runs-on: ubuntu-latest
     needs: lint
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/checkout@v4
       - uses: gitleaks/gitleaks@v8.30.1
