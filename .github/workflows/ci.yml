@@ -46,7 +46,6 @@ jobs:
           CLOUDINARY_NAME: placeholder
           CLOUDINARY_API_KEY: placeholder
           CLOUDINARY_API_SECRET: placeholder
-          STRIPE_SECRET_KEY: sk_test_placeholder
           SMTP_HOST: placeholder
           SMTP_PORT: 465
           SMTP_SERVICE: gmail
