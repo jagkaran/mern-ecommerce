@@ -114,4 +114,4 @@ jobs:
     needs: lint
     steps:
     - uses: actions/checkout@v4
-    - uses: gitleaks/gitleaks-action@v2
+    - uses: gitleaks/gitleaks-action@v3
