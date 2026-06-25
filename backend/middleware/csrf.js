@@ -20,6 +20,20 @@ const { doubleCsrf } = require("csrf-csrf");
  *
  * @module middleware/csrf
  */
+
+// Fail fast in production if CSRF_SECRET is not set. Without a strong
+// secret the HMAC cookie is forgeable — running the app in prod without it
+// is a security failure, not a soft fallback.
+if (
+  process.env.NODE_ENV?.toLowerCase() === "production" &&
+  !process.env.CSRF_SECRET
+) {
+  throw new Error(
+    "CSRF_SECRET is required in production. Set a long random value in the " +
+      "environment (e.g. `openssl rand -hex 32`) before starting the server."
+  );
+}
+
 const { doubleCsrfProtection, generateToken } = doubleCsrf({
   getSecret: () =>
     process.env.CSRF_SECRET || "csrf-fallback-dev-secret-change-in-prod",

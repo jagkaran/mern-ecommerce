@@ -419,27 +419,28 @@ exports.validateCreateOrder = [
     .isIn(["succeeded", "pending", "failed"])
     .withMessage("Invalid payment status"),
 
+  // Client price fields were previously REQUIRED here. They are now
+  // optional: pricing is computed server-side from trusted DB prices and
+  // any client-supplied totals are ignored. Marking these fields optional
+  // keeps old clients (which still send them) compatible while rejecting
+  // bodies that omit the bits the server actually uses.
   body("itemPrice")
-    .notEmpty()
-    .withMessage("Item price is required")
+    .optional()
     .isFloat({ min: 0 })
     .withMessage("Item price must be a positive number"),
 
   body("taxPrice")
-    .notEmpty()
-    .withMessage("Tax price is required")
+    .optional()
     .isFloat({ min: 0 })
     .withMessage("Tax price must be a positive number"),
 
   body("shippingPrice")
-    .notEmpty()
-    .withMessage("Shipping price is required")
+    .optional()
     .isFloat({ min: 0 })
     .withMessage("Shipping price must be a positive number"),
 
   body("totalPrice")
-    .notEmpty()
-    .withMessage("Total price is required")
+    .optional()
     .isFloat({ min: 0 })
     .withMessage("Total price must be a positive number"),
 
@@ -498,14 +499,28 @@ exports.validateUpdateUserRole = [
 ];
 
 /**
- * Payment processing validation
+ * Payment processing validation — orderItems is required, not the legacy
+ * `amount` field. amount-based requests are rejected with 400 in the
+ * controller, no need to fail validation here too.
  */
 exports.validatePayment = [
-  body("amount")
+  body("orderItems")
     .notEmpty()
-    .withMessage("Amount is required")
-    .isFloat({ min: 0.01 })
-    .withMessage("Amount must be at least 0.01"),
+    .withMessage("orderItems is required")
+    .isArray({ min: 1 })
+    .withMessage("At least one order item is required"),
+
+  body("orderItems.*.product")
+    .notEmpty()
+    .withMessage("Product ID is required")
+    .isMongoId()
+    .withMessage("Invalid product ID"),
+
+  body("orderItems.*.quantity")
+    .notEmpty()
+    .withMessage("Quantity is required")
+    .isInt({ min: 1 })
+    .withMessage("Quantity must be at least 1"),
 
   this.handleValidationErrors,
 ];

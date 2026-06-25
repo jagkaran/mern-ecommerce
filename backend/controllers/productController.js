@@ -1,10 +1,32 @@
 const Product = require("../models/productModel");
+const Order   = require("../models/orderModel");
 const ErrorHandler = require("../utils/errorHandler");
 const catchAsyncErrors = require("../middleware/catchAsyncErrors");
 const ApiFeatures = require("../utils/apiFeatures");
 const storage = require("../services/storageService");
 const logger = require("../utils/logger");
 const { recalculateRatings } = require("../utils/aggregationHelpers");
+
+// Whitelist of fields a client is allowed to set when creating or updating a
+// product. Anything else (ratings, numOfReviews, reviews, _id, createdBy,
+// createdAt, ...) is rejected silently to prevent mass-assignment of fields
+// the schema would otherwise happily accept. ratings/numOfReviews/reviews are
+// recomputed by the system and must never be writable from the wire.
+const WRITABLE_PRODUCT_FIELDS = [
+  "name",
+  "description",
+  "price",
+  "category",
+  "stock",
+  "images",
+];
+
+function pickProductFields(body) {
+  return WRITABLE_PRODUCT_FIELDS.reduce((acc, key) => {
+    if (body[key] !== undefined) acc[key] = body[key];
+    return acc;
+  }, {});
+}
 
 exports.createProduct = catchAsyncErrors(async (req, res, next) => {
   let images = [];
@@ -14,10 +36,12 @@ exports.createProduct = catchAsyncErrors(async (req, res, next) => {
     images = req.body.images || [];
   }
   const imagesLinks = await storage.uploadMany(images, "products");
-  req.body.images = imagesLinks;
-  req.body.user = req.user.id;
-  req.body.createdBy = req.user.id;
-  const product = await Product.create(req.body);
+  // Pick only whitelist fields — never spread req.body into Product.create.
+  const fields = pickProductFields(req.body);
+  fields.images = imagesLinks;
+  fields.user = req.user.id;
+  fields.createdBy = req.user.id;
+  const product = await Product.create(fields);
   logger.info(`Product created: ${product._id} by user ${req.user.id}`);
   res.status(201).json({ success: true, product });
 });
@@ -108,12 +132,13 @@ exports.updateProduct = catchAsyncErrors(async (req, res, next) => {
   } else {
     images = req.body.images || [];
   }
+  const fields = pickProductFields(req.body);
   if (images.length > 0) {
     await storage.destroyMany(product.images);
     const imagesLinks = await storage.uploadMany(images, "products");
-    req.body.images = imagesLinks;
+    fields.images = imagesLinks;
   }
-  product = await Product.findByIdAndUpdate(req.params.id, req.body, {
+  product = await Product.findByIdAndUpdate(req.params.id, fields, {
     new: true,
     runValidators: true,
   });
@@ -141,6 +166,23 @@ exports.createProductReview = catchAsyncErrors(async (req, res, next) => {
   if (!product) {
     return next(new ErrorHandler("Product not found", 404));
   }
+
+  // Verified-purchase gate: only users who actually ordered this product
+  // (status anywhere from Processing through Delivered) may review it.
+  // Without this, anyone with a login could review anything.
+  const hasPurchased = await Order.exists({
+    user:    req.user._id,
+    "orderItems.product": productId,
+  });
+  if (!hasPurchased) {
+    return next(
+      new ErrorHandler(
+        "Only customers who purchased this product can leave a review.",
+        403
+      )
+    );
+  }
+
   const existingReview = product.reviews.find(
     (rev) => rev.user.toString() === req.user._id.toString()
   );
@@ -150,7 +192,7 @@ exports.createProductReview = catchAsyncErrors(async (req, res, next) => {
   } else {
     product.reviews.push({
       user: req.user.id,
-      profileImg: req.user.profilePic.url,
+      profileImg: req.user.profilePic?.url || "",
       name: req.user.name,
       rating: Number(rating),
       comment,
@@ -176,6 +218,21 @@ exports.deleteProductReview = catchAsyncErrors(async (req, res, next) => {
   const product = await Product.findById(req.query.productId);
   if (!product) {
     return next(new ErrorHandler("Product not found", 404));
+  }
+  const targetReview = product.reviews.find(
+    (rev) => rev._id.toString() === req.query.id.toString()
+  );
+  if (!targetReview) {
+    return next(new ErrorHandler("Review not found", 404));
+  }
+  // Ownership / admin gate. Without this any authed user could delete any
+  // review just by knowing its mongo _id — classic IDOR.
+  const isOwner = targetReview.user.toString() === req.user._id.toString();
+  const isAdmin = req.user.role === "admin";
+  if (!isOwner && !isAdmin) {
+    return next(
+      new ErrorHandler("You are not authorized to delete this review", 403)
+    );
   }
   const reviews = product.reviews.filter(
     (rev) => rev._id.toString() !== req.query.id.toString()

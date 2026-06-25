@@ -1,6 +1,11 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Rating } from "@mui/material";
+// ponytail: fmt not used yet — price is plain $price. Currency formatting
+// can be added when a consistent display pattern is applied across the app.
+
+const PLACEHOLDER_IMAGE =
+  "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><rect width='100%' height='100%' fill='%23f3f4f6'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%239ca3af' font-family='sans-serif' font-size='16'>No image</text</svg>";
 
 function ProductCard({
   id,
@@ -44,7 +49,7 @@ function ProductCard({
           <div className="prod-img h-52 w-full overflow-hidden rounded">
             <img
               alt={name}
-              src={images[0].url}
+              src={images?.[0]?.url || PLACEHOLDER_IMAGE}
               className="h-full w-full object-cover object-center"
             />
           </div>
@@ -58,7 +63,7 @@ function ProductCard({
               readOnly
             />
             <span className="text-xs ml-1 italic text-gray-400">
-              ({numOfReviews} {numOfReviews > 1 ? "Reviews" : "Review"})
+              ({numOfReviews} {numOfReviews === 1 ? "Review" : "Reviews"})
             </span>
           </div>
 

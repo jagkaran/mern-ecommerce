@@ -1,15 +1,16 @@
-import React from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { useSelector } from "react-redux";
 import { CircularProgress, Box } from "@mui/material";
 
-function ProtectedRoute({ children, isAuthenticated, loading }) {
+function AdminRoute({ isAuthenticated, loading }) {
   const location = useLocation();
+  const { user } = useSelector((s) => s.user);
 
   if (loading !== false) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
         <CircularProgress color="inherit" />
-     </Box>
+      </Box>
     );
   }
 
@@ -18,7 +19,7 @@ function ProtectedRoute({ children, isAuthenticated, loading }) {
     return <Navigate to={`/signin?redirect=${redirect}`} replace />;
   }
 
-  return children ? children : <Outlet />;
+  return user?.role === "admin" ? <Outlet /> : <Navigate to="/account" replace />;
 }
 
-export default ProtectedRoute;
+export default AdminRoute;

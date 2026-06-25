@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import Typography from "@mui/material/Typography";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
@@ -24,14 +24,22 @@ function ReviewOrder({ reviewData, handleReviewDataChange }) {
     country.name,
   ];
 
-  reviewData.subTotal = cartItems.reduce(
-    (acc, item) => acc + item.quantity * item.price,
-    0
-  );
-  reviewData.shippingCharges = reviewData.subTotal > 1000 ? 0 : 50;
-  reviewData.tax = reviewData.subTotal * 0.15;
-  reviewData.totalPrice =
-    reviewData.subTotal + reviewData.shippingCharges + reviewData.tax;
+  const computed = React.useMemo(() => {
+    const subTotal = cartItems.reduce((acc, item) => acc + item.quantity * item.price, 0);
+    const shippingCharges = subTotal > 1000 ? 0 : 50;
+    const tax = subTotal * 0.15;
+    const totalPrice = subTotal + shippingCharges + tax;
+    return { subTotal, shippingCharges, tax, totalPrice };
+  }, [cartItems]);
+
+  // Update parent state when computed values change
+  useEffect(() => {
+    const { subTotal, shippingCharges, tax, totalPrice } = computed;
+    if (reviewData?.subTotal !== subTotal) handleReviewDataChange("subTotal", subTotal);
+    if (reviewData?.shippingCharges !== shippingCharges) handleReviewDataChange("shippingCharges", shippingCharges);
+    if (reviewData?.tax !== tax) handleReviewDataChange("tax", tax);
+    if (reviewData?.totalPrice !== totalPrice) handleReviewDataChange("totalPrice", totalPrice);
+  }, [computed, handleReviewDataChange]);
 
   // handleReviewDataChange is now wrapped in useCallback in the parent (Shipping.js)
   // so it is safe to include in the dependency array without causing infinite re-renders.

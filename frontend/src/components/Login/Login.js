@@ -51,7 +51,10 @@ function Login() {
   if (/^https?:\/\//i.test(redirect) || redirect.startsWith("//")) {
     return "/account";
   }
-  return redirect;
+  // Normalise to exactly one leading slash. Previously the caller did
+  // `history(`/${redirect}`)`, which turned the default "/account" into the
+  // broken "//account" (a protocol-relative URL) on every normal login.
+  return redirect.startsWith("/") ? redirect : `/${redirect}`;
 };
 const redirect = getSafeRedirect();
 
@@ -67,7 +70,7 @@ const redirect = getSafeRedirect();
       // useSelector subscriptions. A hard reload is not needed and would
       // destroy Redux state, trigger an extra loadUser round-trip, and cause
       // a jarring white flash.
-      history(`/${redirect}`, { replace: true });
+      history(redirect, { replace: true });
     }
   }, [error, alert, history, redirect, isAuthenticated, dispatch]);
 

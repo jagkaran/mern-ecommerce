@@ -7,8 +7,8 @@
  * Covered:
  *  - CastError   → 400 "Resource not found"
  *  - Duplicate key (code 11000) → 400 "Duplicate field value"
- *  - JsonWebTokenError → 400 "Invalid token"
- *  - TokenExpiredError → 400 "Token has expired"
+ *  - JsonWebTokenError → 401 "Invalid token"
+ *  - TokenExpiredError → 401 "Token has expired"
  *  - Generic error passthrough (statusCode + message preserved)
  */
 const request  = require("supertest");
@@ -45,21 +45,24 @@ describe("Error middleware — error type branches", () => {
     expect(res.body.message).toMatch(/Duplicate/i);
   });
 
-  it("JsonWebTokenError → 400 Invalid token", async () => {
+  it("JsonWebTokenError → 401 Invalid token", async () => {
+    // Updated: the security hardening maps JWT failures to 401 (not 400) so
+    // clients can distinguish "expired/invalid session" from "bad request".
     const err = Object.assign(new Error("jwt malformed"), {
       name: "JsonWebTokenError",
     });
     const res = await request(makeApp(() => err)).get("/test");
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(401);
     expect(res.body.message).toMatch(/token/i);
   });
 
-  it("TokenExpiredError → 400 Token has expired", async () => {
+  it("TokenExpiredError → 401 Token has expired", async () => {
+    // Same rationale as above: 401 > 400 for auth failures.
     const err = Object.assign(new Error("jwt expired"), {
       name: "TokenExpiredError",
     });
     const res = await request(makeApp(() => err)).get("/test");
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(401);
     expect(res.body.message).toMatch(/expired/i);
   });
 

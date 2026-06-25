@@ -12,6 +12,7 @@ import axios from "axios";
 import { loadUser } from "./actions/userAction";
 import Header from "./components/Home/Header";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AdminRoute from "./components/AdminRoute";
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 
@@ -63,7 +64,41 @@ const PageLoader = () => (
 function App() {
   const dispatch = useDispatch();
   const [stripeApiKey, setStripeApiKey] = useState("");
-  const { isAuthenticated, user } = useSelector((state) => state.user);
+  const { isAuthenticated, user, loading } = useSelector((state) => state.user);
+
+  // Backend uses double-submit cookie CSRF for state-mutating requests
+  // (POST/PUT/DELETE/PATCH) outside NODE_ENV=test. Without withCredentials
+  // the session cookie never flows on the csrf-token fetch, and without
+  // X-CSRF-Token axios every mutation 403s in production.
+  //
+  // Flow:
+  //   1. On mount, GET /api/v1/csrf-token — server sets the signed
+  //      httpOnly cookie "x-csrf-token" and returns the token in the body.
+  //   2. The interceptor below reads the cookie (or stored token) and
+  //      attaches it as X-CSRF-Token on every mutating request.
+  useEffect(() => {
+    axios.defaults.withCredentials = true;
+
+    const requestInterceptor = axios.interceptors.request.use((config) => {
+      const method = (config.method || "get").toLowerCase();
+      const mutating = ["post", "put", "delete", "patch"].includes(method);
+      if (mutating) {
+        // Pull the token from the cookie jar — the server's signed cookie
+        // is the source of truth. csrf-csrf sets it on the csrf-token GET.
+        const match = document.cookie.match(/(?:^|; )x-csrf-token=([^;]+)/);
+        const token = match ? decodeURIComponent(match[1]) : null;
+        if (token) {
+          config.headers = config.headers || {};
+          config.headers["X-CSRF-Token"] = token;
+        }
+      }
+      return config;
+    });
+    // hydration token GET — fire-and-forget; failures are non-fatal in dev.
+    axios.get("/api/v1/csrf-token").catch(() => {});
+
+    return () => axios.interceptors.request.eject(requestInterceptor);
+  }, []);
 
   useEffect(() => { dispatch(loadUser()); }, [dispatch]);
 
@@ -103,7 +138,7 @@ function App() {
                 <Route path="/password/forgot" element={<ForgotPassword />} />
                 <Route path="/cart" element={<Basket />} />
                 <Route path="/aboutus" element={<AboutUs />} />
-                <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} />}>
+                <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} loading={loading} />}>
                   <Route path="/password/update" element={<UpdatePassword />} />
                   <Route
                     path="/shipping"
@@ -121,14 +156,16 @@ function App() {
                   <Route path="/success" element={<Success />} />
                   <Route path="/myorders" element={<MyOrders />} />
                   <Route path="/order/:id" element={<OrderDetails />} />
-                  <Route path="/dashboard"              element={user?.role === "admin" ? <Dashboard />        : <Account />} />
-                  <Route path="/admin/products"         element={user?.role === "admin" ? <AllAdminProducts /> : <Account />} />
-                  <Route path="/admin/orders"           element={user?.role === "admin" ? <AllAdminOrders />   : <Account />} />
-                  <Route path="/admin/users"            element={user?.role === "admin" ? <AllAdminUsers />    : <Account />} />
-                  <Route path="/admin/product/new"      element={user?.role === "admin" ? <CreateProduct />    : <Account />} />
-                  <Route path="/admin/product/update/:id" element={user?.role === "admin" ? <UpdateProduct /> : <Account />} />
-                  <Route path="/admin/user/update/:id"  element={user?.role === "admin" ? <UpdateUser />      : <Account />} />
-                  <Route path="/admin/order/update/:id" element={user?.role === "admin" ? <UpdateOrder />     : <Account />} />
+                  <Route element={<AdminRoute isAuthenticated={isAuthenticated} loading={loading} />}>
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/admin/products" element={<AllAdminProducts />} />
+                  <Route path="/admin/orders" element={<AllAdminOrders />} />
+                  <Route path="/admin/users" element={<AllAdminUsers />} />
+                  <Route path="/admin/product/new" element={<CreateProduct />} />
+                  <Route path="/admin/product/update/:id" element={<UpdateProduct />} />
+                  <Route path="/admin/user/update/:id" element={<UpdateUser />} />
+                  <Route path="/admin/order/update/:id" element={<UpdateOrder />} />
+                </Route>
                 </Route>
                 <Route path="/password/reset/:token" element={<ResetPassword />} />
                 <Route path="/notfound" element={<NotFound />} />

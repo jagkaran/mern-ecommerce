@@ -10,7 +10,7 @@ const helmet = require("helmet");
 const cors = require("cors");
 const rateLimit = require("express-rate-limit");
 const mongoSanitize = require("express-mongo-sanitize");
-const xss = require("xss-clean");
+const { xss } = require("express-xss-sanitizer");
 const compression = require("compression");
 
 // Per-user rate limiters (applied after isAuthenticatedUser resolves req.user)
@@ -94,6 +94,13 @@ app.use("/api/v1/me/update",       sensitiveUserLimiter);
 
 // ─── Body parsers ─────────────────────────────────────────────────────────────
 
+// Stripe webhook REQUIRES the raw request body for HMAC-SHA256 signature
+// verification. express.json() below rewrites req.body to a parsed object,
+// which changes the bytes Stripe signs -> signature check always fails.
+// Mount the raw parser at app-level for the webhook path so it short-circuits
+// express.json() before the global JSON body parser runs.
+app.use("/api/v1/payment/webhook", express.raw({ type: "application/json" }));
+
 // Per-route body size overrides for image-upload endpoints.
 const uploadJsonParser = express.json({ limit: "10mb" });
 const uploadUrlencodedParser = express.urlencoded({ limit: "10mb", extended: true });
@@ -122,7 +129,7 @@ app.use(
 
 // Data sanitisation
 app.use(mongoSanitize());
-app.use(xss());
+app.use(xss()); // express-xss-sanitizer
 
 // ─── CSRF protection (double-submit cookie, webhook excluded) ─────────────────
 // Must come AFTER cookieParser (needs req.cookies) and BEFORE route mounts.

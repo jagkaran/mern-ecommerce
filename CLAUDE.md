@@ -83,8 +83,9 @@ mern-ecommerce/
 - `DELETE /api/v1/admin/order/:id` - Delete order (admin)
 
 ### Payments
-- `POST /api/v1/payment/process` - Process payment (Stripe)
+- `POST /api/v1/payment/process` - Process payment (Stripe). Body is `{ orderItems: [{ product, quantity }] }` — amount is computed server-side from authoritative DB prices. Legacy bodies of `{ amount }` are rejected with 400.
 - `GET /api/v1/getstripeapikey` - Get Stripe publishable key
+- `POST /api/v1/payment/webhook` - Stripe webhook (HMAC-signed raw body; signature verification enforced).
 
 ## Development Workflow
 
@@ -319,6 +320,17 @@ CLOUDINARY_API_SECRET=...
 # Stripe
 STRIPE_API_KEY=pk_test_...
 STRIPE_SECRET_KEY=sk_test_...
+# REQUIRED in production. Used by /api/v1/payment/webhook to verify the
+# stripe-signature header against the raw request body. Without this every
+# webhook call returns 401 and order paidAt never gets set.
+STRIPE_WEBHOOK_SECRET=whsec_...
+
+# CSRF — REQUIRED in production. Backend crashes at boot if missing in prod.
+# Generate with: openssl rand -hex 32
+# The frontend fetches GET /api/v1/csrf-token on app mount; axios attaches the
+# token as X-CSRF-Token on POST/PUT/DELETE/PATCH. Without this, every mutation
+# is 403'd in production.
+CSRF_SECRET=
 
 # SMTP (for password reset)
 SMTP_HOST=smtp.gmail.com

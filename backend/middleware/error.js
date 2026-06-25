@@ -18,14 +18,16 @@ module.exports = (err, req, res, _next) => {
     err = new ErrorHandler(message, 400);
   }
 
-  // Invalid JWT
+  // Invalid JWT — map to 401 (was 400). Status code is 401 even though
+  // ErrorHandler defaults to 400; we pass 401 explicitly so the client
+  // can distinguish "expired/invalid session" from "bad request body".
   if (err.name === "JsonWebTokenError") {
-    err = new ErrorHandler("Invalid token. Please log in again.", 400);
+    err = new ErrorHandler("Invalid token. Please log in again.", 401);
   }
 
   // Expired JWT
   if (err.name === "TokenExpiredError") {
-    err = new ErrorHandler("Token has expired. Please log in again.", 400);
+    err = new ErrorHandler("Token has expired. Please log in again.", 401);
   }
 
   res.status(err.statusCode).json({

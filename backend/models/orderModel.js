@@ -109,7 +109,10 @@ const orderSchema = new mongoose.Schema({
   deliveredAt: Date,
   createdAt: {
     type: Date,
-    default: Date.now(),
+    // Date.now (no parens) is a function reference Mongoose calls per-doc.
+    // Date.now() would be evaluated once at module load and every order
+    // would share a single timestamp.
+    default: Date.now,
   },
 });
 

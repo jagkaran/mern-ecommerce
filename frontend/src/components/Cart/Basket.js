@@ -27,6 +27,7 @@ import ClearIcon from "@mui/icons-material/Clear";
 import CloseIcon from "@mui/icons-material/Close";
 import UndoIcon from "@mui/icons-material/Undo";
 import { useDispatch, useSelector } from "react-redux";
+import axios from "axios";
 import { addItemsToCart, removeItemsFromCart } from "../../actions/cartAction";
 import EmptyCart from "../EmptyCart";
 import { Link } from "react-router-dom";
@@ -44,7 +45,30 @@ function Basket() {
   const { cartItems } = useSelector((state) => state.cart);
   const dispatch = useDispatch();
 
+  // pending removals state
   const [pendingRemovals, setPendingRemovals] = useState({});
+  // latest stock info per product
+  const [productStocks, setProductStocks] = useState({});
+
+  // fetch latest stock for cart items
+  useEffect(() => {
+    async function fetchStocks() {
+      const stocks = {};
+      await Promise.all(
+        cartItems.map(async (item) => {
+          try {
+            const { data } = await axios.get(`/api/v1/product/${item.product}`);
+            stocks[item.product] = data.product?.stock ?? 0;
+          } catch {
+            stocks[item.product] = 0;
+          }
+        })
+      );
+      setProductStocks(stocks);
+    }
+    if (cartItems.length) fetchStocks();
+  }, [cartItems]);
+
   const pendingRef = useRef(pendingRemovals);
   useEffect(() => {
     pendingRef.current = pendingRemovals;

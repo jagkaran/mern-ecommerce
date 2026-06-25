@@ -3,6 +3,7 @@ const request = require("supertest");
 const app     = require("../app");
 const User    = require("../models/userModel");
 const Product = require("../models/productModel");
+const Order   = require("../models/orderModel");
 
 const ts = Date.now();
 let userCookie  = "";
@@ -36,6 +37,52 @@ beforeAll(async () => {
     createdBy:   u1._id,
   });
   productId = product._id.toString();
+
+  // Verified-purchase gate: review controller 403s unless the reviewer has at
+  // least one Order that includes this product. Seed one Delivered order per
+  // reviewer so the review-creation tests have standing to succeed.
+  const verifiedShipping = {
+    address: "123 Test Street",
+    city:    "Testville",
+    state:   "TS",
+    country: "United States",
+    zip:     "12345",
+    phone:   "+15555555555",
+  };
+  await Order.insertMany([
+    {
+      shippingInfo: verifiedShipping,
+      orderItems: [
+        {
+          name:     product.name,
+          price:    product.price,
+          quantity: 1,
+          image:    product.images[0].url,
+          product:  product._id,
+        },
+      ],
+      paymentInfo: { id: `pi_u1_${ts}`, status: "succeeded" },
+      paidAt:    Date.now(),
+      user:      u1._id,
+      orderStatus: "Delivered",
+    },
+    {
+      shippingInfo: verifiedShipping,
+      orderItems: [
+        {
+          name:     product.name,
+          price:    product.price,
+          quantity: 1,
+          image:    product.images[0].url,
+          product:  product._id,
+        },
+      ],
+      paymentInfo: { id: `pi_u2_${ts}`, status: "succeeded" },
+      paidAt:    Date.now(),
+      user:      u2._id,
+      orderStatus: "Delivered",
+    },
+  ]);
 
   const [r1, r2] = await Promise.all([
     request(app).post("/api/v1/login").send({ email: u1.email, password: "Review@12345" }),

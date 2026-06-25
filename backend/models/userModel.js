@@ -29,14 +29,11 @@ const userSchema = new mongoose.Schema({
     minlength: [8, "Password must be greater than 8 characters"],
   },
   profilePic: {
-    public_id: {
-      type: String,
-      required: true,
-    },
-    url: {
-      type: String,
-      required: true,
-    },
+    public_id: String,
+    url:      String,
+    // Both fields default to undefined when missing. Required only when a
+    // client uploads an avatar; bare register-without-avatar now succeeds
+    // and the auth flow no longer 500s on missing Cloudinary config.
   },
   role: {
     type: String,
@@ -58,10 +55,15 @@ const userSchema = new mongoose.Schema({
 userSchema.index({ createdAt: -1 }); // For sorting by creation date
 
 userSchema.pre("save", async function (next) {
+  // Critical: RETURN next() when password is unchanged. The prior version
+  // called next() but didn't return, so the bcrypt.hash line below ran on
+  // every non-password save and re-hashed the already-hashed password —
+  // locking users out after the first forgot/reset/profile-update.
   if (!this.isModified("password")) {
-    next();
+    return next();
   }
   this.password = await bcrypt.hash(this.password, 10);
+  next();
 });
 
 // JWT Token

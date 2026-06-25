@@ -4,6 +4,7 @@ const ErrorHandler    = require("../utils/errorHandler");
 const catchAsyncErrors = require("../middleware/catchAsyncErrors");
 const logger = require("../utils/logger");
 const { withTransaction } = require("../utils/transaction");
+const { computeOrderPricing } = require("../utils/pricing");
 
 /**
  * Create a new order for the authenticated user.
@@ -18,19 +19,45 @@ const { withTransaction } = require("../utils/transaction");
  * @throws {ErrorHandler} 400 if any product has insufficient stock
  */
 exports.createOrder = catchAsyncErrors(async (req, res, next) => {
-  const {
-    shippingInfo, orderItems, paymentInfo,
-    itemPrice, taxPrice, shippingPrice, totalPrice,
-  } = req.body;
+  const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY); // load stripe inside function to avoid circular deps
+  const { paymentInfo } = req.body;
+  // Verify PaymentIntent not reused
+  const existing = await Order.findOne({ "paymentInfo.id": paymentInfo.id });
+  if (existing) {
+    return next(new ErrorHandler("PaymentIntent already used for another order", 409));
+  }
+  let intent;
+  try {
+    intent = await stripe.paymentIntents.retrieve(paymentInfo.id);
+  } catch (e) {
+    return next(new ErrorHandler("Invalid PaymentIntent ID", 402));
+  }
+  if (intent.status !== "succeeded") {
+    return next(new ErrorHandler("Payment not completed", 402));
+  }
 
-  for (const item of orderItems) {
-    const product = await Product.findById(item.product);
-    if (!product) {
-      return next(new ErrorHandler(`Product not found: ${item.product}`, 404));
-    }
-    if (product.stock < item.quantity) {
-      return next(new ErrorHandler(`Insufficient stock for product: ${product.name}`, 400));
-    }
+  const { shippingInfo, orderItems, paymentInfo } = req.body;
+
+  if (!Array.isArray(orderItems) || orderItems.length === 0) {
+    return next(new ErrorHandler("At least one order item is required", 400));
+  }
+
+  // Server-side pricing — never trust client-supplied prices. Re-read each
+  // product from DB, recompute itemPrice/shipping/tax/total, and reject the
+  // order if any line item is missing or short on stock. This closes the
+  // "tamper amount to $0 and pay nothing" hole the old code had.
+  let pricing;
+  try {
+    pricing = await computeOrderPricing(orderItems);
+  } catch (err) {
+    return next(err);
+  }
+
+  const { itemPrice, taxPrice, shippingPrice, totalPrice } = pricing;
+  // Verify Stripe amount matches computed total (cents)
+  const expectedAmount = Math.round(totalPrice * 100);
+  if (intent.amount !== expectedAmount) {
+    return next(new ErrorHandler("Payment amount mismatch", 400));
   }
 
   const order = await withTransaction(async (session) => {
@@ -183,11 +210,9 @@ exports.updateOrder = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler("You have already delivered this order", 400));
   }
 
-  if (req.body.orderStatus === "Shipped") {
-    for (const item of order.orderItems) {
-      await updateStock(item.product, item.quantity);
-    }
-  }
+  // Stock is already deducted at order creation (see createOrder). The old
+  // re-deduct loop here produced a second $-quantity write whenever an admin
+  // flipped status to "Shipped", halving real stock every dispatch. Removed.
 
   order.orderStatus = req.body.orderStatus;
   if (req.body.orderStatus === "Delivered") {
@@ -197,34 +222,6 @@ exports.updateOrder = catchAsyncErrors(async (req, res, next) => {
   await order.save({ validateBeforeSave: false });
   res.status(200).json({ success: true, order });
 });
-
-/**
- * Atomically decrement stock for a product by the given quantity.
- * Rolls back the decrement if it would result in negative stock.
- *
- * @param {string|import('mongoose').Types.ObjectId} id       - Product ID
- * @param {number}                                   quantity - Units to deduct
- * @returns {Promise<void>}
- * @throws {ErrorHandler} 400 if deduction would produce negative stock
- */
-async function updateStock(id, quantity) {
-  const result = await Product.findByIdAndUpdate(
-    id,
-    { $inc: { stock: -quantity } },
-    { new: true, runValidators: true }
-  );
-
-  if (!result) {
-    logger.warn(`Product not found during stock update: ${id}`);
-    return;
-  }
-
-  if (result.stock < 0) {
-    logger.error(`Stock underflow for product ${id}. Current stock: ${result.stock}`);
-    await Product.findByIdAndUpdate(id, { $inc: { stock: quantity } });
-    throw new ErrorHandler("Insufficient stock for this product", 400);
-  }
-}
 
 /**
  * Delete an order by ID — Admin only.
