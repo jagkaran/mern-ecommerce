@@ -75,8 +75,7 @@ const Account = () => {
 
   // setAcountFormValues is a stable setter from useAcountFormControls —
   // adding it to deps would cause an infinite re-render loop.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => {
+    useEffect(() => {
     if (user) {
       setAcountFormValues({
         name: user.name,
@@ -94,7 +93,7 @@ const Account = () => {
       history("/account");
       dispatch({ type: "UpdateProfileReset" });
     }
-  }, [dispatch, error, alert, history, user, isUpdated]);
+  }, [dispatch, error, alert, history, user, isUpdated, setAcountFormValues]);
 
   return (
     <>

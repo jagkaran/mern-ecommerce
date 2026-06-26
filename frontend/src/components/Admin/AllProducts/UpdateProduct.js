@@ -169,6 +169,7 @@ function UpdateProduct() {
     allReviewsError,
     deleteReviewError,
     isDeleted,
+    setValues,
   ]);
 
   return (

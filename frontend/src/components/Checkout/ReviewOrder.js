@@ -24,7 +24,7 @@ function ReviewOrder({ reviewData, handleReviewDataChange }) {
     country.name,
   ];
 
-  const computed = React.useMemo(() => {
+  const computed = useMemo(() => {
     const subTotal = cartItems.reduce((acc, item) => acc + item.quantity * item.price, 0);
     const shippingCharges = subTotal > 1000 ? 0 : 50;
     const tax = subTotal * 0.15;

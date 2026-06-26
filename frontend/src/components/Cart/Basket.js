@@ -27,19 +27,17 @@ import ClearIcon from "@mui/icons-material/Clear";
 import CloseIcon from "@mui/icons-material/Close";
 import UndoIcon from "@mui/icons-material/Undo";
 import { useDispatch, useSelector } from "react-redux";
-import axios from "axios";
 import { addItemsToCart, removeItemsFromCart } from "../../actions/cartAction";
+import axios from "axios";
 import EmptyCart from "../EmptyCart";
 import { Link } from "react-router-dom";
 import Copyright from "../Copyright";
 import Seo from "../Seo";
+import { fmt, fmtNum } from "../../utils/formatCurrency";
 import "./Table.css";
 import { useState, useEffect, useRef, useCallback } from "react";
 
 const UNDO_DURATION = 10; // seconds
-
-// Helper: format a number to exactly 2 decimal places
-const fmt = (n) => Number(n).toFixed(2);
 
 function Basket() {
   const { cartItems } = useSelector((state) => state.cart);
@@ -47,11 +45,12 @@ function Basket() {
 
   // pending removals state
   const [pendingRemovals, setPendingRemovals] = useState({});
-  // latest stock info per product
+  // latest stock per product (fetched from server on mount)
   const [productStocks, setProductStocks] = useState({});
 
-  // fetch latest stock for cart items
+  // Re-fetch live stock so the +/- buttons respect the real cap
   useEffect(() => {
+    let cancelled = false;
     async function fetchStocks() {
       const stocks = {};
       await Promise.all(
@@ -64,9 +63,10 @@ function Basket() {
           }
         })
       );
-      setProductStocks(stocks);
+      if (!cancelled) setProductStocks(stocks);
     }
     if (cartItems.length) fetchStocks();
+    return () => { cancelled = true; };
   }, [cartItems]);
 
   const pendingRef = useRef(pendingRemovals);
@@ -74,8 +74,9 @@ function Basket() {
     pendingRef.current = pendingRemovals;
   }, [pendingRemovals]);
 
-  const increaseQty = (id, quantity, stock) => {
-    if (stock <= quantity) return;
+  const increaseQty = (id, quantity) => {
+    const maxStock = productStocks[id] ?? Infinity;
+    if (quantity >= maxStock) return;
     dispatch(addItemsToCart(id, quantity + 1));
   };
 
@@ -278,31 +279,42 @@ function Basket() {
                                     <Typography color="textPrimary" variant="body1">{item.name}</Typography>
                                     {/* Unit price — always 2 dp */}
                                     <Typography color="textPrimary" variant="body1">
-                                      ${fmt(item.price)}
+                                      {fmt(item.price)}
                                     </Typography>
                                   </Box>
                                 </Box>
                               </TableCell>
                               <TableCell>
-                                <Box sx={{ alignItems: "center", display: "flex" }}>
-                                  <button onClick={() => decreaseQty(item.product, item.quantity)}>
-                                    <RemoveCircleOutlineIcon />
-                                  </button>
-                                  <input
-                                    className="border-none ml-4 w-6 outline-none appearance-none font-sans text-gray-800"
-                                    value={item.quantity}
-                                    type="number"
-                                    readOnly
-                                  />
-                                  <button onClick={() => increaseQty(item.product, item.quantity, item.stock)}>
-                                    <AddCircleOutlineIcon />
-                                  </button>
+                                <Box sx={{ alignItems: "center", display: "flex", flexDirection: "column" }}>
+                                  <Box sx={{ alignItems: "center", display: "flex" }}>
+                                    <button onClick={() => decreaseQty(item.product, item.quantity)}>
+                                      <RemoveCircleOutlineIcon />
+                                    </button>
+                                    <input
+                                      className="border-none ml-4 w-6 outline-none appearance-none font-sans text-gray-800"
+                                      value={item.quantity}
+                                      type="number"
+                                      readOnly
+                                    />
+                                    <button
+                                      onClick={() => increaseQty(item.product, item.quantity)}
+                                      disabled={item.quantity >= (productStocks[item.product] ?? Infinity)}
+                                      style={{ opacity: item.quantity >= (productStocks[item.product] ?? Infinity) ? 0.3 : 1 }}
+                                    >
+                                      <AddCircleOutlineIcon />
+                                    </button>
+                                  </Box>
+                                  {productStocks[item.product] != null && productStocks[item.product] <= 10 && (
+                                    <Typography variant="caption" sx={{ color: "text.secondary", mt: 0.5 }}>
+                                      Only {productStocks[item.product]} left
+                                    </Typography>
+                                  )}
                                 </Box>
                               </TableCell>
                               {/* SubTotal — 2 dp */}
                               <TableCell>
                                 <Typography color="textPrimary" variant="body1">
-                                  ${fmt(item.price * item.quantity)}
+                                  {fmt(item.price * item.quantity)}
                                 </Typography>
                               </TableCell>
                               <TableCell>
@@ -320,7 +332,7 @@ function Basket() {
                     <Box sx={{ alignItems: "center", display: "flex", justifyContent: "flex-end", p: 1, m: 2 }}>
                       <Typography color="textPrimary" variant="h6" mr={3}>Gross Total</Typography>
                       <Typography color="textPrimary" variant="body1" ml={3}>
-                        ${fmt(totalItems.reduce((acc, item) => acc + item.quantity * item.price, 0))}
+                        {fmt(totalItems.reduce((acc, item) => acc + item.quantity * item.price, 0))}
                       </Typography>
                     </Box>
 

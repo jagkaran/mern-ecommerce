@@ -1,25 +1,22 @@
 import React, { useEffect } from "react";
 import Banner from "./Banner";
-import { getProduct } from "../../actions/productAction";
-import { useSelector, useDispatch } from "react-redux";
 import ProductGrid from "../Product/ProductGrid";
 import { CircularProgress } from "@mui/material";
 import { useAlert } from "react-alert";
+import { useGetProductsQuery } from "../../slices/productsApiSlice";
 import Copyright from "../Copyright";
 import Seo from "../Seo";
 
 function Home() {
   const alert = useAlert();
-  const dispatch = useDispatch();
-
-  const { loading, error, products } = useSelector((state) => state.product);
+  const { data, error, isLoading } = useGetProductsQuery();
+  const products = data?.products || [];
 
   useEffect(() => {
     if (error) {
-      return alert.error(error);
+      alert.error(error);
     }
-    dispatch(getProduct());
-  }, [dispatch, error, alert]);
+  }, [error, alert]);
 
   return (
     <>

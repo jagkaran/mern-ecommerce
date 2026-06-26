@@ -64,7 +64,7 @@ const PageLoader = () => (
 function App() {
   const dispatch = useDispatch();
   const [stripeApiKey, setStripeApiKey] = useState("");
-  const { isAuthenticated, user, loading } = useSelector((state) => state.user);
+  const { isAuthenticated, loading } = useSelector((state) => state.user);
 
   // Backend uses double-submit cookie CSRF for state-mutating requests
   // (POST/PUT/DELETE/PATCH) outside NODE_ENV=test. Without withCredentials

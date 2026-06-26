@@ -632,7 +632,10 @@ async function seedData() {
   const adminUser = await User.create({
     name:     "Admin User",
     email:    "admin@clickit.com",
-    password: "Admin@1234",
+    // ponytail: hardcoded seed passwords — dev only. Override via
+    // SEED_ADMIN_PASSWORD / SEED_NORMAL_PASSWORD env vars in production-like
+    // environments. Never seed real data with these defaults.
+    password: process.env.SEED_ADMIN_PASSWORD || "Admin@1234",
     role:     "admin",
     profilePic: {
       public_id: "avatars/admin_seed",
@@ -644,7 +647,7 @@ async function seedData() {
   const normalUser = await User.create({
     name:     "Jane Smith",
     email:    "jane@example.com",
-    password: "Password@1234",
+    password: process.env.SEED_NORMAL_PASSWORD || "Password@1234",
     role:     "user",
     profilePic: {
       public_id: "avatars/jane_seed",

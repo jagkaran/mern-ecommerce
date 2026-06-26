@@ -55,7 +55,7 @@ exports.getActiveCategories = catchAsyncErrors(async (req, res) => {
 });
 
 exports.getAllProducts = catchAsyncErrors(async (req, res) => {
-  const resultPerPage = 8;
+  const resultPerPage = Math.min(100, Math.max(1, Number(req.query.limit) || 8));
   const page = Number(req.query.page) || 1;
   const skip = (page - 1) * resultPerPage;
   const apiFeature = new ApiFeatures(Product.find(), req.query)

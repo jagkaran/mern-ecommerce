@@ -24,9 +24,11 @@ import {
   userDetailsReducer,
   userReducer,
 } from "./reducers/User";
+import { apiReducer, apiMiddleware } from "./slices/apiSlice";
 
 const store = configureStore({
   reducer: {
+    api: apiReducer,
     product: productReducer,
     productDetails: productDetailsReducer,
     categories: categoriesReducer,
@@ -47,6 +49,7 @@ const store = configureStore({
     allReviews: allProductReviewsReducer,
     review: reviewReducer,
   },
+  middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(apiMiddleware),
 });
 
 export default store;

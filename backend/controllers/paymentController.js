@@ -3,8 +3,7 @@ const ErrorHandler = require("../utils/errorHandler");
 const Order = require("../models/orderModel");
 const logger = require("../utils/logger");
 const { computeOrderPricing } = require("../utils/pricing");
-
-const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+const paymentService = require("../services/paymentService");
 
 /**
  * Create a Stripe PaymentIntent and return the client secret to the frontend.
@@ -19,9 +18,6 @@ const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
  * @returns {Promise<void>} 200 { success, client_secret }
  */
 exports.processPayment = catchAsyncErrors(async (req, res, next) => {
-  // Reject legacy { amount } body. Old spec let the client pick a charge
-  // amount which combined with no server-side pricing was the easiest free-
-  // money bug in the app's history.
   if (req.body && Object.prototype.hasOwnProperty.call(req.body, "amount")) {
     return next(
       new ErrorHandler(
@@ -44,9 +40,7 @@ exports.processPayment = catchAsyncErrors(async (req, res, next) => {
 
   const amountInCents = Math.round(pricing.totalPrice * 100);
 
-  const myPayment = await stripe.paymentIntents.create({
-    amount:   amountInCents,
-    currency: "usd",
+  const myPayment = await paymentService.createPaymentIntent(amountInCents, {
     metadata: { company: "Mern Ecommerce" },
   });
 
@@ -58,12 +52,6 @@ exports.processPayment = catchAsyncErrors(async (req, res, next) => {
 
 /**
  * Send the Stripe publishable key to the client.
- * The frontend needs this key to initialise the Stripe.js SDK.
- *
- * @param {import('express').Request}  req
- * @param {import('express').Response} res
- * @param {import('express').NextFunction} _next
- * @returns {Promise<void>} 200 { stripeApiKey }
  */
 exports.sendStripeApiKey = catchAsyncErrors(async (req, res, _next) => {
   res.status(200).json({ stripeApiKey: process.env.STRIPE_API_KEY });
@@ -77,17 +65,7 @@ exports.sendStripeApiKey = catchAsyncErrors(async (req, res, _next) => {
  *    from their servers and cannot supply a browser cookie.
  *  - Instead, every request is authenticated by verifying the
  *    stripe-signature header against the raw request body using
- *    HMAC-SHA256 (stripe.webhooks.constructEvent). Any tampered or
- *    forged payload is rejected with a 401.
- *
- * Supported events:
- *  - payment_intent.succeeded  → marks the matching order as paid
- *  - payment_intent.payment_failed → marks the matching order as failed
- *  - All others are logged and ignored (always returns 200 to Stripe).
- *
- * @param {import('express').Request}  req - Raw body buffer (express.raw middleware)
- * @param {import('express').Response} res
- * @returns {void} Always responds 200 so Stripe does not retry
+ *    HMAC-SHA256. Any tampered or forged payload is rejected with 401.
  */
 exports.stripeWebhook = (req, res) => {
   const sig = req.headers["stripe-signature"];
@@ -100,7 +78,7 @@ exports.stripeWebhook = (req, res) => {
 
   let event;
   try {
-    event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+    event = paymentService.verifyWebhookSignature(req.body, sig, webhookSecret);
   } catch (err) {
     logger.warn(`Stripe webhook signature verification failed: ${err.message}`);
     return res.status(401).json({ success: false, message: `Webhook error: ${err.message}` });

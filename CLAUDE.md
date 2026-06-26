@@ -167,7 +167,7 @@ node agents/security-agent.js
 - Rate limiting on auth endpoints (20 req/15 min)
 - Rate limiting on product endpoints (100 req/15 min)
 - express-mongo-sanitize for NoSQL injection prevention
-- xss-clean for XSS protection
+- express-xss-sanitizer for XSS protection
 - Helmet for security headers
 - CORS with origin whitelist
 

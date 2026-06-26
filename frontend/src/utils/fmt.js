@@ -1,6 +1,5 @@
 /**
- * Shared price formatter — always 2 decimal places.
- * Usage: formatPrice(19.9) => "19.90"
- *        formatPrice(268.385) => "268.39"
+ * Re-export from consolidated formatCurrency.js.
+ * Import from here is deprecated — use formatCurrency.js directly.
  */
-export const formatPrice = (n) => Number(n).toFixed(2);
+export { fmt as formatPrice, fmtNum } from "./formatCurrency";

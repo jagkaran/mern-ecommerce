@@ -165,6 +165,11 @@ app.use("/api/v1/", user);
 app.use("/api/v1/", order);
 app.use("/api/v1/", payment);
 
+// API 404 catch-all — any /api route that didn't match above
+app.use("/api", (_req, res) => {
+  res.status(404).json({ success: false, message: "Not found" });
+});
+
 // Serve React build + SPA fallback — PRODUCTION ONLY.
 if (process.env.NODE_ENV?.toLowerCase() === "production") {
   app.use(express.static(path.join(__dirname, "../frontend/build")));

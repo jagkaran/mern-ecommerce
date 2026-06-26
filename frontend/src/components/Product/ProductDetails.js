@@ -1,16 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import {
-  clearErrors,
-  getProductDetails,
-  newReview,
-} from "../../actions/productAction";
+import { clearErrors, newReview } from "../../actions/productAction";
+import { useGetProductDetailsQuery } from "../../slices/productsApiSlice";
 import { useParams } from "react-router-dom";
 import { Button, CircularProgress, Rating } from "@mui/material";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
 import Reviewcard from "../Reviewcard";
 import { useAlert } from "react-alert";
+import { apiSlice } from "../../slices/apiSlice";
 import Copyright from "../Copyright";
 import Seo from "../Seo";
 import { addItemsToCart } from "../../actions/cartAction";
@@ -29,9 +27,9 @@ function ProductDetails() {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
 
-  const { loading, error, product } = useSelector(
-    (state) => state.productDetails
-  );
+  const { data, error, isLoading } = useGetProductDetailsQuery(id);
+  const product = data?.product || {};
+  const loading = isLoading;
 
   const { success, error: reviewError } = useSelector(
     (state) => state.newReview
@@ -66,10 +64,6 @@ function ProductDetails() {
     setOpen(false);
   };
 
-  // Initial product fetch — runs once on mount and whenever the product id changes.
-  useEffect(() => {
-    dispatch(getProductDetails(id));
-  }, [dispatch, id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Handle product-fetch errors separately so they don't trigger a re-fetch loop.
   useEffect(() => {
