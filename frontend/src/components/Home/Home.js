@@ -30,7 +30,7 @@ function Home() {
         path={"/"}
       />
       <Banner />
-      {loading ? (
+      {isLoading ? (
         <div className="grid place-items-center">
           <CircularProgress />
         </div>
