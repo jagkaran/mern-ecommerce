@@ -39,7 +39,7 @@ const { doubleCsrfProtection, generateToken } = doubleCsrf({
     process.env.CSRF_SECRET || "csrf-fallback-dev-secret-change-in-prod",
   cookieName: "x-csrf-token",
   cookieOptions: {
-    httpOnly: true,
+    httpOnly: false,
     sameSite: "strict",
     secure: process.env.NODE_ENV?.toLowerCase() === "production",
   },
