@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState, useRef } from "react";
 import {
   BrowserRouter as Router,
   Navigate,
@@ -78,15 +78,24 @@ function App() {
   //      attaches it as X-CSRF-Token on every mutating request.
   useEffect(() => {
     axios.defaults.withCredentials = true;
+    const csrfTokenRef = { current: null };
+
+    // Fetch token once and store in ref for fast access.
+    axios
+      .get('/api/v1/csrf-token')
+      .then(res => { csrfTokenRef.current = res.data.csrfToken; })
+      .catch(() => {});
 
     const requestInterceptor = axios.interceptors.request.use((config) => {
       const method = (config.method || "get").toLowerCase();
       const mutating = ["post", "put", "delete", "patch"].includes(method);
       if (mutating) {
-        // Pull the token from the cookie jar — the server's signed cookie
-        // is the source of truth. csrf-csrf sets it on the csrf-token GET.
-        const match = document.cookie.match(/(?:^|; )x-csrf-token=([^;]+)/);
-        const token = match ? decodeURIComponent(match[1]) : null;
+        // Prefer token stored in ref (set by initial GET). Fallback to cookie if not yet available.
+        let token = csrfTokenRef.current;
+        if (!token) {
+          const match = document.cookie.match(/(?:^|; )x-csrf-token=([^;]+)/);
+          token = match ? decodeURIComponent(match[1]) : null;
+        }
         if (token) {
           config.headers = config.headers || {};
           config.headers["X-CSRF-Token"] = token;
@@ -94,8 +103,6 @@ function App() {
       }
       return config;
     });
-    // hydration token GET — fire-and-forget; failures are non-fatal in dev.
-    axios.get("/api/v1/csrf-token").catch(() => {});
 
     return () => axios.interceptors.request.eject(requestInterceptor);
   }, []);
