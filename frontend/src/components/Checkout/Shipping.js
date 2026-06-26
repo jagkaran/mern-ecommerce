@@ -177,7 +177,8 @@ function Shipping() {
         }
       }
     } catch (err) {
-      alert.error(err);
+      const errMsg = err?.response?.data?.message || err.message || 'An error occurred';
+      alert.error(errMsg);
       setSubmitLoading(false);
     }
   };
@@ -228,7 +229,9 @@ function Shipping() {
       alert.error("Your cart is empty!🙅");
     }
     if (error) {
-      alert.error(error);
+      // Ensure we pass a string to the alert component – avoid rendering error objects.
+      const errMsg = typeof error === 'string' ? error : (error?.message || 'An error occurred');
+      alert.error(errMsg);
       dispatch(clearErrors());
     }
   }, [dispatch, error, alert, history, cartItems]);
