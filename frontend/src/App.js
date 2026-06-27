@@ -61,48 +61,41 @@ const PageLoader = () => (
   </Box>
 );
 
+// Module-level CSRF token — populated by GET /api/v1/csrf-token on mount.
+// The csrf-csrf library's cookie contains "token|hash" (signed), but the
+// X-CSRF-Token header must contain ONLY the raw token from the JSON body.
+// Storing at module level ensures the interceptor always reads the latest value.
+let _csrfToken = null;
+
 function App() {
   const dispatch = useDispatch();
   const [stripeApiKey, setStripeApiKey] = useState("");
   const { isAuthenticated, loading } = useSelector((state) => state.user);
 
   // Backend uses double-submit cookie CSRF for state-mutating requests
-  // (POST/PUT/DELETE/PATCH) outside NODE_ENV=test. Without withCredentials
-  // the session cookie never flows on the csrf-token fetch, and without
-  // X-CSRF-Token axios every mutation 403s in production.
-  //
-  // Flow:
-  //   1. On mount, GET /api/v1/csrf-token — server sets the signed
-  //      httpOnly cookie "x-csrf-token" and returns the token in the body.
-  //   2. The interceptor below reads the cookie (or stored token) and
-  //      attaches it as X-CSRF-Token on every mutating request.
+  // (POST/PUT/DELETE/PATCH) outside NODE_ENV=test. The csrf-csrf library
+  // sets a signed httpOnly cookie AND returns the raw token in the JSON body.
+  // The cookie value is "token|hash" — NOT the raw token. So we MUST NOT read
+  // the cookie for the header value; only the response body token is valid.
   useEffect(() => {
     axios.defaults.withCredentials = true;
-    const csrfTokenRef = { current: null };
-
-    // Fetch token once and store in ref for fast access.
-    axios
-      .get('/api/v1/csrf-token')
-      .then(res => { csrfTokenRef.current = res.data.csrfToken; })
-      .catch(() => {});
 
     const requestInterceptor = axios.interceptors.request.use((config) => {
       const method = (config.method || "get").toLowerCase();
       const mutating = ["post", "put", "delete", "patch"].includes(method);
-      if (mutating) {
-        // Prefer token stored in ref (set by initial GET). Fallback to cookie if not yet available.
-        let token = csrfTokenRef.current;
-        if (!token) {
-          const match = document.cookie.match(/(?:^|; )x-csrf-token=([^;]+)/);
-          token = match ? decodeURIComponent(match[1]) : null;
-        }
-        if (token) {
-          config.headers = config.headers || {};
-          config.headers["X-CSRF-Token"] = token;
-        }
+      if (mutating && _csrfToken) {
+        config.headers = config.headers || {};
+        config.headers["X-CSRF-Token"] = _csrfToken;
       }
       return config;
     });
+
+    // Fetch token once on mount — stored at module level so it survives
+    // across re-renders and is available to the interceptor immediately.
+    axios
+      .get("/api/v1/csrf-token")
+      .then((res) => { _csrfToken = res.data.csrfToken; })
+      .catch(() => {});
 
     return () => axios.interceptors.request.eject(requestInterceptor);
   }, []);
