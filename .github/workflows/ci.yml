@@ -40,6 +40,7 @@ jobs:
       SMTP_SERVICE: gmail
       SMTP_MAIL: placeholder@example.com
       SMTP_PASSWORD: placeholder
+      # Deterministic mongodb-memory-server downloads
       MONGOMS_VERSION: 7.0.14
       MONGOMS_DISTRO: ubuntu-22.04
     steps:
@@ -106,5 +107,3 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: gitleaks/gitleaks-action@v2
-        with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
