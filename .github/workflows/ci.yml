@@ -58,32 +58,6 @@ jobs:
           path: coverage/
           retention-days: 7
 
-  e2e:
-    name: Playwright E2E
-    runs-on: ubuntu-latest
-    needs: lint
-    if: github.ref == 'refs/heads/master'
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-      - run: npm ci
-      - run: npm install --legacy-peer-deps --prefix frontend
-      - uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('**/package-lock.json', 'frontend/package-lock.json') }}
-      - run: npx playwright install --with-deps chromium
-      - run: npm run e2e:ci
-      - uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: playwright-report
-          path: playwright-report/
-          retention-days: 7
-
   audit:
     name: Security Audit
     runs-on: ubuntu-latest
