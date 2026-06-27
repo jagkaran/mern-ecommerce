@@ -140,7 +140,7 @@ app.use(xss()); // express-xss-sanitizer
 // between requests the same way a browser does, so CSRF would block all
 // mutation tests. CSRF is a browser-specific attack vector and does not
 // apply to server-to-server test runners.
-if (process.env.NODE_ENV?.toLowerCase() !== "test") {
+if (process.env.NODE_ENV?.toLowerCase() === "production") {
   const { csrfProtection, generateCsrfToken } = require("./middleware/csrf");
   app.get("/api/v1/csrf-token", generateCsrfToken);
   app.use(csrfProtection);
