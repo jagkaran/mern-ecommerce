@@ -106,7 +106,10 @@ function Shipping() {
   const orderInfo = JSON.parse(sessionStorage.getItem("orderInfo"));
 
   const paymentData = {
-    amount: Math.round((orderInfo?.totalPrice ?? 0) * 100),
+    orderItems: cartItems.map((item) => ({
+      product: item.product,
+      quantity: item.quantity,
+    })),
   };
 
   const orderData = {
