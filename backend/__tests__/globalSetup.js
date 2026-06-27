@@ -7,7 +7,7 @@ const path = require("path");
 // Prevents transient download failures from fastdl outages.
 // Override via env if you need a specific version.
 process.env.MONGOMS_VERSION  = process.env.MONGOMS_VERSION  || "7.0.14";
-process.env.MONGOMS_DISTRO   = process.env.MONGOMS_DISTRO   || "ubuntu";
+process.env.MONGOMS_DISTRO   = process.env.MONGOMS_DISTRO   || "ubuntu-22.04";
 
 module.exports = async function globalSetup() {
   const mongod = await MongoMemoryServer.create();

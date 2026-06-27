@@ -11,15 +11,15 @@ jobs:
     name: Lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-      - run: npm ci
-      - run: npm install --legacy-peer-deps --prefix frontend
-      - run: npm run lint --if-present
-      - run: npm run lint --prefix frontend --if-present
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version-file: .nvmrc
+        cache: npm
+    - run: npm ci
+    - run: npm install --legacy-peer-deps --prefix frontend
+    - run: npm run lint --if-present
+    - run: npm run lint --prefix frontend --if-present
 
   test:
     name: Backend Tests
@@ -28,43 +28,35 @@ jobs:
     strategy:
       matrix:
         node-version: [18, 20, 22]
-    services:
-      mongodb:
-        image: mongo:7
-        ports:
-          - 27017:27017
-        options: >-
-          --health-cmd "mongosh --eval 'db.runCommand({ ping: 1 })'"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        env:
-          NODE_ENV: test
-          DB_URI: mongodb://localhost:27017/mern-ecommerce-test
-          JWT_SECRET: ci-test-jwt-secret-do-not-use-in-prod
-          JWT_EXPIRE: 1d
-          CLOUDINARY_NAME: placeholder
-          CLOUDINARY_API_KEY: placeholder
-          CLOUDINARY_API_SECRET: placeholder
-          SMTP_HOST: placeholder
-          SMTP_PORT: 465
-          SMTP_SERVICE: gmail
-          SMTP_MAIL: placeholder@example.com
-          SMTP_PASSWORD: placeholder
+    env:
+      NODE_ENV: test
+      JWT_SECRET: ci-test-jwt-secret-do-not-use-in-prod
+      JWT_EXPIRE: 1d
+      CLOUDINARY_NAME: placeholder
+      CLOUDINARY_API_KEY: placeholder
+      CLOUDINARY_API_SECRET: placeholder
+      SMTP_HOST: placeholder
+      SMTP_PORT: 465
+      SMTP_SERVICE: gmail
+      SMTP_MAIL: placeholder@example.com
+      SMTP_PASSWORD: placeholder
+      # Deterministic mongodb-memory-server downloads
+      MONGOMS_VERSION: 7.0.14
+      MONGOMS_DISTRO: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: npm
-      - run: npm ci
-      - run: npm test -- --coverage --forceExit --testTimeout=30000
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: coverage-${{ matrix.node-version }}
-          path: coverage/
-          retention-days: 7
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: npm
+    - run: npm ci
+    - run: npm test -- --coverage --forceExit --testTimeout=30000
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: coverage-${{ matrix.node-version }}
+        path: coverage/
+        retention-days: 7
 
   e2e:
     name: Playwright E2E
@@ -72,41 +64,41 @@ jobs:
     needs: lint
     if: github.ref == 'refs/heads/master'
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-      - run: npm ci
-      - run: npm install --legacy-peer-deps --prefix frontend
-      - uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('**/package-lock.json', 'frontend/package-lock.json') }}
-      - run: npx playwright install --with-deps chromium
-      - run: npm run e2e:ci
-      - uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: playwright-report
-          path: playwright-report/
-          retention-days: 7
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version-file: .nvmrc
+        cache: npm
+    - run: npm ci
+    - run: npm install --legacy-peer-deps --prefix frontend
+    - uses: actions/cache@v4
+      with:
+        path: ~/.cache/ms-playwright
+        key: playwright-${{ runner.os }}-${{ hashFiles('**/package-lock.json', 'frontend/package-lock.json') }}
+    - run: npx playwright install --with-deps chromium
+    - run: npm run e2e:ci
+    - uses: actions/upload-artifact@v4
+      if: failure()
+      with:
+        name: playwright-report
+        path: playwright-report/
+        retention-days: 7
 
   audit:
     name: Security Audit
     runs-on: ubuntu-latest
     needs: lint
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-      - run: npm ci
-      - run: npm install --legacy-peer-deps --prefix frontend
-      - run: npm audit --audit-level=high
-      - run: npm audit --audit-level=high --prefix frontend
-        continue-on-error: true
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version-file: .nvmrc
+        cache: npm
+    - run: npm ci
+    - run: npm install --legacy-peer-deps --prefix frontend
+    - run: npm audit --audit-level=high
+    - run: npm audit --audit-level=high --prefix frontend
+      continue-on-error: true
 
   secret-scan:
     name: Secret Scan
@@ -115,3 +107,5 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - uses: gitleaks/gitleaks-action@v2
+      with:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
