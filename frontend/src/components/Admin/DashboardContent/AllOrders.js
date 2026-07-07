@@ -1,33 +1,44 @@
 import React from "react";
-import { Avatar, Card, CardContent, Grid, Typography } from "@mui/material";
-import MoneyIcon from "@mui/icons-material/Money";
+import { Card, CardBody, BodyText, Headline } from "../../../design/primitives";
+import ReceiptIcon from "@mui/icons-material/Receipt";
 
 function AllOrders({ allOrders }) {
   return (
-    <Card sx={{ height: "100%" }}>
-      <CardContent>
-        <Grid container spacing={3} sx={{ justifyContent: "space-between" }}>
-          <Grid item>
-            <Typography color="textSecondary" gutterBottom variant="overline">
+    <Card>
+      <CardBody>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "auto auto",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: 16,
+          }}
+        >
+          <div>
+            <BodyText small style={{ color: "var(--t-neutral-400)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
               Orders
-            </Typography>
-            <Typography color="textPrimary" variant="h4">
-              {allOrders}
-            </Typography>
-          </Grid>
-          <Grid item>
-            <Avatar
-              sx={{
-                backgroundColor: "error.main",
-                height: 56,
-                width: 56,
-              }}
-            >
-              <MoneyIcon />
-            </Avatar>
-          </Grid>
-        </Grid>
-      </CardContent>
+            </BodyText>
+            <Headline level="3xl" style={{ fontSize: "var(--t-fontSize-3xl)" }}>
+              {allOrders ?? 0}
+            </Headline>
+          </div>
+          <div
+            style={{
+              width: 48,
+              height: 48,
+              borderRadius: "50%",
+              background: "var(--t-semantic-error)",
+              color: "#fff",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <ReceiptIcon />
+          </div>
+        </div>
+      </CardBody>
     </Card>
   );
 }
