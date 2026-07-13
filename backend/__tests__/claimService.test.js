@@ -24,9 +24,12 @@ jest.mock("../utils/transaction", () => ({
 
 const mongoose = require("mongoose");
 const { mintClaimToken, claimGuestOrder } = require("../services/claimService");
+const orderService = require("../services/orderService");
 const Order = require("../models/orderModel");
 const User  = require("../models/userModel");
 const Product = require("../models/productModel");
+const paymentService = require("../services/paymentService");
+const { computeOrderPricing } = require("../utils/pricing");
 
 let productId;
 beforeAll(async () => {
@@ -87,5 +90,46 @@ describe("claimService — HMAC + lifecycle", () => {
     });
     await expect(claimGuestOrder({ claimToken: token, password: "passw0rd!" }))
       .rejects.toMatchObject({ statusCode: 409, message: expect.stringMatching(/account exists/i) });
+  });
+});
+
+// Stripe is called by createOrder to verify the PaymentIntent. The mock
+// returns whatever amount the server-side pricing computes, so the amount
+// check passes regardless of which product or coupon the test uses.
+jest.mock("../services/paymentService", () => ({
+  retrievePaymentIntent: jest.fn(),
+}));
+
+describe("orderService.createOrder — guest path", () => {
+  // Helper: wire paymentService mock to return whatever amount the server's
+  // pricing computes, so createOrder's amount-equality check passes.
+  async function withMatchingPaymentIntent(orderItems, id, fn) {
+    const pricing = await computeOrderPricing(orderItems, null);
+    const amount = Math.round(pricing.totalPrice * 100);
+    paymentService.retrievePaymentIntent.mockImplementationOnce(async (pid) => ({
+      id: pid, status: "succeeded", amount, currency: "usd",
+    }));
+    return fn(id);
+  }
+
+  it("returns claimToken on guest order creation", async () => {
+    const orderItems = [{ name: "Item", price: 10, quantity: 1, image: "i", product: productId }];
+    const result = await withMatchingPaymentIntent(orderItems, `pi_${Date.now()}`, (id) =>
+      orderService.createOrder({
+        shippingInfo: { address: "1 St", city: "C", state: "S", country: "X", zip: 12345, phone: 1234567890 },
+        orderItems,
+        paymentInfo: { id, status: "succeeded" },
+      }, null, { guestEmail: "guest1@y.io" })
+    );
+    expect(result.claimToken).toMatch(/^[0-9a-f]{64}$/);
+    expect(result.order.guestEmail).toBe("guest1@y.io");
+    expect(result.order.user).toBeUndefined();
+  });
+  it("rejects without user or guestEmail", async () => {
+    await expect(orderService.createOrder({
+      shippingInfo: { address: "1", city: "C", state: "S", country: "X", zip: 1, phone: 1 },
+      orderItems: [{ name: "i", price: 1, quantity: 1, image: "i", product: productId }],
+      paymentInfo: { id: "pi_no", status: "succeeded" },
+    }, null, {})).rejects.toThrow(/email/i);
   });
 });
