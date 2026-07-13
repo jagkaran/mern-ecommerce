@@ -7,6 +7,7 @@ import ShippingBlock from "./ShippingBlock";
 import ReviewBlock from "./ReviewBlock";
 import TrustStrip from "./TrustStrip";
 import StickyCta from "./StickyCta";
+import PaymentForm from "./PaymentForm";
 import { useToast } from "../../hooks/useToast";
 import { createOrder, clearErrors } from "../../actions/orderAction";
 
@@ -88,6 +89,7 @@ export default function CheckoutPage() {
       <ContactBlock signedIn={!!user} />
       <ShippingBlock />
       <ReviewBlock />
+      <PaymentForm />
       <TrustStrip />
       <StickyCta
         totalLabel=""

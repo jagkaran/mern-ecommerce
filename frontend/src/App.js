@@ -70,12 +70,11 @@ useCsrfToken();
 useEffect(() => { dispatch(loadUser()); }, [dispatch]);
 
 useEffect(() => {
-if (!isAuthenticated) return;
 axios
 .get("/api/v1/getstripeapikey")
 .then(({ data }) => setStripeApiKey(data.stripeApiKey))
 .catch(() => {});
-}, [isAuthenticated]);
+}, []);
 
 return (
 <CurrencyProvider>
@@ -97,7 +96,11 @@ return (
 <Route path="/signup" element={<Register />} />
 <Route path="/password/forgot" element={<ForgotPassword />} />
 <Route path="/cart" element={<Basket />} />
-<Route path="/checkout" element={<Checkout />} />
+<Route path="/checkout" element={
+  stripeApiKey ? (
+    <Elements stripe={loadStripe(stripeApiKey)}><Checkout /></Elements>
+  ) : <PageLoader />
+} />
 <Route path="/aboutus" element={<AboutUs />} />
 <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} loading={loading} />}>
 <Route path="/password/update" element={<UpdatePassword />} />
