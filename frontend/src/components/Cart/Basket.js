@@ -1,54 +1,25 @@
-import {
-  Avatar,
-  Box,
-  Button,
-  Card,
-  CardHeader,
-  Container,
-  Divider,
-  Grid,
-  IconButton,
-  LinearProgress,
-  Snackbar,
-  SnackbarContent,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Typography,
-  Paper,
-} from "@mui/material";
-import { tableCellClasses } from "@mui/material/TableCell";
-import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
-import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
-import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
-import ClearIcon from "@mui/icons-material/Clear";
-import CloseIcon from "@mui/icons-material/Close";
-import UndoIcon from "@mui/icons-material/Undo";
+import React, { useEffect, useState } from "react";
+import { Box, IconButton } from "@mui/material";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import { useDispatch, useSelector } from "react-redux";
+import { useToast } from "../../hooks/useToast";
+import { useCurrency } from "../../utils/currencyContext";
 import { addItemsToCart, removeItemsFromCart } from "../../actions/cartAction";
 import axios from "axios";
-import EmptyCart from "../EmptyCart";
 import { Link } from "react-router-dom";
-import Copyright from "../Copyright";
+import { Headline, BodyText, Price, PrimaryBtn, Overline, Surface, QtyStepper, Badge, Reveal, Divider, GhostBtn } from "../../design/primitives";
 import Seo from "../Seo";
-import { fmt, fmtNum } from "../../utils/formatCurrency";
-import "./Table.css";
-import { useState, useEffect, useRef, useCallback } from "react";
-
-const UNDO_DURATION = 10; // seconds
 
 function Basket() {
-  const { cartItems } = useSelector((state) => state.cart);
+  const { fmt } = useCurrency();
+  const { cartItems, coupon } = useSelector((state) => state.cart);
   const dispatch = useDispatch();
-
-  // pending removals state
-  const [pendingRemovals, setPendingRemovals] = useState({});
-  // latest stock per product (fetched from server on mount)
+  const toast = useToast();
   const [productStocks, setProductStocks] = useState({});
+  const [couponInput, setCouponInput] = useState("");
+  const [couponBusy, setCouponBusy] = useState(false);
 
-  // Re-fetch live stock so the +/- buttons respect the real cap
+  // Re-fetch stock so the QtyStepper respects the real cap
   useEffect(() => {
     let cancelled = false;
     async function fetchStocks() {
@@ -66,301 +37,544 @@ function Basket() {
       if (!cancelled) setProductStocks(stocks);
     }
     if (cartItems.length) fetchStocks();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [cartItems]);
 
-  const pendingRef = useRef(pendingRemovals);
-  useEffect(() => {
-    pendingRef.current = pendingRemovals;
-  }, [pendingRemovals]);
-
-  const increaseQty = (id, quantity) => {
+  const setQty = (id, currentQty, nextQty) => {
+    if (nextQty < 1) {
+      handleRemove(id);
+      return;
+    }
     const maxStock = productStocks[id] ?? Infinity;
-    if (quantity >= maxStock) return;
-    dispatch(addItemsToCart(id, quantity + 1));
+    if (nextQty > maxStock) {
+      toast.info(`Only ${maxStock} in stock`);
+      return;
+    }
+    if (nextQty > currentQty) dispatch(addItemsToCart(id, currentQty + 1));
+    else if (nextQty < currentQty) dispatch(addItemsToCart(id, currentQty - 1));
   };
 
-  const decreaseQty = (id, quantity) => {
-    if (1 >= quantity) return;
-    dispatch(addItemsToCart(id, quantity - 1));
+  const handleRemove = (productId, name) => {
+    dispatch(removeItemsFromCart(productId));
+    toast.success(
+      (() => {
+        // react-toast supports custom JSX in success; for plain text we use info
+        return `Removed ${name}`;
+      })()
+    );
   };
 
-  const commitRemoval = useCallback(
-    (productId) => {
-      dispatch(removeItemsFromCart(productId));
-      setPendingRemovals((prev) => {
-        const next = { ...prev };
-        delete next[productId];
-        return next;
+  const totalItemsCount = cartItems.reduce((a, i) => a + i.quantity, 0);
+  const totalPrice = cartItems.reduce((a, i) => a + i.quantity * i.price, 0);
+
+  // ─── Coupon handlers ───────────────────────────────────────────────────────
+  // Coupon validation is server-side via /api/v1/coupon/validate. We send the
+  // current subtotal so the API can compute the discount preview. The actual
+  // discount is recomputed authoritatively at order creation, never trust
+  // client numbers on checkout.
+  const applyCoupon = async () => {
+    const code = couponInput.trim();
+    if (!code) return;
+    setCouponBusy(true);
+    try {
+      const { data } = await axios.post("/api/v1/coupon/validate", {
+        code,
+        itemSubtotal: totalPrice,
       });
-    },
-    [dispatch]
-  );
-
-  const handleDeleteClick = (item) => {
-    const productId = item.product;
-    if (pendingRef.current[productId]) return;
-
-    const intervalId = setInterval(() => {
-      setPendingRemovals((prev) => {
-        if (!prev[productId]) return prev;
-        const newLeft = prev[productId].secondsLeft - 1;
-        if (newLeft <= 0) {
-          clearInterval(prev[productId].intervalId);
-          return prev;
-        }
-        return {
-          ...prev,
-          [productId]: { ...prev[productId], secondsLeft: newLeft },
-        };
-      });
-    }, 1000);
-
-    const timeoutId = setTimeout(() => {
-      clearInterval(intervalId);
-      commitRemoval(productId);
-    }, UNDO_DURATION * 1000);
-
-    setPendingRemovals((prev) => ({
-      ...prev,
-      [productId]: { item, timeoutId, intervalId, secondsLeft: UNDO_DURATION },
-    }));
+      if (data.valid) {
+        dispatch({ type: "ApplyCoupon", payload: data.coupon });
+        toast.success(`Coupon ${data.coupon.code} applied`);
+        setCouponInput("");
+      } else {
+        toast.error("Coupon not found");
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Could not validate coupon");
+    } finally {
+      setCouponBusy(false);
+    }
   };
 
-  const handleUndo = (productId) => {
-    const entry = pendingRef.current[productId];
-    if (!entry) return;
-    clearTimeout(entry.timeoutId);
-    clearInterval(entry.intervalId);
-    setPendingRemovals((prev) => {
-      const next = { ...prev };
-      delete next[productId];
-      return next;
-    });
+  const removeCoupon = () => {
+    dispatch({ type: "RemoveCoupon" });
+    toast.info("Coupon removed");
   };
 
-  const handleSnackbarClose = (productId) => {
-    const entry = pendingRef.current[productId];
-    if (!entry) return;
-    clearTimeout(entry.timeoutId);
-    clearInterval(entry.intervalId);
-    commitRemoval(productId);
-  };
+  // Compute the discount amount for the cart summary. For freeShipping we
+  // show "Free shipping" qualitatively — the actual shipping cost will be
+  // visible on the shipping step (the server doesn't disclose shipping here).
+  const couponDiscount =
+    coupon?.discountType === "freeShipping"
+      ? null
+      : coupon?.discountAmount ?? 0;
+  const grandTotal = Math.max(0, totalPrice - (couponDiscount ?? 0));
 
-  useEffect(() => {
-    return () => {
-      Object.values(pendingRef.current).forEach(({ timeoutId, intervalId }) => {
-        clearTimeout(timeoutId);
-        clearInterval(intervalId);
-      });
-    };
-  }, []);
+  // -------- Empty state --------
+  if (!cartItems.length) {
+    return (
+      <>
+        <Seo title="Your bag | Hverdag" description="A quiet moment to review." path="/cart" />
+        <section style={{ paddingBlock: "var(--t-space-4xl)", minHeight: "60vh" }}>
+          <div
+            style={{
+              maxWidth: "560px",
+              marginInline: "auto",
+              paddingInline: "var(--t-grid-containerPad)",
+              textAlign: "center",
+            }}
+          >
+            <Headline level="2xl" style={{ marginBottom: 16 }}>
+              Your bag is empty
+            </Headline>
+            <BodyText
+              lead
+              style={{
+                color: "var(--t-neutral-500)",
+                fontStyle: "italic",
+                fontFamily: "var(--t-fontFamily-display)",
+                marginBottom: 32,
+              }}
+            >
+              Find something to look after.
+            </BodyText>
+            <PrimaryBtn component={Link} to="/products">
+              Browse the collection
+            </PrimaryBtn>
+          </div>
+        </section>
+      </>
+    );
+  }
 
-  const visibleItems = cartItems.filter((item) => !pendingRemovals[item.product]);
-  const totalItems   = cartItems.filter((item) => !pendingRemovals[item.product]);
-  const pendingList  = Object.values(pendingRemovals);
-
+  // -------- Populated state --------
   return (
     <>
       <Seo
-        title="Your Shopping Cart - Click.it Store"
-        description="Please review your items in cart and proceed to Checkout"
+        title={`Your bag | Hverdag`}
+        description={`${totalItemsCount} pieces you're keeping close.`}
         path="/cart"
       />
-
-      {/* Undo Snackbars */}
-      {pendingList.map(({ item, secondsLeft }) => (
-        <Snackbar
-          key={item.product}
-          open
-          anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      <section
+        style={{
+          backgroundColor: "var(--t-neutral-50)",
+          paddingBlock: "var(--t-space-3xl)",
+          minHeight: "70vh",
+        }}
+      >
+        <div
           style={{
-            bottom:
-              16 +
-              pendingList.findIndex((e) => e.item.product === item.product) * 100,
+            maxWidth: "var(--t-grid-containerMax)",
+            marginInline: "auto",
+            paddingInline: "var(--t-grid-containerPad)",
           }}
         >
-          <SnackbarContent
-            sx={{
-              backgroundColor: "#323232",
-              minWidth: "340px !important",
-              flexDirection: "column",
-              p: 0,
-              overflow: "hidden",
-              borderRadius: 2,
+          <Overline sx={{ display: "block", mb: 1, color: "var(--t-neutral-500)" }}>
+            Cart
+          </Overline>
+          <Headline level="2xl" style={{ marginBottom: 48 }}>
+            Your bag{" "}
+            <Box
+              component="span"
+              sx={{
+                color: "var(--t-neutral-500)",
+                fontFamily: "var(--t-fontFamily-display)",
+                fontStyle: "italic",
+                fontSize: "1.5rem",
+                fontWeight: 400,
+                ml: 1,
+              }}
+            >
+              ({totalItemsCount} {totalItemsCount === 1 ? "piece" : "pieces"})
+            </Box>
+          </Headline>
+
+          <div
+            className="cart-layout"
+            style={{
+              display: "grid",
+              gap: 48,
+              alignItems: "start",
             }}
-            message={
-              <Box sx={{ px: 2, pt: 1.5, pb: 0.5, width: "100%" }}>
+          >
+            {/* Items list — Adidas-inspired 3-col grid per line */}
+            <div>
+              {cartItems.map((item, i) => {
+                const maxStock = productStocks[item.product] ?? Infinity;
+                return (
+                  <Reveal key={item.product} delay={i * 40}>
+                    <Box
+                      sx={{
+                        display: "grid",
+                        gridTemplateColumns: {
+                          xs: "64px 1fr",
+                          sm: "72px 1fr auto",
+                        },
+                        gridTemplateRows: { xs: "auto auto", sm: "auto" },
+                        gap: { xs: 2, sm: 3 },
+                        alignItems: "center",
+                        py: 2.5,
+                        borderTop:
+                          i === 0 ? "1px solid var(--t-neutral-200)" : "none",
+                        borderBottom: "1px solid var(--t-neutral-200)",
+                      }}
+                    >
+                      {/* Col 1: image — left, parallel to name */}
+                      <Box
+                        sx={{
+                          gridRow: { xs: "1 / 3", sm: "1" },
+                          gridColumn: "1",
+                        }}
+                      >
+                        <Link
+                          to={`/product/${item.product}`}
+                          style={{
+                            display: "block",
+                            width: { xs: 64, sm: 72 },
+                            height: { xs: 64, sm: 72 },
+                            background: "var(--t-neutral-100)",
+                            borderRadius: "var(--t-border-radius-base)",
+                            border: "1px solid var(--t-neutral-200)",
+                            overflow: "hidden",
+                          }}
+                        >
+                          {item.image ? (
+                            <img
+                              alt={item.name}
+                              src={item.image}
+                              loading="lazy"
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "cover",
+                                display: "block",
+                              }}
+                            />
+                          ) : (
+                            <Box
+                              sx={{
+                                color: "var(--t-neutral-400)",
+                                fontSize: 10,
+                                p: 1,
+                                textAlign: "center",
+                              }}
+                            >
+                              No image
+                            </Box>
+                          )}
+                        </Link>
+                      </Box>
+
+                      {/* Col 2: name + size/category (parallel to image) + qty (below) */}
+                      <Box sx={{ gridColumn: { xs: "2", sm: "2" }, minWidth: 0 }}>
+                        <Link
+                          to={`/product/${item.product}`}
+                          style={{
+                            textDecoration: "none",
+                            color: "var(--t-neutral-900)",
+                          }}
+                        >
+                          <Box
+                            component="h3"
+                            sx={{
+                              fontFamily: "var(--t-fontFamily-display)",
+                              fontSize: "1.0625rem",
+                              fontWeight: 500,
+                              color: "var(--t-neutral-900)",
+                              letterSpacing: "var(--t-letterSpacing-tight)",
+                              lineHeight: 1.3,
+                              m: 0,
+                              mb: 0.5,
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                            title={item.name}
+                          >
+                            {item.name}
+                          </Box>
+                        </Link>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1,
+                            fontSize: "var(--t-fontSize-sm)",
+                            color: "var(--t-neutral-500)",
+                            mb: 0.5,
+                          }}
+                        >
+                          {item.category && (
+                            <Box
+                              sx={{
+                                fontSize: "var(--t-fontSize-xs)",
+                                fontWeight: 500,
+                                letterSpacing: "0.08em",
+                                textTransform: "uppercase",
+                                color: "var(--t-neutral-500)",
+                              }}
+                            >
+                              {item.category}
+                            </Box>
+                          )}
+                          {item.category && (
+                            <Box sx={{ color: "var(--t-neutral-300)" }}>·</Box>
+                          )}
+                          <Box sx={{ fontSize: "var(--t-fontSize-sm)", color: "var(--t-neutral-500)" }}>
+                            {fmt(item.price)} each
+                          </Box>
+                        </Box>
+                        {maxStock <= 10 && Number.isFinite(maxStock) && (
+                          <Badge variant="warning" sx={{ mt: 0.5, display: "inline-block" }}>
+                            Only {maxStock} left
+                          </Badge>
+                        )}
+                      </Box>
+
+                      {/* Col 3 — qty (parallel under name) + price+remove on extreme right */}
+                      <Box
+                        sx={{
+                          gridColumn: { xs: "2", sm: "3" },
+                          gridRow: { xs: "2", sm: "1" },
+                          display: "flex",
+                          flexDirection: { xs: "row", sm: "column" },
+                          alignItems: "center",
+                          justifyContent: { xs: "flex-start", sm: "flex-end" },
+                          gap: { xs: 3, sm: 1 },
+                          textAlign: { xs: "left", sm: "right" },
+                        }}
+                      >
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                          <QtyStepper
+                            value={item.quantity}
+                            min={0}
+                            max={Number.isFinite(maxStock) ? maxStock : 99}
+                            onChange={(next) =>
+                              setQty(item.product, item.quantity, next)
+                            }
+                          />
+                        </Box>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1.5,
+                          }}
+                        >
+                          <Price
+                            style={{
+                              display: "block",
+                              fontSize: "var(--t-fontSize-base)",
+                              fontFamily: "var(--t-fontFamily-sans)",
+                              fontWeight: 600,
+                              color: "var(--t-neutral-900)",
+                              fontVariantNumeric: "tabular-nums",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {fmt(item.price * item.quantity)}
+                          </Price>
+                          <IconButton
+                            onClick={() =>
+                              handleRemove(item.product, item.name)
+                            }
+                            aria-label={`Remove ${item.name} from bag`}
+                            size="small"
+                            sx={{
+                              color: "var(--t-neutral-500)",
+                              transition:
+                                "color var(--t-motion-duration-fast) var(--t-motion-easing-out), background var(--t-motion-duration-fast) var(--t-motion-easing-out)",
+                              "&:hover": {
+                                color: "var(--t-primary-600)",
+                                backgroundColor: "var(--t-primary-50)",
+                              },
+                            }}
+                          >
+                            <DeleteOutlineIcon fontSize="small" />
+                          </IconButton>
+                        </Box>
+                      </Box>
+                    </Box>
+                  </Reveal>
+                );
+              })}
+            </div>
+
+            {/* Summary */}
+            <Surface
+              sx={{
+                position: { lg: "sticky" },
+                top: { lg: 88 },
+                p: { xs: 3, sm: 4 },
+              }}
+            >
+              <Headline
+                level="sm"
+                sx={{
+                  fontSize: "var(--t-fontSize-lg)",
+                  fontFamily: "var(--t-fontFamily-display)",
+                  mb: 3,
+                }}
+              >
+                Summary
+              </Headline>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  mb: 1,
+                  fontSize: "var(--t-fontSize-sm)",
+                  color: "var(--t-neutral-600)",
+                }}
+              >
+                <span>Subtotal</span>
+                <span style={{ fontVariantNumeric: "tabular-nums", fontWeight: 500, color: "var(--t-neutral-900)" }}>
+                  {fmt(totalPrice)}
+                </span>
+              </Box>
+              <Box
+                sx={{
+                  fontSize: "var(--t-fontSize-sm)",
+                  color: "var(--t-neutral-500)",
+                  fontStyle: "italic",
+                  mb: 3,
+                }}
+              >
+                Shipping calculated at checkout.
+              </Box>
+
+              {/* Coupon block — placed between shipping hint and total so the
+                  discount visually reduces the order total. */}
+              {coupon ? (
                 <Box
                   sx={{
                     display: "flex",
-                    alignItems: "center",
                     justifyContent: "space-between",
-                    gap: 1,
-                    mb: 1,
+                    alignItems: "center",
+                    mb: 2,
+                    px: 1.5,
+                    py: 1,
+                    borderRadius: "var(--t-border-radius-sm)",
+                    backgroundColor: "var(--t-accent-sage-50)",
+                    border: "1px solid var(--t-accent-sage-200, #C7D2BC)",
+                    fontSize: "var(--t-fontSize-sm)",
                   }}
                 >
-                  <Typography variant="body2" sx={{ color: "#fff", flexShrink: 1, mr: 1 }} noWrap>
-                    Removed&nbsp;<strong>{item.name}</strong>
-                  </Typography>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                    <Typography variant="caption" sx={{ color: "#aaa", minWidth: 24, textAlign: "right" }}>
-                      {secondsLeft}s
-                    </Typography>
-                    <Button
-                      size="small"
-                      startIcon={<UndoIcon fontSize="small" />}
-                      onClick={() => handleUndo(item.product)}
-                      sx={{ color: "#90caf9", fontWeight: 700, textTransform: "none", minWidth: 0, px: 1 }}
-                    >
-                      Undo
-                    </Button>
-                    <IconButton size="small" onClick={() => handleSnackbarClose(item.product)} sx={{ color: "#aaa" }}>
-                      <CloseIcon fontSize="small" />
-                    </IconButton>
-                  </Box>
+                  <span style={{ color: "var(--t-accent-sage-600)" }}>
+                    {coupon.code}{" "}
+                    {coupon.discountType === "freeShipping"
+                      ? "· free shipping"
+                      : `· ${fmt(coupon.discountAmount)} off`}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={removeCoupon}
+                    aria-label="Remove coupon"
+                    style={{
+                      background: "transparent",
+                      border: "none",
+                      cursor: "pointer",
+                      color: "var(--t-accent-sage-600)",
+                      fontSize: "1.1rem",
+                      lineHeight: 1,
+                      opacity: 0.7,
+                    }}
+                  >
+                    ×
+                  </button>
                 </Box>
-                <LinearProgress
-                  variant="determinate"
-                  value={(secondsLeft / UNDO_DURATION) * 100}
+              ) : (
+                <Box sx={{ display: "flex", gap: 1, mb: 3 }}>
+                  <input
+                    type="text"
+                    name="coupon"
+                    placeholder="Coupon code"
+                    aria-label="Coupon code"
+                    autoComplete="off"
+                    value={couponInput}
+                    onChange={(e) => setCouponInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        applyCoupon();
+                      }
+                    }}
+                    style={{
+                      flex: 1,
+                      minWidth: 0,
+                      height: 40,
+                      padding: "0 12px",
+                      border: "1px solid var(--t-neutral-200)",
+                      borderRadius: "var(--t-border-radius-base)",
+                      fontSize: "var(--t-fontSize-sm)",
+                      backgroundColor: "#FFF",
+                      color: "var(--t-neutral-900)",
+                      fontFamily: "inherit",
+                      outline: "none",
+                      transition:
+                        "border-color var(--t-motion-duration-fast) var(--t-motion-easing-out)",
+                    }}
+                    onFocus={(e) =>
+                      (e.currentTarget.style.borderColor = "var(--t-primary-600)")
+                    }
+                    onBlur={(e) =>
+                      (e.currentTarget.style.borderColor = "var(--t-neutral-200)")
+                    }
+                  />
+                  <GhostBtn
+                    type="button"
+                    onClick={applyCoupon}
+                    disabled={couponBusy || !couponInput.trim()}
+                  >
+                    {couponBusy ? "…" : "Apply"}
+                  </GhostBtn>
+                </Box>
+              )}
+
+              <Divider />
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "baseline",
+                  my: 2,
+                }}
+              >
+                <Box
                   sx={{
-                    height: 3,
-                    borderRadius: 0,
-                    backgroundColor: "#555",
-                    "& .MuiLinearProgress-bar": {
-                      backgroundColor: "#90caf9",
-                      transition: "transform 1s linear",
-                    },
+                    fontSize: "var(--t-fontSize-sm)",
+                    fontWeight: 500,
+                    color: "var(--t-neutral-900)",
+                    letterSpacing: "0.04em",
                   }}
-                />
+                >
+                  Total
+                </Box>
+                <Price large>{fmt(grandTotal)}</Price>
               </Box>
-            }
-          />
-        </Snackbar>
-      ))}
-
-      {/* Cart body */}
-      {visibleItems.length > 0 || pendingList.length > 0 ? (
-        totalItems.length > 0 ? (
-          <Container maxWidth="lg">
-            <Grid container spacing={3}>
-              <Grid item lg={12} md={12} xs={12}>
-                <Card variant="outlined">
-                  <Paper className="container" sx={{ boxShadow: "none" }}>
-                    <Box sx={{ alignItems: "center", display: "flex" }}>
-                      <CardHeader title="Shopping Cart" />
-                      <Typography variant="body1" gutterBottom sx={{ mt: 1 }}>
-                        ({totalItems.reduce((acc, item) => acc + item.quantity, 0)} items)
-                      </Typography>
-                    </Box>
-                    <Divider />
-                    <Box mt={2}>
-                      <Table sx={{ [`& .${tableCellClasses.root}`]: { border: "none" } }}>
-                        <TableHead>
-                          <TableRow>
-                            <TableCell>
-                              <Typography variant="h6" gutterBottom component="div" mr={2}>Product Details</Typography>
-                            </TableCell>
-                            <TableCell>
-                              <Typography variant="h6" gutterBottom component="div" mr={2}>Quantity</Typography>
-                            </TableCell>
-                            <TableCell>
-                              <Typography variant="h6" gutterBottom component="div" mr={2}>SubTotal</Typography>
-                            </TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {visibleItems.map((item) => (
-                            <TableRow key={item.product}>
-                              <TableCell>
-                                <Box sx={{ alignItems: "center", display: "flex" }}>
-                                  <Avatar src={item.image} sx={{ mr: 2, width: 90, height: 120 }} variant="square" />
-                                  <Box>
-                                    <Typography color="textPrimary" variant="body1">{item.name}</Typography>
-                                    {/* Unit price — always 2 dp */}
-                                    <Typography color="textPrimary" variant="body1">
-                                      {fmt(item.price)}
-                                    </Typography>
-                                  </Box>
-                                </Box>
-                              </TableCell>
-                              <TableCell>
-                                <Box sx={{ alignItems: "center", display: "flex", flexDirection: "column" }}>
-                                  <Box sx={{ alignItems: "center", display: "flex" }}>
-                                    <button onClick={() => decreaseQty(item.product, item.quantity)}>
-                                      <RemoveCircleOutlineIcon />
-                                    </button>
-                                    <input
-                                      className="border-none ml-4 w-6 outline-none appearance-none font-sans text-gray-800"
-                                      value={item.quantity}
-                                      type="number"
-                                      readOnly
-                                    />
-                                    <button
-                                      onClick={() => increaseQty(item.product, item.quantity)}
-                                      disabled={item.quantity >= (productStocks[item.product] ?? Infinity)}
-                                      style={{ opacity: item.quantity >= (productStocks[item.product] ?? Infinity) ? 0.3 : 1 }}
-                                    >
-                                      <AddCircleOutlineIcon />
-                                    </button>
-                                  </Box>
-                                  {productStocks[item.product] != null && productStocks[item.product] <= 10 && (
-                                    <Typography variant="caption" sx={{ color: "text.secondary", mt: 0.5 }}>
-                                      Only {productStocks[item.product]} left
-                                    </Typography>
-                                  )}
-                                </Box>
-                              </TableCell>
-                              {/* SubTotal — 2 dp */}
-                              <TableCell>
-                                <Typography color="textPrimary" variant="body1">
-                                  {fmt(item.price * item.quantity)}
-                                </Typography>
-                              </TableCell>
-                              <TableCell>
-                                <Button onClick={() => handleDeleteClick(item)}>
-                                  <ClearIcon />
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </Box>
-
-                    {/* Gross Total — 2 dp */}
-                    <Box sx={{ alignItems: "center", display: "flex", justifyContent: "flex-end", p: 1, m: 2 }}>
-                      <Typography color="textPrimary" variant="h6" mr={3}>Gross Total</Typography>
-                      <Typography color="textPrimary" variant="body1" ml={3}>
-                        {fmt(totalItems.reduce((acc, item) => acc + item.quantity * item.price, 0))}
-                      </Typography>
-                    </Box>
-
-                    {/* Checkout */}
-                    <Box sx={{ alignItems: "center", display: "flex", justifyContent: "flex-end", p: 1, m: 2 }}>
-                      <Link to="/signin?redirect=shipping">
-                        <Button
-                          startIcon={<ArrowForwardIosIcon fontSize="small" />}
-                          sx={{ mt: 3 }}
-                          variant="contained"
-                        >
-                          Checkout
-                        </Button>
-                      </Link>
-                    </Box>
-                  </Paper>
-                </Card>
-              </Grid>
-            </Grid>
-          </Container>
-        ) : (
-          <EmptyCart />
-        )
-      ) : (
-        <EmptyCart />
-      )}
-
-      <Copyright />
+              <PrimaryBtn
+                component={Link}
+                to="/checkout"
+                sx={{ width: "100%" }}
+              >
+                Continue to checkout
+              </PrimaryBtn>
+              <p
+                style={{
+                  marginTop: 16,
+                  fontSize: "var(--t-fontSize-sm)",
+                  color: "var(--t-neutral-500)",
+                  textAlign: "center",
+                  fontStyle: "italic",
+                }}
+              >
+                free mending for life, included
+              </p>
+            </Surface>
+          </div>
+        </div>
+      </section>
     </>
   );
 }
