@@ -56,8 +56,12 @@ describe("Order API — auth guards", () => {
   it("GET /api/v1/orders/me → 401 without auth", async () => {
     expect((await request(app).get("/api/v1/orders/me")).status).toBe(401);
   });
-  it("POST /api/v1/order/new → 401 without auth", async () => {
-    expect((await request(app).post("/api/v1/order/new").send({})).status).toBe(401);
+  it("POST /api/v1/order/new → 400 without auth + empty body (validation kicks in)", async () => {
+    // After T6 (guest checkout), /order/new accepts optional auth. An empty
+    // body without auth no longer 401s — it passes auth but fails body
+    // validation with 400. This guards against accidental re-introduction
+    // of the hard auth requirement.
+    expect((await request(app).post("/api/v1/order/new").send({})).status).toBe(400);
   });
   it("GET /api/v1/admin/orders → 401 without auth", async () => {
     expect((await request(app).get("/api/v1/admin/orders")).status).toBe(401);
