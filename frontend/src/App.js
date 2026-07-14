@@ -83,7 +83,7 @@ return (
 <ThemeProvider theme={theme}>
 <TokenCSS />
 <Header />
-<main style={{ paddingTop: 'calc(var(--t-headerHeight) + 1.5rem)' }}>
+<main id="main" tabIndex={-1} style={{ paddingTop: 'calc(var(--t-headerHeight) + 1.5rem)', outline: 'none' }}>
 <Suspense fallback={<PageLoader />}>
 <Routes>
 <Route path="/" element={<Home />} />
