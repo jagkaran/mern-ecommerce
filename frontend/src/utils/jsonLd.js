@@ -6,11 +6,16 @@ export function productJsonLd(product) {
   const imageArr = Array.isArray(product.images)
     ? product.images.map(i => (typeof i === 'string' ? i : i?.url)).filter(Boolean)
     : [];
+  // Schema.org validators (and Google's Rich Results test) flag empty `image`
+  // / `review` arrays as warnings — and a single warning can suppress the
+  // entire Product rich result. Drop empty arrays so the field is absent and
+  // pass validation cleanly.
+  const limitedReviews = (product.reviews || []).slice(0, 3);
   return {
     '@context': 'https://schema.org',
     '@type': 'Product',
     name: product.name,
-    image: imageArr,
+    image: imageArr.length ? imageArr : undefined,
     description: product.description,
     sku: product._id,
     aggregateRating: product.avgRating
@@ -20,13 +25,15 @@ export function productJsonLd(product) {
           reviewCount: product.numOfReviews ?? 0,
         }
       : undefined,
-    review: (product.reviews || []).slice(0, 3).map(r => ({
-      '@type': 'Review',
-      author: r.name,
-      datePublished: r.createdAt,
-      reviewBody: r.comment,
-      reviewRating: { '@type': 'Rating', ratingValue: r.rating },
-    })),
+    review: limitedReviews.length
+      ? limitedReviews.map(r => ({
+          '@type': 'Review',
+          author: r.name,
+          datePublished: r.createdAt,
+          reviewBody: r.comment,
+          reviewRating: { '@type': 'Rating', ratingValue: r.rating },
+        }))
+      : undefined,
   };
 }
 

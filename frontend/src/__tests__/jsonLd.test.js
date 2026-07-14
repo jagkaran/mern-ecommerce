@@ -28,7 +28,7 @@ describe('productJsonLd', () => {
       _id: 'p1',
       name: 'X',
       description: 'd',
-      images: [],
+      images: [{ url: 'https://example.com/x.jpg' }],
       reviews: Array.from({ length: 10 }, (_, i) => ({
         name: `r${i}`,
         createdAt: '2026-01-01',
@@ -40,8 +40,24 @@ describe('productJsonLd', () => {
   });
 
   it('omits aggregateRating when no avgRating', () => {
-    const product = { _id: 'p1', name: 'X', description: 'd', images: [] };
+    const product = { _id: 'p1', name: 'X', description: 'd', images: [{ url: 'https://example.com/x.jpg' }] };
     expect(productJsonLd(product).aggregateRating).toBeUndefined();
+  });
+
+  it('omits image array when product has no images', () => {
+    // Schema.org validators flag `"image": []` as a warning that can suppress
+    // the entire Product rich result — instead, drop the field entirely.
+    const product = { _id: 'p1', name: 'X', description: 'd', images: [] };
+    expect(productJsonLd(product).image).toBeUndefined();
+    expect('image' in productJsonLd(product)).toBe(false);
+  });
+
+  it('omits review array when product has no reviews', () => {
+    // Same rationale as images: empty review arrays trigger Rich Results warnings.
+    const product = { _id: 'p1', name: 'X', description: 'd', images: [{ url: 'https://example.com/x.jpg' }] };
+    const out = productJsonLd(product);
+    expect(out.review).toBeUndefined();
+    expect('review' in out).toBe(false);
   });
 });
 
