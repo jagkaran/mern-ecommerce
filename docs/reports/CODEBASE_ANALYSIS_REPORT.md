@@ -821,3 +821,22 @@ export default function () {
 **Report Version**: 1.0.0
 **Next Review**: 2026-05-30
 **Maintained By**: SDLC Agentic AI System
+
+---
+
+## Conversion Uplift — Phase A (2026-07-13)
+
+Shipped: Lighthouse baseline + image perf (Cloudinary f_auto/q_auto + srcset) + JSON-LD Product/Organization schema + a11y fixes (skip-link, AA contrast tokens, 44px touch targets).
+
+**Score deltas** (from baseline to post-PR3, mobile):
+- Homepage a11y: <TBD — see `docs/perf/baseline-2026-07-14.json` vs `docs/perf/post-pr3-2026-07-14.json`>
+- PDP a11y: <TBD — see `docs/perf/baseline-2026-07-14.json` vs `docs/perf/post-pr3-2026-07-14.json`>
+- PDP perf: <TBD — see `docs/perf/baseline-2026-07-14.json` vs `docs/perf/post-pr3-2026-07-14.json`>
+
+See `docs/perf/baseline-2026-07-14.json`, `docs/perf/post-pr2-2026-07-14.json`, `docs/perf/post-pr3-2026-07-14.json` for raw scores.
+
+**Note:** Baseline captured pre-Phase-A. `post-pr2-2026-07-14.json` and `post-pr3-2026-07-14.json` are env-blocked stubs (dev servers `:3000` / `:5001` did not auto-start). Recapture via `npm run perf` before merge.
+
+**Spec**: `docs/superpowers/specs/2026-07-13-conversion-uplift-phase-a-design.md`
+
+**Deferred**: Phase B (guest checkout, separate spec), Phase C (hierarchy + trust polish), Phase D (test infra), tips #8 (AI recs) and #10 (A/B infra) — user-flagged gaps.

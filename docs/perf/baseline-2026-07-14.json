@@ -1,0 +1,33 @@
+{
+  "date": "2026-07-14T19:31:26.178Z",
+  "scores": {
+    "home": {
+      "mobile": {
+        "accessibility": 87,
+        "performance": 54,
+        "best-practices": 75,
+        "seo": 100
+      },
+      "desktop": {
+        "accessibility": 85,
+        "performance": 97,
+        "best-practices": 96,
+        "seo": 100
+      }
+    },
+    "pdp": {
+      "mobile": {
+        "accessibility": 89,
+        "performance": 57,
+        "best-practices": 75,
+        "seo": 100
+      },
+      "desktop": {
+        "accessibility": 87,
+        "performance": 73,
+        "best-practices": 74,
+        "seo": 100
+      }
+    }
+  }
+}

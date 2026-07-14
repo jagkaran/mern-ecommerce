@@ -1,0 +1,4 @@
+{
+  "date": null,
+  "note": "post-PR2 capture skipped: dev servers (frontend :3000, backend :5001) did not auto-start in this environment. Recapture via `npm run perf` before merge — see Task 8 final LH pass. Original PR1 baseline preserved at docs/perf/baseline-2026-07-14.json."
+}
