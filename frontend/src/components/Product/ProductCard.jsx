@@ -191,8 +191,10 @@ function ProductCard({
               position: 'absolute',
               top: 8,
               right: 8,
-              width: 36,
-              height: 36,
+              width: 44,
+              height: 44,
+              minWidth: 44,
+              minHeight: 44,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -319,7 +321,7 @@ function ProductCard({
             <span
               style={{
                 fontSize: 'var(--t-fontSize-sm)',
-                color: 'var(--t-neutral-500)',
+                color: 'var(--t-neutral-700)',
                 fontVariantNumeric: 'tabular-nums',
               }}
             >
