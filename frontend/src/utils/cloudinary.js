@@ -7,7 +7,6 @@ export function cld(url, { w, h } = {}) {
   const transforms = ['f_auto', 'q_auto'];
   if (w) transforms.push(`w_${w}`);
   if (h) transforms.push(`h_${h}`);
-  const sep = url.includes('?') ? '&' : '?';
   return url.replace('/upload/', `/upload/${transforms.join(',')}/`);
 }
 
