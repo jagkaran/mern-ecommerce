@@ -1,3 +1,5 @@
+import { render } from '@testing-library/react';
+import JsonLd from '../components/JsonLd';
 import { productJsonLd, organizationJsonLd } from '../utils/jsonLd';
 
 describe('productJsonLd', () => {
@@ -69,5 +71,18 @@ describe('organizationJsonLd', () => {
     expect(out['@type']).toBe('Organization');
     expect(out.name).toBeTruthy();
     expect(out.url).toBeTruthy();
+  });
+});
+
+describe('JsonLd XSS escapes', () => {
+  it('neutralizes </script> breakout in payload', () => {
+    const { container } = render(
+      <JsonLd data={{ x: '</script><script>alert(1)</script>' }} />
+    );
+    const script = container.querySelector('script[type="application/ld+json"]');
+    expect(script).toBeTruthy();
+    // Raw `</script>` substring must NOT appear — escaped Unicode form must appear.
+    expect(script.innerHTML).not.toContain('</script>');
+    expect(script.innerHTML).toContain('\\u003c');
   });
 });
