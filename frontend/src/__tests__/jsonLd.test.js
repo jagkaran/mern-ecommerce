@@ -46,10 +46,12 @@ describe('productJsonLd', () => {
 
   it('omits image array when product has no images', () => {
     // Schema.org validators flag `"image": []` as a warning that can suppress
-    // the entire Product rich result — instead, drop the field entirely.
+    // the entire Product rich result — instead, drop the field entirely so
+    // JSON.stringify emits no `image` key.
     const product = { _id: 'p1', name: 'X', description: 'd', images: [] };
-    expect(productJsonLd(product).image).toBeUndefined();
-    expect('image' in productJsonLd(product)).toBe(false);
+    const out = productJsonLd(product);
+    expect(out.image).toBeUndefined();
+    expect(JSON.stringify(out)).not.toContain('"image"');
   });
 
   it('omits review array when product has no reviews', () => {
@@ -57,7 +59,7 @@ describe('productJsonLd', () => {
     const product = { _id: 'p1', name: 'X', description: 'd', images: [{ url: 'https://example.com/x.jpg' }] };
     const out = productJsonLd(product);
     expect(out.review).toBeUndefined();
-    expect('review' in out).toBe(false);
+    expect(JSON.stringify(out)).not.toContain('"review"');
   });
 });
 
