@@ -125,9 +125,18 @@ describe("POST /api/v1/payment/process — contract enforcement", () => {
 
 describe("GET /api/v1/getstripeapikey — public reachability (C1 fix)", () => {
   it("200 without auth (guests need it for /checkout)", async () => {
-    const res = await request(app).get("/api/v1/getstripeapikey");
-    expect(res.status).toBe(200);
-    expect(res.body.stripeApiKey).toBeDefined();
+    // Some sandbox envs lack STRIPE_API_KEY; only assert the status.
+    // The route guard is what we're testing here, not Stripe credentials.
+    const prev = process.env.STRIPE_API_KEY;
+    process.env.STRIPE_API_KEY = "pk_test_xyz";
+    try {
+      const res = await request(app).get("/api/v1/getstripeapikey");
+      expect(res.status).toBe(200);
+      expect(res.body.stripeApiKey).toBeDefined();
+    } finally {
+      if (prev === undefined) delete process.env.STRIPE_API_KEY;
+      else process.env.STRIPE_API_KEY = prev;
+    }
   });
 });
 

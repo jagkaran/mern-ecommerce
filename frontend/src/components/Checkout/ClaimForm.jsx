@@ -19,7 +19,7 @@ export default function ClaimForm({ claimToken }) {
     }
     setBusy(true);
     try {
-      const { data } = await axios.post(
+      await axios.post(
         `/api/v1/order/claim`,
         { claimToken, password: pw },
         { withCredentials: true }
