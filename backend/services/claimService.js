@@ -16,12 +16,35 @@ exports.mintClaimToken = function mintClaimToken(orderId, guestEmail) {
 };
 
 async function findOrderByToken(token) {
-  // We don't store the raw token — only HMAC. Compute candidate hashes for
-  // recent guest orders. Brute-force safe: scope to orders w/ a claimTokenHash.
-  // We include already-claimed orders so replay can return the
-  // "Order already claimed" error below; without this, a second claim attempt
-  // would 400 with "Invalid claim token" (the token matches but the cleared
-  // claimTokenHash filters the row out of the query).
+  // The token itself is the HMAC. We don't store the raw token — only the
+  // sha256(token) hash, which is what claimTokenHash is — and we ALSO store
+  // the HMAC-derived raw token. Two competing designs were possible; this
+  // version uses sha256(token) as the lookup key (deterministic, indexed)
+  // and re-verifies the HMAC of (orderId, email) against the supplied raw
+  // token to defeat hash collisions.
+  //
+  // PRIMARY path: direct lookup by sha256(token). O(log N).
+  const hash = crypto.createHash("sha256").update(token).digest("hex");
+  const candidate = await Order.findOne({ claimTokenHash: hash })
+    .select("+claimTokenHash")
+    .lean();
+  if (candidate) {
+    // Defensive HMAC re-verification — sha256 has 2^256 space but a hash
+    // collision still allows an attacker with that hash to claim an order
+    // they don't own the secret for. The HMAC check rejects those.
+    if (!candidate.guestEmail) return null;
+    if (sign(candidate._id.toString(), candidate.guestEmail) !== token) {
+      // Hash matched but HMAC did not — extremely rare (sha256 collision),
+      // surface as a generic invalid-token so we don't leak the collision.
+      return null;
+    }
+    return candidate;
+  }
+
+  // FALLBACK: scan recent guest orders. Brute-force safe because token
+  // must match HMAC orderId|email exactly. We include already-claimed
+  // orders in the scan so replay can return the "Order already claimed"
+  // error below.
   const orders = await Order.find({
     claimTokenHash: { $exists: true, $ne: null },
   })

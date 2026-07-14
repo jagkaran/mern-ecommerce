@@ -60,7 +60,12 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
 
 /**
  * Get details of a specific order.
- * Only the order owner or an admin may access.
+ * Owner or admin may access. Guest orders (user == null) are unreachable
+ * through this route — guests must claim the order first to authenticate,
+ * after which the order is reassigned to the new user and GET works.
+ *
+ * Was crashing 500 because guest orders lack a `user`. The null-guard
+ * here returns a clear 403 instead of NPE-ing.
  */
 exports.getOrderDetails = catchAsyncErrors(async (req, res, next) => {
   const order = await Order.findById(req.params.id).populate("user", "name email");
@@ -69,7 +74,18 @@ exports.getOrderDetails = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler("Order not found", 404));
   }
 
-  if (order.user._id.toString() !== req.user._id.toString() && req.user.role !== "admin") {
+  // Guest orders: only admins may view them directly (for support).
+  // Anonymous claim flow uses /order/:id AFTER /order/claim which reassigns
+  // the order to the freshly-minted user, at which point the auth check
+  // below allows access.
+  if (!order.user) {
+    if (req.user.role !== "admin") {
+      return next(new ErrorHandler("Claim this order first to view details.", 403));
+    }
+  } else if (
+    order.user._id.toString() !== req.user._id.toString() &&
+    req.user.role !== "admin"
+  ) {
     return next(new ErrorHandler("You are not authorized to view this order", 403));
   }
 

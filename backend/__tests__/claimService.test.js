@@ -72,6 +72,47 @@ describe("claimService — HMAC + lifecycle", () => {
       .rejects.toThrow(/already claimed/i);
   });
 
+  it("finds an old token via the sha256 index even when > 50 unclaimed guest orders exist (I8 fix)", async () => {
+    // I8: previously findOrderByToken limited to `.limit(50)`, so valid
+    // tokens older than the 50 most-recent guest orders returned
+    // "Invalid claim token". The new primary lookup uses Order.findOne by
+    // claimTokenHash, which is indexed.
+    const targetOrder = await Order.create({
+      shippingInfo: { address: "1 St", city: "C", state: "S", country: "X", zip: 12345, phone: 1234567890 },
+      orderItems: [{ name: "x", price: 1, quantity: 1, image: "i", product: productId }],
+      paymentInfo: { id: "pi_old", status: "succeeded" },
+      itemPrice: 1, taxPrice: 0, shippingPrice: 0, totalPrice: 1,
+      paidAt: Date.now(),
+      guestEmail: "oldtoken@y.io",
+    });
+    const token = mintClaimToken(targetOrder._id.toString(), "oldtoken@y.io");
+    targetOrder.claimTokenHash = crypto.createHash("sha256").update(token).digest("hex");
+    // Backdate so it falls outside the 50-doc scan
+    targetOrder.createdAt = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
+    await targetOrder.save();
+
+    // Fill the DB with 60+ newer guest orders so the limit-50 scan would
+    // miss the target order. Use unique emails per order so any conflict
+    // with assertions below is impossible.
+    const filler = [];
+    for (let i = 0; i < 60; i++) {
+      filler.push({
+        shippingInfo: { address: "1", city: "C", state: "S", country: "X", zip: 1, phone: 1 },
+        orderItems: [{ name: "x", price: 1, quantity: 1, image: "i", product: productId }],
+        paymentInfo: { id: `pi_f${i}`, status: "succeeded" },
+        itemPrice: 1, taxPrice: 0, shippingPrice: 0, totalPrice: 1,
+        paidAt: Date.now(),
+        guestEmail: `filler_${i}_${Date.now()}@y.io`,
+        claimTokenHash: "0".repeat(64),
+      });
+    }
+    await Order.insertMany(filler);
+
+    // The token for the old order is still findable via the indexed lookup.
+    await expect(claimGuestOrder({ claimToken: token, password: "passw0rd!" }))
+      .resolves.toMatchObject({ user: expect.objectContaining({ email: "oldtoken@y.io" }) });
+  });
+
   it("claimGuestOrder signals ACCOUNT_EXISTS when email has User", async () => {
     await User.create({ name: "Dup User", email: "dup@y.io", password: "Existing1!", profilePic: { public_id:"d", url:"http://e.com/d.jpg" } });
     // Create a guest order w/ that email. Pin _id so the HMAC computed

@@ -445,6 +445,18 @@ exports.validateCreateOrder = [
     .isIn(["succeeded", "pending", "failed"])
     .withMessage("Invalid payment status"),
 
+  // I9: guestEmail is optional at this layer (authenticated orders skip
+  // it). When present, normalize and validate so the claim flow doesn't
+  // 500 later on malformed emails. The service layer still requires it
+  // for unauthenticated callers.
+  body("guestEmail")
+    .optional()
+    .isEmail()
+    .withMessage("Please provide a valid email")
+    .normalizeEmail()
+    .isLength({ max: 100 })
+    .withMessage("Email is too long"),
+
   // Client price fields were previously REQUIRED here. They are now
   // optional: pricing is computed server-side from trusted DB prices and
   // any client-supplied totals are ignored. Marking these fields optional
