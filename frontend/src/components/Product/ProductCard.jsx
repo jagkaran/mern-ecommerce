@@ -118,8 +118,11 @@ function ProductCard({
               {secondary && (
                 <img
                   alt=""
-                  src={secondary}
+                  src={cld(secondary, { w: 768 })}
+                  srcSet={srcset(secondary)}
+                  sizes="(max-width:600px) 50vw, (max-width:1024px) 33vw, 25vw"
                   loading="lazy"
+                  decoding="async"
                   aria-hidden
                   style={{
                     position: 'absolute',

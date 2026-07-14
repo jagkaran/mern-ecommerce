@@ -15,7 +15,7 @@ import useCurrencyLock from "./useCurrencyLock";
 import DesktopNav from "./DesktopNav";
 import MobileDrawer from "./MobileDrawer";
 import AccountMenu from "./AccountMenu";
-import SkipLink from "../SkipLink";
+import SkipLink from "../../SkipLink";
 
 function Header() {
   const navigate = useNavigate();
