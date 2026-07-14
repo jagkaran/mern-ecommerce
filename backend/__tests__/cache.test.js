@@ -19,7 +19,7 @@ const {
 /** Build a minimal Express-style req/res/next triple */
 function makeCtx(overrides = {}) {
   const captured = {};
-  const req = { method: "GET", originalUrl: "/api/v1/products", ...overrides };
+  const req = { method: "GET", originalUrl: "/api/v1/products", query: {}, ...overrides };
   const res = {
     json: jest.fn((body) => { captured.body = body; return res; }),
   };
