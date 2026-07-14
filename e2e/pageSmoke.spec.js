@@ -173,6 +173,16 @@ test.describe("JSON-LD rich snippets", () => {
   });
 });
 
+test.describe("Skip-link a11y", () => {
+  test("SkipLink becomes visible and focusable on first Tab", async ({ page }) => {
+    await page.goto("/");
+    await page.keyboard.press("Tab");
+    const skipLink = page.getByRole("link", { name: /skip to main content/i });
+    await expect(skipLink).toBeFocused();
+    await expect(skipLink).toBeVisible();
+  });
+});
+
 test.describe("Responsive (mobile/tablet/desktop)", () => {
   for (const viewport of [
     { name: "iPhone-SE", width: 375, height: 667 },
