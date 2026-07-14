@@ -14,9 +14,36 @@ process.env.JWT_EXPIRE        = "7d";
 process.env.COOKIE_EXPIRE     = "7";
 process.env.STRIPE_SECRET_KEY = "sk_test_mock";
 
-// Stripe mock
-jest.mock("stripe", () => () => ({
-  paymentIntents: { create: jest.fn().mockResolvedValue({ client_secret: "test_secret" }) },
+// Stripe mock — covers paymentService.createPaymentIntent, retrievePaymentIntent, verifyWebhookSignature.
+// Singleton instance so per-test `mockRejectedValueOnce` overrides on the test's
+// `stripeInstance` reference are visible to the service's cached `getStripe()`.
+let mockStripeSingleton;
+jest.mock("stripe", () => (...args) => {
+  if (!mockStripeSingleton) {
+    mockStripeSingleton = {
+      paymentIntents: {
+        create: jest.fn().mockResolvedValue({ id: "pi_test", client_secret: "test_secret" }),
+        retrieve: jest.fn().mockResolvedValue({ id: "pi_test", status: "succeeded", amount: 0 }),
+      },
+      webhooks: {
+        // Default: parse the raw body so happy-path verify tests pass without
+        // any per-test setup. Tests that need an error response override via
+        // `stripeInstance.webhooks.constructEvent.mockImplementationOnce(...)`.
+        constructEvent: jest.fn((rawBody) => JSON.parse(rawBody.toString())),
+      },
+    };
+  }
+  return mockStripeSingleton;
+});
+
+// Disposable-email + breach checks must never hit the network in tests.
+// Both fail-open in production, so defaulting to "clean" preserves prod semantics
+// (signup flows only block when an upstream definitively flags the input).
+jest.mock("../services/emailQualityService", () => ({
+  isDisposableEmail: jest.fn().mockResolvedValue(false),
+}));
+jest.mock("../services/passwordBreachService", () => ({
+  isPasswordBreached: jest.fn().mockResolvedValue(false),
 }));
 
 // Cloudinary mock
