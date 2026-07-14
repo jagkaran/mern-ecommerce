@@ -25,7 +25,7 @@ export default function ClaimForm({ claimToken }) {
         { withCredentials: true }
       );
       toast.success("Welcome! Your orders are now linked.");
-      navigate("/orders");
+      navigate("/myorders");
     } catch (e) {
       setErr(e.response?.data?.message || "Could not save — try again");
     } finally {

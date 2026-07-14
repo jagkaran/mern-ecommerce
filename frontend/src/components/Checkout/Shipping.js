@@ -1,21 +1,18 @@
 import React, { useCallback, useEffect } from "react";
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useAlert } from "react-alert";
-import Box from "@mui/material/Box";
-import Container from "@mui/material/Container";
-import Paper from "@mui/material/Paper";
-import Stepper from "@mui/material/Stepper";
-import Step from "@mui/material/Step";
-import StepLabel from "@mui/material/StepLabel";
-import Button from "@mui/material/Button";
-import Typography from "@mui/material/Typography";
-import AddressForm from "./AddressForm";
-import PaymentForm from "./PaymentForm";
-import ReviewOrder from "./ReviewOrder";
-import Seo from "../Seo";
+import { useToast } from "../../hooks/useToast";
 import { useNavigate } from "react-router-dom";
-import Success from "./Success";
+import { Box } from "@mui/material";
+import { Headline, PrimaryBtn, Overline, StepIndicator, Surface } from "../../design/primitives";
+
+import AddressForm from "./AddressForm";
+import ReviewOrder from "./ReviewOrder";
+import PaymentForm from "./PaymentForm";
+import { useCurrency } from "../../utils/currencyContext";
+
+import Seo from "../Seo";
+
 import { saveShippingInfo } from "../../actions/cartAction";
 import axios from "axios";
 import {
@@ -24,291 +21,261 @@ import {
   useStripe,
 } from "@stripe/react-stripe-js";
 import { clearErrors, createOrder } from "../../actions/orderAction";
-import PaymentIcon from "@mui/icons-material/Payment";
-import LoadingButton from "@mui/lab/LoadingButton";
-import Copyright from "../Copyright";
-import { fmt } from "../../utils/formatCurrency";
 
 function Shipping() {
-  const dispatch = useDispatch();
-  const alert = useAlert();
-  const { shippingInfo, cartItems } = useSelector((state) => state.cart);
-  const history = useNavigate();
-  const [activeStep, setActiveStep] = useState(0);
-  const stripe = useStripe();
-  const elements = useElements();
-  const { user } = useSelector((state) => state.user);
-  const { error } = useSelector((state) => state.newOrder);
-  const [submitLoading, setSubmitLoading] = useState(false);
+const { fmt, code, rate } = useCurrency();
+const dispatch = useDispatch();
+const toast = useToast();
+const { shippingInfo, cartItems, coupon } = useSelector((state) => state.cart);
+const history = useNavigate();
+const [activeStep, setActiveStep] = useState(0);
+const stripe = useStripe();
+const elements = useElements();
+const { user } = useSelector((state) => state.user);
+const { error } = useSelector((state) => state.newOrder);
+const [submitLoading, setSubmitLoading] = useState(false);
 
-  const [addFormValues, setAddFormValues] = useState({
-    firstName: shippingInfo.firstName,
-    lastName: shippingInfo.lastName,
-    address: shippingInfo.address,
-    phone: shippingInfo.phone,
-    country: shippingInfo.country,
-    state: shippingInfo.state,
-    city: shippingInfo.city,
-    zip: shippingInfo.zip,
-  });
+const [addFormValues, setAddFormValues] = useState({
+  firstName: shippingInfo.firstName,
+  lastName: shippingInfo.lastName,
+  address: shippingInfo.address,
+  phone: shippingInfo.phone,
+  country: shippingInfo.country,
+  state: shippingInfo.state,
+  city: shippingInfo.city,
+  zip: shippingInfo.zip,
+});
 
-  const [reviewData, setReviewData] = useState({
-    subTotal: "",
-    shippingCharges: "",
-    tax: "",
-    totalPrice: "",
-  });
+const [reviewData, setReviewData] = useState({
+  subTotal: "",
+  shippingCharges: "",
+  tax: "",
+  totalPrice: "",
+});
 
-  const isFormEmpty = (form) => {
-    for (const value of Object.values(form)) {
-      if (value === "") return true;
-    }
-    return false;
-  };
+const isFormEmpty = (form) => {
+  for (const value of Object.values(form)) {
+    if (!value || value === "") return true;
+  }
+  return false;
+};
 
-  const handleNext = () => {
-    if (!isFormEmpty(addFormValues)) {
-      const { firstName, lastName, address, city, state, zip, country, phone } =
-        addFormValues;
-      dispatch(
-        saveShippingInfo({
-          firstName,
-          lastName,
-          address,
-          city,
-          state,
-          country,
-          zip,
-          phone,
-        })
-      );
-      setActiveStep(activeStep + 1);
-    } else {
-      alert.error("Please fill all fields");
-    }
+const handleNext = () => {
+  if (!isFormEmpty(addFormValues)) {
+    const { firstName, lastName, address, city, state, zip, country, phone } =
+      addFormValues;
+    dispatch(
+      saveShippingInfo({ firstName, lastName, address, city, state, country, zip, phone })
+    );
+    setActiveStep(activeStep + 1);
+  } else {
+    toast.error("Please fill all fields");
+  }
+};
 
-    if (addFormValues.phone.length !== 10) {
-      alert.error("Phone Number should be 10 digits Long");
-    }
-  };
+// orderInfo lives in component state, not sessionStorage. Stays in-memory only
+// for the duration of the checkout flow; cleared on unmount (page navigation).
+const [orderInfoState, setOrderInfoState] = useState({});
 
-  const handleReviewData = (step) => {
-    if (!isFormEmpty(reviewData)) {
-      sessionStorage.setItem("orderInfo", JSON.stringify(reviewData));
-      setActiveStep(step + 1);
-    } else {
-      alert.error("Review data is empty");
-    }
-  };
+const handleReviewData = (step) => {
+  if (!isFormEmpty(reviewData)) {
+    setOrderInfoState(reviewData);
+    setActiveStep(step + 1);
+  } else {
+    toast.error("Review data is empty");
+  }
+};
 
-  // Read orderInfo from sessionStorage fresh each render so the Pay button
-  // always shows the value saved when the user clicked Next on step 2.
-  const orderInfo = JSON.parse(sessionStorage.getItem("orderInfo"));
+const paymentData = {
+  orderItems: cartItems.map((item) => ({
+    product: item.product,
+    quantity: item.quantity,
+  })),
+};
 
-  const paymentData = {
-    orderItems: cartItems.map((item) => ({
-      product: item.product,
-      quantity: item.quantity,
-    })),
-  };
+const orderData = {
+  shippingInfo,
+  orderItems: cartItems,
+  itemPrice: orderInfoState?.subTotal,
+  taxPrice: orderInfoState?.tax,
+  shippingPrice: orderInfoState?.shippingCharges,
+  totalPrice: orderInfoState?.totalPrice,
+  currency: code,
+  currencyRate: rate,
+  couponCode: coupon?.code, // server re-resolves and re-applies; never trust client discount
+};
 
-  const orderData = {
-    shippingInfo,
-    orderItems: cartItems,
-    // Field name MUST match the backend schema: `itemPrice` (no trailing 's')
-    itemPrice: orderInfo?.subTotal,
-    taxPrice: orderInfo?.tax,
-    shippingPrice: orderInfo?.shippingCharges,
-    totalPrice: orderInfo?.totalPrice,
-  };
-
-  const handlePaymentDataProcessing = async (step, e) => {
-    e.preventDefault();
-    setSubmitLoading(true);
-    try {
-      const config = { headers: { "Content-Type": "application/json" } };
-      const { data } = await axios.post(
-        "/api/v1/payment/process",
-        paymentData,
-        config
-      );
-      const client_secret = data.client_secret;
-      if (!stripe || !elements) return;
-      const result = await stripe.confirmCardPayment(client_secret, {
-        payment_method: {
-          card: elements.getElement(CardNumberElement),
-          billing_details: {
-            name: `${shippingInfo.firstName} ${shippingInfo.lastName}`,
-            email: user.email,
-            address: {
-              line1: shippingInfo.address,
-              city: shippingInfo.city,
-              state: shippingInfo.state,
-              postal_code: shippingInfo.zip,
-              country: shippingInfo.country,
-            },
+const handlePaymentDataProcessing = async (step, e) => {
+  e.preventDefault();
+  setSubmitLoading(true);
+  try {
+    const config = { headers: { "Content-Type": "application/json" } };
+    const { data } = await axios.post(
+      "/api/v1/payment/process",
+      paymentData,
+      config
+    );
+    const client_secret = data.client_secret;
+    if (!stripe || !elements) return;
+    const result = await stripe.confirmCardPayment(client_secret, {
+      payment_method: {
+        card: elements.getElement(CardNumberElement),
+        billing_details: {
+          name: `${shippingInfo.firstName} ${shippingInfo.lastName}`,
+          email: user.email,
+          address: {
+            line1: shippingInfo.address,
+            city: shippingInfo.city,
+            state: shippingInfo.state,
+            postal_code: shippingInfo.zip,
+            country: shippingInfo.country,
           },
         },
-      });
-      if (result.error) {
-        alert.error(result.error.message);
-        setSubmitLoading(false);
-      } else {
-        if (result.paymentIntent.status === "succeeded") {
-          orderData.paymentInfo = {
-            id: result.paymentIntent.id,
-            status: result.paymentIntent.status,
-          };
-
-          // Await the order creation so Redux state is populated before
-          // navigating. Without await the navigate fired before the POST
-          // /api/v1/order/new completed, and the subsequent reload wiped
-          // all Redux state so the Success page never saw the new order.
-          await dispatch(createOrder(orderData));
-
-          sessionStorage.removeItem("orderInfo");
-          localStorage.removeItem("shippingInfo");
-          localStorage.removeItem("cartItems");
-
-          // Navigate to the success screen — state.newOrder.order now holds
-          // the freshly created order. Do NOT call window.location.reload()
-          // here: a hard reload destroys Redux state before Success can read it.
-          history("/success");
-        } else {
-          alert.error("There's some issue while processing payment");
-          setSubmitLoading(false);
-        }
-      }
-    } catch (err) {
-      const errMsg = err?.response?.data?.message || err.message || 'An error occurred';
-      alert.error(errMsg);
+      },
+    });
+    if (result.error) {
+      toast.error(result.error.message);
       setSubmitLoading(false);
+    } else {
+      if (result.paymentIntent.status === "succeeded") {
+        orderData.paymentInfo = {
+          id: result.paymentIntent.id,
+          status: result.paymentIntent.status,
+        };
+
+        // createOrder now returns { order, claimToken, error? }.
+        // Authenticated orders have no claimToken — success URL stays clean.
+        const placed = await dispatch(createOrder(orderData));
+        if (placed?.error) {
+          toast.error(typeof placed.error === "string" ? placed.error : "Could not place order");
+          setSubmitLoading(false);
+          return;
+        }
+
+        // Clear local in-memory state on success — cart + order details
+        setOrderInfoState({});
+        const tokenQuery = placed?.claimToken
+          ? `?token=${encodeURIComponent(placed.claimToken)}`
+          : "";
+        history(`/success${tokenQuery}`);
+      } else {
+        toast.error("There's some issue while processing payment");
+        setSubmitLoading(false);
+      }
     }
-  };
+  } catch (err) {
+    const errMsg = err?.response?.data?.message || err.message || "An error occurred";
+    toast.error(errMsg);
+    setSubmitLoading(false);
+  }
+};
 
-  const handleBack = () => {
-    sessionStorage.removeItem("orderInfo");
-    setActiveStep(activeStep - 1);
-  };
+const handleBack = () => {
+  setOrderInfoState({});
+  setActiveStep(activeStep - 1);
+};
 
-  const handleChange = (input, e) => {
-    e.preventDefault();
-    setAddFormValues({ ...addFormValues, [input]: e.target.value });
-  };
+const handleChange = (input, e) => {
+  e?.preventDefault?.();
+  setAddFormValues((prev) => ({ ...prev, [input]: e.target.value }));
+};
 
-  const handleReviewDataChange = useCallback((input, value) => {
-    setReviewData((prev) => ({ ...prev, [input]: value }));
-  }, []);
+const handleReviewDataChange = useCallback((input, value) => {
+  setReviewData((prev) => ({ ...prev, [input]: value }));
+}, []);
 
-  const handleStepFunc = (step, e) => {
-    if (step === 0) handleNext();
-    if (step === 1) handleReviewData(step);
-    if (step === 2) handlePaymentDataProcessing(step, e);
-  };
+const handleStepFunc = (step, e) => {
+  if (step === 0) handleNext();
+  if (step === 1) handleReviewData(step);
+  if (step === 2) handlePaymentDataProcessing(step, e);
+};
 
-  const steps = ["Shipping address", "Review your order", "Payment details"];
+const steps = ["Shipping", "Review", "Payment"];
 
-  const getStepContent = (step) => {
-    switch (step) {
-      case 0:
-        return <AddressForm values={addFormValues} handleChange={handleChange} />;
-      case 1:
-        return (
-          <ReviewOrder
-            reviewData={reviewData}
-            handleReviewDataChange={handleReviewDataChange}
-          />
-        );
-      case 2:
-        return <PaymentForm />;
-      default:
-        throw new Error("Unknown Step");
-    }
-  };
+useEffect(() => {
+  if (cartItems.length === 0) {
+    history("/products");
+    toast.error("Your cart is empty!");
+  }
+  if (error) {
+    const errMsg = typeof error === "string" ? error : error?.message || "An error occurred";
+    toast.error(errMsg);
+    dispatch(clearErrors());
+  }
+}, [dispatch, error, toast, history, cartItems]);
 
-  useEffect(() => {
-    if (cartItems.length === 0) {
-      history("/products");
-      alert.error("Your cart is empty!🙅");
-    }
-    if (error) {
-      // Ensure we pass a string to the alert component – avoid rendering error objects.
-      const errMsg = typeof error === 'string' ? error : (error?.message || 'An error occurred');
-      alert.error(errMsg);
-      dispatch(clearErrors());
-    }
-  }, [dispatch, error, alert, history, cartItems]);
+useEffect(() => {
+  setAddFormValues({
+    firstName: "",
+    lastName: "",
+    address: "",
+    phone: "",
+    country: "",
+    state: "",
+    city: "",
+    zip: "",
+  });
+}, []);
 
-  // Derive the pay-button label from sessionStorage (set when user clicks Next
-  // on step 2) so it always reflects the confirmed, formatted total.
-  const payLabel = orderInfo?.totalPrice
-    ? `Pay ${fmt(orderInfo.totalPrice)}`
-    : "Pay";
+const payLabel = orderInfoState?.totalPrice ? `Pay ${fmt(orderInfoState.totalPrice)}` : "Pay";
 
-  return (
-    <div>
-      <Seo
-        title="Information - Click.it Store - Checkout"
-        description="Add your delivery details to place an order"
-        path="/shipping"
-      />
-      <Container component="main" maxWidth="sm" sx={{ mb: 4 }}>
-        <Paper
-          variant="outlined"
-          sx={{ my: { xs: 3, md: 6 }, p: { xs: 2, md: 3 } }}
+return (
+  <div>
+    <Seo title="Checkout" description="Complete your order" path="/shipping" />
+    <section style={{ backgroundColor: "var(--t-neutral-50)", paddingBlock: "var(--t-space-3xl)" }}>
+      <div
+        style={{
+          maxWidth: "var(--t-grid-containerMax)",
+          marginInline: "auto",
+          paddingInline: "var(--t-grid-containerPad)",
+        }}
+      >
+        <Overline style={{ marginBottom: 8 }}>Checkout</Overline>
+        <Headline level="2xl" style={{ marginBottom: 32 }}>
+          Place Your Order
+        </Headline>
+
+        {/* Soft progress */}
+        <Box sx={{ mb: 4, pb: 3, borderBottom: "1px solid var(--t-neutral-200)" }}>
+          <StepIndicator steps={steps} current={activeStep} />
+        </Box>
+
+        <Surface sx={{ p: { xs: 3, sm: 5 } }} key={activeStep} className="hverdag-fade-through">
+          {activeStep === 0 && <AddressForm values={addFormValues} handleChange={handleChange} />}
+          {activeStep === 1 && <ReviewOrder reviewData={reviewData} handleReviewDataChange={handleReviewDataChange} />}
+          {activeStep === 2 && <PaymentForm />}
+        </Surface>
+
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            marginTop: 32,
+          }}
         >
-          <Typography component="h1" variant="h4" align="center">
-            Checkout
-          </Typography>
-          <Stepper activeStep={activeStep} sx={{ pt: 3, pb: 5 }}>
-            {steps.map((label) => (
-              <Step key={label}>
-                <StepLabel>{label}</StepLabel>
-              </Step>
-            ))}
-          </Stepper>
-          <React.Fragment>
-            {activeStep === steps.length ? (
-              <Success />
-            ) : (
-              <React.Fragment>
-                {getStepContent(activeStep)}
-                <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-                  {activeStep !== 0 && (
-                    <Button onClick={handleBack} sx={{ mt: 3, ml: 1 }}>
-                      Back
-                    </Button>
-                  )}
-                  {activeStep === steps.length - 1 ? (
-                    <LoadingButton
-                      size="small"
-                      onClick={(e) => handleStepFunc(activeStep, e)}
-                      endIcon={<PaymentIcon />}
-                      loading={submitLoading}
-                      loadingPosition="end"
-                      variant="contained"
-                      sx={{ mt: 3, ml: 1 }}
-                    >
-                      {payLabel}
-                    </LoadingButton>
-                  ) : (
-                    <Button
-                      variant="contained"
-                      onClick={(e) => handleStepFunc(activeStep, e)}
-                      sx={{ mt: 3, ml: 1 }}
-                    >
-                      Next
-                    </Button>
-                  )}
-                </Box>
-              </React.Fragment>
-            )}
-          </React.Fragment>
-        </Paper>
-      </Container>
-      <Copyright />
-    </div>
-  );
+          {activeStep !== 0 && (
+            <PrimaryBtn variant="text" onClick={handleBack}>
+              Back
+            </PrimaryBtn>
+          )}
+          <div />
+          {activeStep === steps.length - 1 ? (
+            <PrimaryBtn
+              type="button"
+              onClick={(e) => handleStepFunc(activeStep, e)}
+              disabled={submitLoading}
+              aria-busy={submitLoading}
+            >
+              {submitLoading ? "…" : payLabel}
+            </PrimaryBtn>
+          ) : (
+            <PrimaryBtn onClick={() => handleStepFunc(activeStep)}>Next</PrimaryBtn>
+          )}
+        </div>
+      </div>
+    </section>
+  </div>
+);
 }
 
 export default Shipping;

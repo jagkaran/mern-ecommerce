@@ -102,6 +102,11 @@ return (
   ) : <PageLoader />
 } />
 <Route path="/aboutus" element={<AboutUs />} />
+{/* /success lives OUTSIDE the ProtectedRoute block — a guest who just
+    placed an order must be able to land here. The Success page itself
+    guards its content via the claim token (params.get("token")) and the
+    presence of an authenticated user; the page just needs to be reachable. */}
+<Route path="/success" element={<Success />} />
 <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} loading={loading} />}>
 <Route path="/password/update" element={<UpdatePassword />} />
 <Route path="/shipping" element={
@@ -110,7 +115,6 @@ stripeApiKey ? (
 ) : <PageLoader />
 } />
 <Route path="/account" element={<Account />} />
-<Route path="/success" element={<Success />} />
 <Route path="/myorders" element={<MyOrders />} />
 <Route path="/order/:id" element={<OrderDetails />} />
 <Route element={<AdminRoute isAuthenticated={isAuthenticated} loading={loading} />}>

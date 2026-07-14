@@ -2,8 +2,11 @@ import React from "react";
 
 const fmt = (n) => `$${Number(n).toFixed(2)}`;
 
-export default function ReviewBlock({ subtotal = 0, shipping = 0, tax = 0 }) {
-  const total = Number(subtotal) + Number(shipping) + Number(tax);
+export default function ReviewBlock({ subtotal = 0, shipping = 0, tax = 0, total: totalProp }) {
+  // When `total` is supplied, trust it as the source of truth (the parent
+  // already computed and rounded the value). Otherwise fall back to the
+  // local sum — same logic we had before the C4 wiring.
+  const total = totalProp != null ? Number(totalProp) : Number(subtotal) + Number(shipping) + Number(tax);
   return (
     <section aria-label="Order summary">
       <h2>Order summary</h2>
