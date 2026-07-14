@@ -5,6 +5,16 @@ import { MemoryRouter } from "react-router-dom";
 import checkoutReducer from "../../../slices/checkoutSlice";
 import CheckoutPage from "../CheckoutPage";
 
+// After C4 wiring, CheckoutPage calls useStripe/useElements + CardElement
+// directly. jsdom has no Stripe context — mock everything to plain shims.
+// CardElement is rendered by the embedded PaymentForm.
+jest.mock("@stripe/react-stripe-js", () => ({
+  CardElement:       () => <div data-testid="stripe-card-element" />,
+  useStripe:         () => ({}),
+  useElements:       () => ({}),
+  Elements:          ({ children }) => <>{children}</>,
+}));
+
 // Stub the cart reducer — CheckoutPage reads cartItems/shippingInfo, but the
 // guest CTA assertion only needs the user slice to drive ContactBlock.
 const cartReducerStub = (s = { cartItems: [], shippingInfo: {} }) => s;
