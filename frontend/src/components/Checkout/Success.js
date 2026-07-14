@@ -1,76 +1,134 @@
-import {
-  Avatar,
-  Box,
-  Button,
-  Container,
-  Paper,
-  Typography,
-} from "@mui/material";
 import React from "react";
 import { useSelector } from "react-redux";
-import Link from "@mui/material/Link";
-import CheckIcon from "@mui/icons-material/Check";
-import { createOrderNumber } from "../Order/MyOrders";
-import Seo from "../Seo";
-import Copyright from "../Copyright";
+import { Link, useSearchParams } from "react-router-dom";
+import { ThanksBlock, SpoonIllustration, Surface, Price, PrimaryBtn, GhostBtn, Divider } from "../../design/primitives";
+import { fmtInCurrency } from "../../utils/fmtInCurrency";
+import ClaimForm from "./ClaimForm";
 
-function Success() {
-  // Read the order that was just created — this is populated by createOrder
-  // before Shipping.js navigates here, so it always reflects the new order.
-  // Previously this page fetched ALL orders and picked the last one, which
-  // caused a race: the new order often hadn't arrived yet so it showed the
-  // previous order instead.
+export default function Success() {
   const { order } = useSelector((state) => state.newOrder);
-
+  const { user } = useSelector((state) => state.user);
+  const [params] = useSearchParams();
+  const token = params.get("token");
   const orderId = order?._id;
-  const orderCountry = order?.shippingInfo?.country || "IN";
+  const orderTotal = order?.totalPrice || order?.itemsPrice || null;
+  const currency = order?.currency || "USD";
+  const rate = order?.currencyRate || 1;
+
+  if (!orderId) {
+    return (
+      <section style={{ paddingBlock: "var(--t-space-4xl)" }}>
+        <div
+          style={{
+            maxWidth: "var(--t-grid-containerMax)",
+            marginInline: "auto",
+            paddingInline: "var(--t-grid-containerPad)",
+            textAlign: "center",
+          }}
+        >
+          <p style={{ color: "var(--t-neutral-500)", fontFamily: "var(--t-fontFamily-display)", fontStyle: "italic" }}>
+            gathering the details…
+          </p>
+        </div>
+      </section>
+    );
+  }
 
   return (
-    <React.Fragment>
-      <Container component="main" maxWidth="sm" sx={{ mb: 4 }}>
-        <Paper
-          variant="outlined"
-          sx={{ my: { xs: 3, md: 6 }, p: { xs: 2, md: 3 } }}
+    <section
+      style={{
+        paddingBlock: "var(--t-space-4xl)",
+        backgroundColor: "var(--t-neutral-50)",
+        minHeight: "70vh",
+      }}
+    >
+      <div
+        style={{
+          maxWidth: "var(--t-grid-containerMax)",
+          marginInline: "auto",
+          paddingInline: "var(--t-grid-containerPad)",
+        }}
+      >
+        <ThanksBlock
+          title="thank you — we've got this"
+          subtitle="Your order is being looked after. We'll send a quiet note when it leaves the workshop, and another when it's safely with you."
+          orderRef={orderId.slice(-8)}
+          illustration={<SpoonIllustration size={120} />}
+        />
+
+        {orderTotal && (
+          <Surface
+            sx={{
+              maxWidth: 480,
+              mx: "auto",
+              mt: 2,
+              p: { xs: 3, sm: 4 },
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <span
+                style={{
+                  fontSize: "var(--t-fontSize-sm)",
+                  fontWeight: 500,
+                  letterSpacing: "0.04em",
+                  textTransform: "uppercase",
+                  color: "var(--t-neutral-500)",
+                }}
+              >
+                Total
+              </span>
+              <Price large>{fmtInCurrency(orderTotal, currency, rate)}</Price>
+            </div>
+            <Divider style={{ marginBlock: "1rem", background: "var(--t-neutral-200)" }} />
+            <p
+              style={{
+                fontSize: "var(--t-fontSize-sm)",
+                color: "var(--t-neutral-500)",
+                fontStyle: "italic",
+                textAlign: "center",
+              }}
+            >
+              free mending for life, included
+            </p>
+          </Surface>
+        )}
+
+        {token && !user && (
+          <Surface
+            sx={{
+              maxWidth: 480,
+              mx: "auto",
+              mt: 3,
+              p: { xs: 3, sm: 4 },
+            }}
+          >
+            <ClaimForm claimToken={token} />
+          </Surface>
+        )}
+
+        <div
+          style={{
+            display: "flex",
+            gap: "1rem",
+            justifyContent: "center",
+            flexWrap: "wrap",
+            marginTop: "2.5rem",
+          }}
         >
-          <Box sx={{ display: "flex", justifyContent: "center", mb: 1 }}>
-            <Avatar sx={{ m: 2, bgcolor: "secondary.main" }}>
-              <CheckIcon />
-            </Avatar>
-          </Box>
-          <Typography variant="h5" gutterBottom>
-            Thank you for your order.
-          </Typography>
-          <Typography component="div" variant="subtitle1">
-            <Box sx={{ alignItems: "baseline" }}>
-              Your order number is
-              <Link href={orderId ? `/order/${orderId}` : undefined}>
-                {` ${
-                  orderId
-                    ? createOrderNumber(orderId, orderCountry)
-                    : "loading…"
-                }. `}
-              </Link>
-              We have emailed your order confirmation, and will send you an
-              update when your order has shipped.
-              <Seo
-                title={`Order Confirmation - ${
-                  orderId ? createOrderNumber(orderId, orderCountry) : ""
-                } - Click.it Store`}
-                description="Congratulations!!! You have successfully created an order."
-                path="/success"
-              />
-            </Box>
-          </Typography>
-          <Box sx={{ display: "flex", justifyContent: "center" }}>
-            <Button variant="outlined" href="/myorders" sx={{ mt: 3, ml: 1 }}>
-              View Orders
-            </Button>
-          </Box>
-        </Paper>
-      </Container>
-      <Copyright />
-    </React.Fragment>
+          <Link to={`/order/${orderId}`} style={{ textDecoration: "none" }}>
+            <PrimaryBtn>View order</PrimaryBtn>
+          </Link>
+          <Link to="/products" style={{ textDecoration: "none" }}>
+            <GhostBtn>Browse more</GhostBtn>
+          </Link>
+        </div>
+      </div>
+    </section>
   );
 }
-
-export default Success;

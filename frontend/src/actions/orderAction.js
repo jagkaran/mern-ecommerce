@@ -15,13 +15,24 @@ export const createOrder = (order) => async (dispatch) => {
       payload: data.order,
     });
 
-    // Return the order so callers can await the dispatch and read the id
-    return data.order;
+    // Return both the order AND the claimToken (when present). Returning the
+    // full object lets CheckoutPage pass `claimToken` into the success URL
+    // for the /success page's ClaimForm. Authenticated users get
+    // `claimToken: undefined`, callers must handle both shapes.
+    //
+    // LEGACY: prior versions returned `data.order` directly. Callers that
+    // awaited a single `.order` doc (Shipping.js) will now need to read
+    // `.order._id` off the resolved value — see CheckoutPage + Shipping
+    // for the updated handling.
+    return { order: data.order, claimToken: data.claimToken };
   } catch (error) {
     dispatch({
       type: "CreateOrderFail",
-      payload: error.response.data.message,
+      payload: error.response?.data?.message || "Order failed",
     });
+    // Preserve backward compatibility: dispatch error so callers that
+    // check `result.error` still work.
+    return { error: error.response?.data?.message || "Order failed" };
   }
 };
 

@@ -4,19 +4,55 @@ const ErrorHandler    = require("../utils/errorHandler");
 const catchAsyncErrors = require("../middleware/catchAsyncErrors");
 const logger = require("../utils/logger");
 const orderService = require("../services/orderService");
+const { claimGuestOrder } = require("../services/claimService");
+const sendToken = require("../utils/jwtToken");
+const { estimateDelivery } = require("../services/deliveryEstimateService");
+
+/**
+ * Claim a guest order — exchanges a claim token for a freshly-minted JWT
+ * cookie. Mounted as a public route (no auth required) so the emailed link
+ * works for first-time visitors. The token is verified inside claimService.
+ */
+exports.claimOrder = catchAsyncErrors(async (req, res, next) => {
+  try {
+    const { user } = await claimGuestOrder(req.body);
+    sendToken(user, 201, res);
+  } catch (err) {
+    return next(err);
+  }
+});
 
 /**
  * Create a new order — thin controller adapter.
  * Delegates verification, pricing, and transactional write to orderService.
+ * Optional auth: an authenticated user gets `{ order }`; an anonymous
+ * guest must supply `guestEmail` and receives `{ order, claimToken }`.
  */
 exports.createOrder = catchAsyncErrors(async (req, res, next) => {
-  const { shippingInfo, orderItems, paymentInfo } = req.body;
+  const {
+    shippingInfo,
+    orderItems,
+    paymentInfo,
+    guestEmail,
+    currency = "USD",
+    currencyRate = 1,
+    couponCode,
+  } = req.body;
   try {
-    const order = await orderService.createOrder(
-      { shippingInfo, orderItems, paymentInfo },
-      req.user._id
+    const result = await orderService.createOrder(
+      { shippingInfo, orderItems, paymentInfo, currency, currencyRate, couponCode },
+      req.user ? req.user._id : null,
+      { guestEmail }
     );
-    res.status(201).json({ success: true, order });
+    if (req.user) {
+      res.status(201).json({ success: true, order: result });
+    } else {
+      res.status(201).json({
+        success: true,
+        order: result.order,
+        claimToken: result.claimToken,
+      });
+    }
   } catch (err) {
     return next(err);
   }
@@ -24,7 +60,12 @@ exports.createOrder = catchAsyncErrors(async (req, res, next) => {
 
 /**
  * Get details of a specific order.
- * Only the order owner or an admin may access.
+ * Owner or admin may access. Guest orders (user == null) are unreachable
+ * through this route — guests must claim the order first to authenticate,
+ * after which the order is reassigned to the new user and GET works.
+ *
+ * Was crashing 500 because guest orders lack a `user`. The null-guard
+ * here returns a clear 403 instead of NPE-ing.
  */
 exports.getOrderDetails = catchAsyncErrors(async (req, res, next) => {
   const order = await Order.findById(req.params.id).populate("user", "name email");
@@ -33,11 +74,33 @@ exports.getOrderDetails = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler("Order not found", 404));
   }
 
-  if (order.user._id.toString() !== req.user._id.toString() && req.user.role !== "admin") {
+  // Guest orders: only admins may view them directly (for support).
+  // Anonymous claim flow uses /order/:id AFTER /order/claim which reassigns
+  // the order to the freshly-minted user, at which point the auth check
+  // below allows access.
+  if (!order.user) {
+    if (req.user.role !== "admin") {
+      return next(new ErrorHandler("Claim this order first to view details.", 403));
+    }
+  } else if (
+    order.user._id.toString() !== req.user._id.toString() &&
+    req.user.role !== "admin"
+  ) {
     return next(new ErrorHandler("You are not authorized to view this order", 403));
   }
 
-  res.status(200).json({ success: true, order });
+  // Compute estimated delivery date using shipping country
+  const countryCode = order.shippingInfo?.country;
+  const estimatedDelivery = countryCode
+    ? await estimateDelivery(countryCode)
+    : null;
+
+  // Attach the estimated delivery as a virtual field without mutating the DB document
+  const orderWithETA = order.toObject
+    ? { ...order.toObject(), estimatedDelivery }
+    : { ...order, estimatedDelivery };
+
+  res.status(200).json({ success: true, order: orderWithETA });
 });
 
 /**
@@ -50,7 +113,7 @@ exports.getMyOrders = catchAsyncErrors(async (req, res, _next) => {
 
   const [orders, orderCount] = await Promise.all([
     Order.find({ user: req.user._id })
-      .select('shippingInfo orderItems paymentInfo itemPrice taxPrice shippingPrice totalPrice orderStatus paidAt deliveredAt createdAt')
+      .select('shippingInfo orderItems paymentInfo itemPrice taxPrice shippingPrice totalPrice orderStatus paidAt deliveredAt createdAt currency currencyRate')
       .lean()
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -82,13 +145,28 @@ exports.getAllOrders = catchAsyncErrors(async (req, res, _next) => {
 
   const [orders, orderCount, aggResult] = await Promise.all([
     Order.find()
-      .select('shippingInfo orderItems paymentInfo itemPrice taxPrice shippingPrice totalPrice orderStatus paidAt deliveredAt createdAt user')
+      .select('shippingInfo orderItems paymentInfo itemPrice taxPrice shippingPrice totalPrice orderStatus paidAt deliveredAt createdAt user currency currencyRate')
       .lean()
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit),
     Order.countDocuments(),
-    Order.aggregate([{ $group: { _id: null, total: { $sum: "$totalPrice" } } }]),
+    // Total revenue summed in USD: each order total / its currencyRate.
+    // currencyRate is the USD→foreign rate captured at checkout, so USD = total / rate.
+    // Defends against divide-by-zero and missing rate defaulting to 1 (already USD).
+    Order.aggregate([
+      {
+        $addFields: {
+          _rate: { $cond: [{ $eq: ["$currencyRate", 0] }, 1, { $ifNull: ["$currencyRate", 1] }] },
+        },
+      },
+      {
+        $addFields: {
+          _normalizedTotal: { $divide: ["$totalPrice", "$_rate"] },
+        },
+      },
+      { $group: { _id: null, total: { $sum: "$_normalizedTotal" } } },
+    ]),
   ]);
 
   const totalAmount = aggResult.length > 0 ? aggResult[0].total : 0;

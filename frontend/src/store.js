@@ -24,7 +24,10 @@ import {
   userDetailsReducer,
   userReducer,
 } from "./reducers/User";
+import { wishlistReducer } from "./reducers/wishlistReducer";
+import { toastReducer } from "./reducers/toastReducer";
 import { apiReducer, apiMiddleware } from "./slices/apiSlice";
+import checkoutReducer, { persistMiddleware } from "./slices/checkoutSlice";
 
 const store = configureStore({
   reducer: {
@@ -48,8 +51,12 @@ const store = configureStore({
     userDetails: userDetailsReducer,
     allReviews: allProductReviewsReducer,
     review: reviewReducer,
+    wishlist: wishlistReducer,
+    toast: toastReducer,
+    checkout: checkoutReducer,
   },
-  middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(apiMiddleware),
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware().concat(apiMiddleware, persistMiddleware),
 });
 
 export default store;

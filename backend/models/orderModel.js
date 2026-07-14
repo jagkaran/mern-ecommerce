@@ -57,7 +57,29 @@ const orderSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.ObjectId,
     ref: "User",
-    required: true,
+    required: false,
+    index: true,
+    sparse: true,
+  },
+
+  guestEmail: {
+    type: String,
+    lowercase: true,
+    trim: true,
+    index: true,
+    sparse: true,
+  },
+
+  claimTokenHash: {
+    type: String,
+    index: true,
+    sparse: true,
+    select: false,
+  },
+
+  claimedAt: {
+    type: Date,
+    default: null,
   },
 
   paymentInfo: {
@@ -94,10 +116,38 @@ const orderSchema = new mongoose.Schema({
     default: 0,
   },
 
+  // Coupon snapshot — denormalized at order time so historical orders keep
+  // their discount info even if the coupon is later edited or removed.
+  discount: {
+    type: Number,
+    required: true,
+    default: 0,
+  },
+
+  coupon: {
+    code:           { type: String, default: null },
+    discountType:   { type: String, default: null },
+    discountValue:  { type: Number, default: null },
+    discountAmount: { type: Number, default: null },
+  },
+
   totalPrice: {
     type: Number,
     required: true,
     default: 0,
+  },
+
+  // Currency code the user was viewing in when placing the order
+  // (e.g. "EUR"). Backend prices are always stored in USD; this field
+  // allows the UI to display the order in the same currency context.
+  currency: {
+    type: String,
+    default: "USD",
+  },
+  // FX rate at time of order — 1 for USD, ~0.92 for EUR, etc.
+  currencyRate: {
+    type: Number,
+    default: 1,
   },
 
   orderStatus: {

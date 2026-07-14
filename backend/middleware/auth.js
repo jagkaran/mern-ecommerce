@@ -36,3 +36,22 @@ exports.authorizeRoles = (...roles) => {
     next();
   };
 };
+
+// Best-effort auth — sets req.user from a valid JWT cookie, otherwise
+// req.user = null. Never 401s. Used by routes that should work for both
+// authenticated and anonymous (guest) callers.
+exports.optionalAuth = catchAsyncErrors(async (req, res, next) => {
+  const { token } = req.cookies || {};
+  if (!token) {
+    req.user = null;
+    return next();
+  }
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id).select("_id name email role");
+    req.user = user || null;
+  } catch (_e) {
+    req.user = null;
+  }
+  next();
+});

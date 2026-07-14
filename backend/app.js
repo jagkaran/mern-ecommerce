@@ -57,25 +57,29 @@ app.use(compression());
 
 // ─── IP-based rate limiters (before body parsing) ────────────────────────────
 
-// Tight limit on auth endpoints
+// Tight limit on auth endpoints — bypassed in E2E for the same reason.
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 20,
+  max: process.env.E2E_BYPASS_LIMITS ? 1_000_000 : 20,
   message: { success: false, message: "Too many requests, please try again later." },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: () => !!process.env.E2E_BYPASS_LIMITS,
 });
 app.use("/api/v1/login", authLimiter);
 app.use("/api/v1/register", authLimiter);
 app.use("/api/v1/password/forgot", authLimiter);
 
-// General limit on product listing endpoints
+// General limit on product listing endpoints — bypassed entirely in E2E
+// (Playwright hits these endpoints dozens of times per spec).
 const productLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  // Allow a generous ceiling even in dev; tests get effectively unlimited.
+  max: process.env.E2E_BYPASS_LIMITS ? 1_000_000 : 100,
   message: { success: false, message: "Too many requests, please try again later." },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: () => !!process.env.E2E_BYPASS_LIMITS,
 });
 app.use("/api/v1/products", productLimiter);
 app.use("/api/v1/product/:id", productLimiter);
@@ -91,6 +95,10 @@ app.use("/api/v1/payment/process", userRateLimiter);
 app.use("/api/v1/admin/",          userRateLimiter);
 app.use("/api/v1/password/update", sensitiveUserLimiter);
 app.use("/api/v1/me/update",       sensitiveUserLimiter);
+// /order/claim mints a User and a JWT — same blast radius as
+// /password/update. Throttle it the same way to keep brute-force attacks
+// expensive. Keyed by IP because the requester is anonymous here.
+app.use("/api/v1/order/claim",     sensitiveUserLimiter);
 
 // ─── Body parsers ─────────────────────────────────────────────────────────────
 
@@ -153,17 +161,23 @@ const requestLogger = require("./middleware/logger");
 app.use(requestLogger);
 
 // ─── API Routes ───────────────────────────────────────────────────────────────
-const product = require("./routes/productRoute");
-const user    = require("./routes/userRoute");
-const order   = require("./routes/orderRoute");
-const payment = require("./routes/paymentRoute");
-const health  = require("./routes/healthRoute");
+const product    = require("./routes/productRoute");
+const user       = require("./routes/userRoute");
+const order      = require("./routes/orderRoute");
+const payment    = require("./routes/paymentRoute");
+const health     = require("./routes/healthRoute");
+const currency   = require("./routes/currencyRoute");
+const geo        = require("./routes/geoRoute");
+const coupon     = require("./routes/couponRoute");
 
 app.use("/api/v1/", health);
 app.use("/api/v1/", product);
 app.use("/api/v1/", user);
 app.use("/api/v1/", order);
 app.use("/api/v1/", payment);
+app.use("/api/v1/currency", currency);
+app.use("/api/v1/geo", geo);
+app.use("/api/v1/coupon", coupon);
 
 // API 404 catch-all — any /api route that didn't match above
 app.use("/api", (_req, res) => {

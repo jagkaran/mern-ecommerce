@@ -51,9 +51,21 @@ beforeAll(async () => {
 describe("POST /api/v1/payment/process — contract enforcement", () => {
   const postUrl = "/api/v1/payment/process";
 
-  it("401 without auth", async () => {
+  it("400 without auth + empty body (validation kicks in; route is now optionalAuth)", async () => {
+    // After C1 fix: /payment/process is optionalAuth (guest checkout needs it).
+    // Empty body without auth passes the auth gate but fails body validation
+    // with 400.
     const res = await request(app).post(postUrl).send({});
-    expect(res.status).toBe(401);
+    expect(res.status).toBe(400);
+  });
+
+  it("200 without auth + valid orderItems (guest can create a PaymentIntent)", async () => {
+    if (!cheapProd) return;
+    const res = await request(app).post(postUrl).send({
+      orderItems: [{ product: cheapProd._id.toString(), quantity: 1 }],
+    });
+    expect(res.status).toBe(200);
+    expect(res.body.client_secret).toBe("test_secret");
   });
 
   it("400 for legacy { amount } body (validation catches it first)", async () => {
@@ -97,6 +109,34 @@ describe("POST /api/v1/payment/process — contract enforcement", () => {
         orderItems: [{ product: "000000000000000000000000", quantity: 1 }],
       });
     expect(res.status).toBe(404);
+  });
+
+  it("200 for guest /payment/process (optionalAuth — C1 fix)", async () => {
+    // Guests need to create a PaymentIntent to confirm checkout.
+    if (!cheapProd) return;
+    const res = await request(app).post(postUrl).send({
+      orderItems: [{ product: cheapProd._id.toString(), quantity: 1 }],
+    });
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.client_secret).toBeDefined();
+  });
+});
+
+describe("GET /api/v1/getstripeapikey — public reachability (C1 fix)", () => {
+  it("200 without auth (guests need it for /checkout)", async () => {
+    // Some sandbox envs lack STRIPE_API_KEY; only assert the status.
+    // The route guard is what we're testing here, not Stripe credentials.
+    const prev = process.env.STRIPE_API_KEY;
+    process.env.STRIPE_API_KEY = "pk_test_xyz";
+    try {
+      const res = await request(app).get("/api/v1/getstripeapikey");
+      expect(res.status).toBe(200);
+      expect(res.body.stripeApiKey).toBeDefined();
+    } finally {
+      if (prev === undefined) delete process.env.STRIPE_API_KEY;
+      else process.env.STRIPE_API_KEY = prev;
+    }
   });
 });
 

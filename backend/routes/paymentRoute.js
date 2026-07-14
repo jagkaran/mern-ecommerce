@@ -7,7 +7,7 @@ const {
 
 const router = express.Router();
 
-const { isAuthenticatedUser } = require("../middleware/auth");
+const { isAuthenticatedUser, optionalAuth } = require("../middleware/auth");
 const { validatePayment } = require("../middleware/validation");
 
 // Stripe webhook — raw body parser is mounted at app-level in app.js BEFORE
@@ -18,8 +18,15 @@ const { validatePayment } = require("../middleware/validation");
 // inside the stripeWebhook controller.
 router.route("/payment/webhook").post(stripeWebhook);
 
-router.route("/payment/process").post(isAuthenticatedUser, validatePayment, processPayment);
+// /payment/process supports both authenticated users and guest checkout, so
+// it uses optionalAuth. The server-side pricing logic is identical for
+// both — auth is not required to compute a PaymentIntent amount.
+router.route("/payment/process").post(optionalAuth, validatePayment, processPayment);
 
-router.route("/getstripeapikey").get(isAuthenticatedUser, sendStripeApiKey);
+// The Stripe publishable key is intentionally PUBLIC (it ships in every
+// Stripe.js bundle by design, prefix `pk_`). It must be reachable by guests
+// on the /checkout route, which loads before login. optionalAuth lets the
+// route respond for both authenticated and anonymous callers without 401ing.
+router.route("/getstripeapikey").get(optionalAuth, sendStripeApiKey);
 
 module.exports = router;
