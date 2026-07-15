@@ -120,6 +120,9 @@ export const TokenCSS = () => (
       gap: var(--t-grid-gutter);
     }
 
+    @media (max-width: 1280px) {
+      .prod-grid { grid-template-columns: repeat(3, 1fr); }
+    }
     @media (max-width: 1024px) {
       .prod-grid, .cat-grid { grid-template-columns: repeat(3, 1fr); }
       .cart-layout, .checkout-grid, .account-grid, .filter-grid {
@@ -133,10 +136,6 @@ export const TokenCSS = () => (
       .filter-grid { grid-template-columns: 1fr; }
       .account-grid > :first-child { max-width: 100%; }
     }
-    @media (max-width: 480px) {
-      .prod-grid, .cat-grid { grid-template-columns: 1fr; }
-    }
-
     /* Reduced motion */
     @media (prefers-reduced-motion: reduce) {
       html { scroll-behavior: auto; }
