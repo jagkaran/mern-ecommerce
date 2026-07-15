@@ -1,46 +1,44 @@
 import {
   CircularProgress,
-  FormControl,
-  InputLabel,
-  MenuItem,
   Pagination,
-  Rating,
-  Select,
   Slider,
-  Stack,
   Typography,
+  Box,
+  MenuItem,
+  TextField,
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
-import { useAlert } from "react-alert";
+import { useToast } from "../../hooks/useToast";
 import { useDispatch, useSelector } from "react-redux";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { getProduct, getActiveCategories } from "../../actions/productAction";
-import Copyright from "../Copyright";
 import ProductGrid from "./ProductGrid";
-import StarIcon from "@mui/icons-material/Star";
 import Seo from "../Seo";
+import {
+  QuietFilter,
+  FilterGroup,
+  FilterOption,
+  Overline,
+  Headline,
+  BodyText,
+  GhostBtn,
+  Breadcrumb,
+} from "../../design/primitives";
 
-const ratingLabels = {
-  1: "Useless",
-  2: "Poor",
-  3: "Ok",
-  4: "Good",
-  5: "Excellent",
-};
-
-function valuetext(value) {
-  return `${value}°`;
-}
+const ratingLabels = { 0: "Any", 1: "1+", 2: "2+", 3: "3+", 4: "4+", 5: "5 only" };
 
 function Products() {
-  const alert = useAlert();
+  const toast = useToast();
   const dispatch = useDispatch();
   const [currentPage, setCurrentPage] = useState(1);
-  const [price, setPrice] = useState([1, 5000]);
-  const [priceRange, setPriceRange] = useState([1, 5000]);
-  const [category, setCategory] = useState("");
+  const [price, setPrice] = useState([0, 5000]);
+  const [priceRange, setPriceRange] = useState([0, 5000]);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlCategory = searchParams.get("category") || "";
+  const [category, setCategory] = useState(urlCategory);
   const [ratingValue, setRatingValue] = useState(0);
-  const [ratingHover, setRatingHover] = useState(-1);
+  const urlSort = searchParams.get("sort") || "newest";
+  const [sort, setSort] = useState(urlSort);
 
   const {
     loading,
@@ -51,142 +49,264 @@ function Products() {
     filteredProductsCount,
   } = useSelector((state) => state.product);
 
-  const { categories } = useSelector((state) => state.categories);
   const { keyword } = useParams();
+
+  const { categories, categoryCounts, priceRange: dbPriceRange } =
+    useSelector((state) => state.categories);
 
   const numberOfPages = Math.floor(
     (filteredProductsCount + resultPerPage - 1) / resultPerPage
   );
 
-  const priceHandler = (e, newPrice) => setPrice(newPrice);
-  const priceRangeHandler = () => setPriceRange(price);
   const setCurrentPageNo = (e, value) => setCurrentPage(value);
-
-  const handleChangeCategory = (event) => {
-    setCategory(event.target.value);
-    setCurrentPage(1);
-  };
 
   useEffect(() => {
     dispatch(getActiveCategories());
   }, [dispatch]);
 
+  // URL is source of truth for category — keeps header sub-menu links,
+  // sidebar filter clicks, and browser back/forward all in sync.
   useEffect(() => {
-    if (error) return alert.error(error);
-    dispatch(getProduct(keyword, currentPage, priceRange, category, ratingValue));
-  }, [dispatch, error, alert, keyword, currentPage, priceRange, category, ratingValue]);
+    setCategory(urlCategory);
+    setCurrentPage(1);
+  }, [urlCategory]);
+
+  useEffect(() => {
+    setSort(urlSort);
+    setCurrentPage(1);
+  }, [urlSort]);
+
+  // Once the categories payload arrives, snap the slider to real min/max.
+  // Guards against stale-cache responses that omit `priceRange` (server
+  // restart flushes the in-memory cache).
+  useEffect(() => {
+    const { min, max } = dbPriceRange || {};
+    if (Number.isFinite(min) && Number.isFinite(max) && max > min) {
+      setPrice([min, max]);
+      setPriceRange([min, max]);
+    }
+  }, [dbPriceRange]);
+
+  useEffect(() => {
+    if (error) return toast.error(error);
+    dispatch(getProduct(keyword, currentPage, priceRange, category, ratingValue, sort));
+  }, [dispatch, error, toast, keyword, currentPage, priceRange, category, ratingValue, sort]);
 
   return (
     <>
       <Seo
-        title="New and Trendy Product Store"
-        description="Looking for a&nbsp;New and Trendy Products&nbsp;to add to your quiver? The Click.it store has one of the largest selections of new and trendy products on the planet. Choose from&nbsp;clothing,&nbsp;shoes,&nbsp;accessories,&nbsp;and&nbsp;much more."
+        title={`${keyword ? `${keyword} · ` : ""}Shop | Hverdag`}
+        description="Everyday essentials, carefully sourced. The full collection."
         path="/products"
       />
+
+      <Box
+        component="header"
+        sx={{
+          py: { xs: 5, md: 8 },
+          px: "var(--t-grid-containerPad)",
+          borderBottom: "1px solid var(--t-neutral-200)",
+          backgroundColor: "var(--t-neutral-50)",
+        }}
+      >
+        <Box sx={{ maxWidth: "var(--t-grid-containerMax)", mx: "auto" }}>
+          <Breadcrumb
+            items={[
+              { label: "Home", to: "/" },
+              ...(category
+                ? [{ label: "Shop", to: "/products" }, { label: category }]
+                : keyword
+                ? [{ label: "Shop", to: "/products" }, { label: `Search · ${keyword}` }]
+                : [{ label: "Shop" }]),
+            ]}
+          />
+          <Overline sx={{ display: "block", mb: 1, color: "var(--t-neutral-500)" }}>
+            {keyword ? `Search · ${keyword}` : "The collection"}
+          </Overline>
+          <Headline level="3xl" style={{ maxWidth: "32ch" }}>
+            {keyword
+              ? `Pieces the room around "${keyword}"`
+              : "Pieces made to live with you"}
+          </Headline>
+          <BodyText sx={{ mt: 2, color: "var(--t-neutral-500)", maxWidth: "var(--t-measure-base)" }}>
+            {productsCount} {productsCount === 1 ? "piece" : "pieces"} in the collection.
+            Filter quietly on the left.
+          </BodyText>
+        </Box>
+      </Box>
+
       {loading ? (
-        <div className="grid place-items-center">
-          <CircularProgress />
-        </div>
+        <Box sx={{ display: "grid", placeItems: "center", py: 12 }}>
+          <CircularProgress sx={{ color: "var(--t-primary-600)" }} />
+        </Box>
       ) : (
-        <>
-          <div className="bg-white">
-            <div className="max-w-2xl mx-auto py-16 px-4 sm:py-24 sm:px-6 lg:max-w-7xl lg:px-8">
-              <h2 className="text-2xl font-extrabold tracking-tight text-gray-800 text-left">
-                All Products ({productsCount})
-              </h2>
-
-              <div className="flex flex-col items-center justify-around p-4 sm:flex-row bg-gray-100 mt-2 mb-2 border-1 rounded-lg">
-                {/* Price slider */}
-                <div className="ml-4 w-36">
-                  <Typography sx={{ textAlign: "center" }}>
-                    Price{" "}
-                    <span className="text-xs">
-                      ({priceRange[0]} to {priceRange[1]})
-                    </span>
-                  </Typography>
-                  <Slider
-                    value={price}
-                    onChange={priceHandler}
-                    onChangeCommitted={priceRangeHandler}
-                    valueLabelDisplay="auto"
-                    aria-labelledby="range-slider"
-                    getAriaValueText={valuetext}
-                    min={0}
-                    max={5000}
+        <Box
+          sx={{
+            maxWidth: "var(--t-grid-containerMax)",
+            mx: "auto",
+            px: "var(--t-grid-containerPad)",
+            py: { xs: 4, md: 6 },
+          }}
+        >
+          <Box className="filter-grid" sx={{ alignItems: "start" }}>
+            {/* Filters — quiet shelf */}
+            <QuietFilter title="Browse">
+              <FilterGroup label="Category">
+                <FilterOption
+                  label="All"
+                  count={productsCount}
+                  active={!category}
+                  onClick={() => {
+                    setSearchParams({});
+                    setCurrentPage(1);
+                  }}
+                />
+                {categories.map((cat) => (
+                  <FilterOption
+                    key={cat}
+                    label={cat}
+                    count={categoryCounts ? categoryCounts[cat] : undefined}
+                    active={category === cat}
+                    onClick={() => {
+                      setSearchParams({ category: cat });
+                      setCurrentPage(1);
+                    }}
                   />
-                </div>
+                ))}
+              </FilterGroup>
 
-                {/* Category dropdown
-                    Key fix: when value="" the MUI InputLabel would overlap the
-                    "All" placeholder because displayEmpty alone doesn't shrink
-                    the label. Adding shrink={true} forces the label to always
-                    float above the select box. */}
-                <div className="ml-6 w-40 mt-6 sm:mt-0">
-                  <FormControl fullWidth size="small">
-                    <InputLabel
-                      id="category-select-label"
-                      shrink={true}
-                    >
-                      Category
-                    </InputLabel>
-                    <Select
-                      labelId="category-select-label"
-                      id="category-select"
-                      label="Category"
-                      value={category}
-                      onChange={handleChangeCategory}
-                      displayEmpty
-                      notched
-                    >
-                      <MenuItem value="">All</MenuItem>
-                      {categories.map((cat) => (
-                        <MenuItem key={cat} value={cat}>
-                          <span className="capitalize">{cat}</span>
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </div>
+              <FilterGroup label="Price">
+                <Slider
+                  value={price}
+                  onChange={(_, v) => setPrice(v)}
+                  onChangeCommitted={(_, v) => setPriceRange(v)}
+                  valueLabelDisplay="auto"
+                  min={dbPriceRange?.min ?? 0}
+                  max={dbPriceRange?.max ?? 5000}
+                  step={Math.max(1, Math.round(((dbPriceRange?.max ?? 5000) - (dbPriceRange?.min ?? 0)) / 100))}
+                  sx={{
+                    color: "var(--t-primary-600)",
+                    mt: 1,
+                    "& .MuiSlider-thumb": {
+                      transition: "all var(--t-motion-duration-fast) var(--t-motion-easing-out)",
+                    },
+                  }}
+                />
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    fontSize: "var(--t-fontSize-sm)",
+                    color: "var(--t-neutral-500)",
+                    fontVariantNumeric: "tabular-nums",
+                  }}
+                >
+                  <span>{price[0]}</span>
+                  <span>{price[1]}</span>
+                </Box>
+              </FilterGroup>
 
-                {/* Ratings filter */}
-                <div className="ml-4 mt-6 sm:mt-0">
-                  <Stack spacing={1}>
-                    <Typography sx={{ textAlign: "center" }}>Ratings</Typography>
-                    <div className="flex flex-col items-center sm:flex-row">
-                      <Rating
-                        name="hover-feedback"
-                        value={ratingValue}
-                        onChange={(event, newRatingValue) => setRatingValue(newRatingValue)}
-                        onChangeActive={(event, newHover) => setRatingHover(newHover)}
-                        size="large"
-                        emptyIcon={<StarIcon style={{ opacity: 0.55 }} fontSize="inherit" />}
-                      />
-                      {ratingValue !== null && (
-                        <span className="ml-4">
-                          {ratingLabels[ratingHover !== -1 ? ratingHover : ratingValue]}
-                        </span>
-                      )}
-                    </div>
-                  </Stack>
-                </div>
-              </div>
+              <FilterGroup label="Rating">
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+                  {[0, 1, 2, 3, 4, 5].map((r) => (
+                    <FilterOption
+                      key={r}
+                      label={ratingLabels[r]}
+                      active={ratingValue === r}
+                      onClick={() => {
+                        setRatingValue(r);
+                        setCurrentPage(1);
+                      }}
+                    />
+                  ))}
+                </Box>
+              </FilterGroup>
+
+              {(category || priceRange[0] > 0 || priceRange[1] < 5000 || ratingValue > 0) && (
+                <GhostBtn
+                  onClick={() => {
+                    setSearchParams({});
+                    setPrice([0, 5000]);
+                    setPriceRange([0, 5000]);
+                    setRatingValue(0);
+                    setCurrentPage(1);
+                  }}
+                  sx={{ alignSelf: "flex-start", mt: 1 }}
+                >
+                  Clear filters
+                </GhostBtn>
+              )}
+            </QuietFilter>
+
+            {/* Grid + sort + pagination */}
+            <Box>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  mb: 3,
+                  gap: 2,
+                  flexWrap: "wrap",
+                }}
+              >
+                <Typography variant="body2" sx={{ color: "var(--t-neutral-500)" }}>
+                  {filteredProductsCount} {filteredProductsCount === 1 ? "result" : "results"}
+                </Typography>
+                <TextField
+                  select
+                  size="small"
+                  value={sort}
+                  onChange={(e) => {
+                    const next = e.target.value;
+                    setSort(next);
+                    setCurrentPage(1);
+                    const params = {};
+                    if (category) params.category = category;
+                    if (next && next !== "newest") params.sort = next;
+                    setSearchParams(params);
+                  }}
+                  sx={{
+                    minWidth: 180,
+                    "& .MuiOutlinedInput-root": {
+                      fontFamily: "var(--t-fontFamily-display)",
+                      fontSize: "var(--t-fontSize-sm)",
+                    },
+                  }}
+                >
+                  <MenuItem value="newest">Newest</MenuItem>
+                  <MenuItem value="price-asc">Price ↑ (low to high)</MenuItem>
+                  <MenuItem value="price-desc">Price ↓ (high to low)</MenuItem>
+                  <MenuItem value="rating-desc">Rating (high to low)</MenuItem>
+                  <MenuItem value="name-asc">Name (A–Z)</MenuItem>
+                </TextField>
+              </Box>
 
               <ProductGrid products={products} />
 
               {resultPerPage < filteredProductsCount && (
-                <div className="mt-10">
+                <Box sx={{ display: "flex", justifyContent: "center", mt: 8 }}>
                   <Pagination
                     count={numberOfPages}
                     onChange={setCurrentPageNo}
                     page={currentPage}
+                    sx={{
+                      "& .MuiPaginationItem-root": {
+                        fontFamily: "var(--t-fontFamily-display)",
+                        color: "var(--t-neutral-700)",
+                      },
+                      "& .Mui-selected": {
+                        backgroundColor: "var(--t-primary-600) !important",
+                        color: "#FFF !important",
+                      },
+                    }}
                   />
-                </div>
+                </Box>
               )}
-            </div>
-          </div>
-        </>
+            </Box>
+          </Box>
+        </Box>
       )}
-      <Copyright />
     </>
   );
 }

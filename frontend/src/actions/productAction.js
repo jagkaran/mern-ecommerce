@@ -6,17 +6,16 @@ export const getProduct =
     currentPage = 1,
     price = [0, 5000],
     category,
-    ratingValue = 0
+    ratingValue = 0,
+    sort = "newest"
   ) =>
   async (dispatch) => {
     try {
       dispatch({ type: "ProductRequest" });
 
       let link = `/api/v1/products?keyword=${keyword}&page=${currentPage}&price[gte]=${price[0]}&price[lte]=${price[1]}&ratings[gte]=${ratingValue}`;
-
-      if (category) {
-        link = `/api/v1/products?keyword=${keyword}&page=${currentPage}&price[gte]=${price[0]}&price[lte]=${price[1]}&category=${category}&ratings[gte]=${ratingValue}`;
-      }
+      if (category) link += `&category=${category}`;
+      if (sort && sort !== "newest") link += `&sort=${sort}`;
 
       const { data } = await axios.get(link);
       dispatch({ type: "ProductSuccess", payload: data });
@@ -25,12 +24,20 @@ export const getProduct =
     }
   };
 
-// Fetch only the categories that have at least one product in the DB.
+// Fetch active categories plus per-category counts and global price range.
+// Used by the PLP sidebar to render category badges and dynamic slider.
 export const getActiveCategories = () => async (dispatch) => {
   try {
     dispatch({ type: "CategoriesRequest" });
     const { data } = await axios.get("/api/v1/products/categories");
-    dispatch({ type: "CategoriesSuccess", payload: data.categories });
+    dispatch({
+      type: "CategoriesSuccess",
+      payload: {
+        categories: data.categories || [],
+        categoryCounts: data.categoryCounts || {},
+        priceRange: data.priceRange || { min: 0, max: 5000 },
+      },
+    });
   } catch (error) {
     dispatch({
       type: "CategoriesFailure",
@@ -94,7 +101,7 @@ export const deleteReview = (reviewId, productId) => async (dispatch) => {
   try {
     dispatch({ type: "DeleteReviewRequest" });
     const { data } = await axios.delete(
-      `/api/v1/reviews?id=${reviewId}&productId=${productId}`
+      `/api/v1/review?id=${reviewId}&productId=${productId}`
     );
     dispatch({ type: "DeleteReviewSuccess", payload: data.success });
   } catch (error) {
