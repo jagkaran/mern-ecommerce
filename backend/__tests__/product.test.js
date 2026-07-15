@@ -102,3 +102,91 @@ describe("Product API — reviews", () => {
     expect(res.body).toHaveProperty("reviews");
   });
 });
+
+describe("getAllProducts — server-side sort param", () => {
+  // Three products with distinct values across every sort dimension so the
+  // four cases below can each prove the right key was applied. createdAt is
+  // set explicitly so "newest" ordering is deterministic regardless of insert
+  // order / clock skew inside the in-memory MongoDB.
+  let seedUser;
+
+  beforeAll(async () => {
+    seedUser = await User.create({
+      name: "Sort Seed User",
+      email: `sortseed_${Date.now()}@example.com`,
+      password: "SortSeed@123",
+      role: "admin",
+      profilePic: { public_id: "sort_seed", url: "http://example.com/seed.jpg" },
+    });
+    await Product.deleteMany({ category: "SortTest" });
+    await Product.insertMany([
+      {
+        name: "Aaa Cheap",
+        description: "Cheap and cheerful",
+        price: 10,
+        category: "SortTest",
+        stock: 5,
+        images: [],
+        ratings: 4.5,
+        numOfReviews: 10,
+        createdBy: seedUser._id,
+        createdAt: new Date("2024-01-01T00:00:00Z"),
+      },
+      {
+        name: "Bbb Pricy",
+        description: "Expensive and well-rated",
+        price: 999,
+        category: "SortTest",
+        stock: 5,
+        images: [],
+        ratings: 1.5,
+        numOfReviews: 10,
+        createdBy: seedUser._id,
+        createdAt: new Date("2024-06-15T00:00:00Z"),
+      },
+      {
+        name: "Ccc Middle",
+        description: "Middle of the pack",
+        price: 100,
+        category: "SortTest",
+        stock: 5,
+        images: [],
+        ratings: 3.0,
+        numOfReviews: 10,
+        createdBy: seedUser._id,
+        createdAt: new Date("2024-12-31T00:00:00Z"),
+      },
+    ]);
+  });
+
+  afterAll(async () => {
+    await Product.deleteMany({ category: "SortTest" });
+    if (seedUser) await User.deleteOne({ _id: seedUser._id });
+  });
+
+  it("sorts by ?sort=price-asc (cheapest first)", async () => {
+    const res = await request(app).get("/api/v1/products?sort=price-asc&limit=10");
+    expect(res.status).toBe(200);
+    const prices = res.body.products.map((p) => p.price);
+    expect(prices).toEqual([...prices].sort((a, b) => a - b));
+  });
+
+  it("sorts by ?sort=rating-desc (highest rated first)", async () => {
+    const res = await request(app).get("/api/v1/products?sort=rating-desc&limit=10");
+    expect(res.status).toBe(200);
+    const ratings = res.body.products.map((p) => p.ratings);
+    expect(ratings[0]).toBeGreaterThanOrEqual(ratings[ratings.length - 1]);
+  });
+
+  it("falls back to newest for unknown sort value", async () => {
+    const unknown = await request(app).get("/api/v1/products?sort=banana&limit=10");
+    const newest  = await request(app).get("/api/v1/products?sort=newest&limit=10");
+    expect(unknown.body.products.map((p) => p._id))
+      .toEqual(newest.body.products.map((p) => p._id));
+  });
+
+  it("rejects non-string sort with 200 newest (no crash)", async () => {
+    const res = await request(app).get("/api/v1/products?sort[]=price&limit=10");
+    expect(res.status).toBe(200); // falls back, no 500
+  });
+});

@@ -47,17 +47,50 @@ exports.createProduct = catchAsyncErrors(async (req, res, next) => {
 });
 
 exports.getActiveCategories = catchAsyncErrors(async (req, res) => {
-  const categories = await Product.distinct("category");
+  // Single response: distinct list + per-category counts + global price
+  // bounds. Lets the PLP render sidebar badges and dynamic slider range
+  // without extra round-trips.
+  const [categories, countsAgg, priceAgg] = await Promise.all([
+    Product.distinct("category"),
+    Product.aggregate([
+      { $match: { category: { $exists: true, $ne: "" } } },
+      { $group: { _id: "$category", count: { $sum: 1 } } },
+    ]),
+    Product.aggregate([
+      { $group: { _id: null, min: { $min: "$price" }, max: { $max: "$price" } } },
+    ]),
+  ]);
   const clean = categories
     .filter((c) => c && c.trim().length > 0)
     .sort((a, b) => a.localeCompare(b));
-  res.status(200).json({ success: true, categories: clean });
+  const categoryCounts = Object.fromEntries(
+    countsAgg.map((c) => [c._id, c.count])
+  );
+  const priceRange = priceAgg[0]
+    ? { min: Math.floor(priceAgg[0].min), max: Math.ceil(priceAgg[0].max) }
+    : { min: 0, max: 5000 };
+  res.status(200).json({
+    success: true,
+    categories: clean,
+    categoryCounts,
+    priceRange,
+  });
 });
+
+const SORT_MAP = {
+  newest:        { createdAt: -1 },
+  "price-asc":   { price: 1 },
+  "price-desc":  { price: -1 },
+  "rating-desc": { ratings: -1 },
+  "name-asc":    { name: 1 },
+};
 
 exports.getAllProducts = catchAsyncErrors(async (req, res) => {
   const resultPerPage = Math.min(100, Math.max(1, Number(req.query.limit) || 8));
   const page = Number(req.query.page) || 1;
   const skip = (page - 1) * resultPerPage;
+  const sortKey = typeof req.query.sort === "string" ? req.query.sort : "newest";
+  const sort = SORT_MAP[sortKey] || SORT_MAP.newest;
   const apiFeature = new ApiFeatures(Product.find(), req.query)
     .search()
     .filter();
@@ -68,7 +101,7 @@ exports.getAllProducts = catchAsyncErrors(async (req, res) => {
       .lean()
       .skip(skip)
       .limit(resultPerPage)
-      .sort({ createdAt: -1 }),
+      .sort(sort),
     Product.countDocuments(),
     Product.countDocuments(filterQuery),
   ]);

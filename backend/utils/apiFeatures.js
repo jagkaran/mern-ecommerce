@@ -28,8 +28,11 @@ class ApiFeatures {
     // Spread to avoid mutating the original queryStr reference
     const queryFilter = { ...this.queryStr };
 
-    // Strip pagination / search fields before passing to MongoDB
-    ["keyword", "page", "limit"].forEach((key) => delete queryFilter[key]);
+    // Strip pagination / search / sort fields before passing to MongoDB.
+    // `sort` is handled separately by the controller via SORT_MAP — leaving
+    // it here would turn e.g. ?sort=price-asc into a Mongo filter criterion
+    // that matches nothing (Product schema has no `sort` field).
+    ["keyword", "page", "limit", "sort"].forEach((key) => delete queryFilter[key]);
 
     // Convert gt/gte/lt/lte to MongoDB $ operators
     let queryStr = JSON.stringify(queryFilter);
@@ -46,8 +49,9 @@ class ApiFeatures {
   getFilter() {
     const queryFilter = { ...this.queryStr };
 
-    // Strip pagination / search fields before passing to MongoDB
-    ["keyword", "page", "limit"].forEach((key) => delete queryFilter[key]);
+    // Strip pagination / search / sort fields before passing to MongoDB.
+    // See filter() above for why `sort` is in this list.
+    ["keyword", "page", "limit", "sort"].forEach((key) => delete queryFilter[key]);
 
     // Convert gt/gte/lt/lte to MongoDB $ operators
     let queryStr = JSON.stringify(queryFilter);
