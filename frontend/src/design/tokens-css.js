@@ -105,7 +105,7 @@ export const TokenCSS = () => (
     }
     .account-grid {
       display: grid;
-      grid-template-columns: 280px 1fr;
+      grid-template-columns: 1fr 1fr;
       gap: var(--t-grid-gutter);
       align-items: start;
     }
