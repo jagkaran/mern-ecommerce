@@ -44,12 +44,6 @@ function Products() {
   const urlSort = searchParams.get("sort") || "newest";
   const [sort, setSort] = useState(urlSort);
 
-  const hasActiveFilters =
-    !!category ||
-    ratingValue > 0 ||
-    priceRange[0] > (dbPriceRange?.min ?? 0) ||
-    priceRange[1] < (dbPriceRange?.max ?? 5000);
-
   const {
     loading,
     error,
@@ -63,6 +57,12 @@ function Products() {
 
   const { categories, categoryCounts, priceRange: dbPriceRange } =
     useSelector((state) => state.categories);
+
+  const hasActiveFilters =
+    !!category ||
+    ratingValue > 0 ||
+    priceRange[0] > (dbPriceRange?.min ?? 0) ||
+    priceRange[1] < (dbPriceRange?.max ?? 5000);
 
   const numberOfPages = Math.floor(
     (filteredProductsCount + resultPerPage - 1) / resultPerPage
