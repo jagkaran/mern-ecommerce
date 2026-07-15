@@ -1,8 +1,13 @@
-import { TextField } from "@mui/material";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Copyright from "./Copyright";
 import Seo from "./Seo";
+import {
+  Section,
+  Container,
+  Overline,
+  Headline,
+  PrimaryBtn,
+} from "../design/primitives";
 
 function Search() {
   const [keyword, setKeyword] = useState("");
@@ -20,29 +25,65 @@ function Search() {
   return (
     <>
       <Seo
-        title="Search New and Trendy on world's best product store"
-        description="Search New and Trendy on world's best product store"
+        title="Search | Hverdag"
+        description="Search the Hverdag collection — kept pieces, makers, materials."
         path="/search"
       />
-      <div>
-        <form
-          className="w-full h-full max-w-full md:flex-none flex items-center justify-center"
-          onSubmit={searchSubmitHandler}
-        >
-          <TextField
-            label="Search a Product..."
-            type="search"
-            onChange={(e) => setKeyword(e.target.value)}
-            className="lg:w-1/4 sm:w-1/2 md:w-1/2"
-          />
-          <input
-            className="p-4 mx-4 h-full text-gray-700 max-h-full transition ease-in duration-200 uppercase rounded-full hover:bg-gray-800 hover:text-white border-1 focus:outline-none"
-            type="submit"
-            value="Search"
-          />
-        </form>
-      </div>
-      <Copyright />
+      <Section>
+        <Container style={{ maxWidth: "640px" }}>
+          <div style={{ textAlign: "center", marginBottom: "48px" }}>
+            <Overline>Find what you're after</Overline>
+            <Headline level="2xl" style={{ marginTop: "4px" }}>
+              Look through the shelves
+            </Headline>
+            <p
+              style={{
+                color: "var(--t-neutral-500)",
+                fontFamily: "var(--t-fontFamily-display)",
+                fontStyle: "italic",
+                marginTop: 12,
+              }}
+            >
+              What would you like to keep next?
+            </p>
+          </div>
+          <form
+            onSubmit={searchSubmitHandler}
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "12px",
+              alignItems: "stretch",
+              justifyContent: "center",
+              maxWidth: "100%",
+            }}
+          >
+            <input
+              type="search"
+              placeholder="Search a product..."
+              value={keyword}
+              onChange={(e) => setKeyword(e.target.value)}
+              style={{
+                flex: "1 1 240px",
+                minWidth: 0,
+                padding: "12px 16px",
+                border: "1px solid var(--t-neutral-300)",
+                borderRadius: "var(--t-border-radius-base)",
+                fontFamily: "inherit",
+                fontSize: "16px",
+                background: "#fff",
+                transition: "border-color 200ms cubic-bezier(0,0,0.2,1)",
+              }}
+            />
+            <PrimaryBtn
+              type="submit"
+              sx={{ whiteSpace: "nowrap", flex: "0 0 auto" }}
+            >
+              Search
+            </PrimaryBtn>
+          </form>
+        </Container>
+      </Section>
     </>
   );
 }
