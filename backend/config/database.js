@@ -18,16 +18,16 @@ const MONGO_OPTIONS = {
   bufferCommands: false,
 };
 
-const connectDB = () => {
+const connectDB = () =>
   mongoose
     .connect(process.env.DB_URI, MONGO_OPTIONS)
     .then((data) => {
       logger.info(`MongoDB connected: ${data.connection.host}`);
+      return data;
     })
     .catch((err) => {
       logger.error(`MongoDB connection error: ${err.message}`);
       process.exit(1);
     });
-};
 
 module.exports = connectDB;

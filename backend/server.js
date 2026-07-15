@@ -18,17 +18,23 @@ process.on("uncaughtException", (err) => {
   process.exit(1);
 });
 
-connectDB();
+// ponytail: await connectDB before listen so /products/categories
+// never races the connection — Promise.all of distinct + 2 aggregates
+// throws "before initial connection is complete" otherwise
+// (bufferCommands:false in MONGO_OPTIONS).
+(async () => {
+  await connectDB();
 
-cloudinary.config({
-  cloud_name:  process.env.CLOUDINARY_NAME,
-  api_key:     process.env.CLOUDINARY_API_KEY,
-  api_secret:  process.env.CLOUDINARY_API_SECRET,
-});
+  cloudinary.config({
+    cloud_name:  process.env.CLOUDINARY_NAME,
+    api_key:     process.env.CLOUDINARY_API_KEY,
+    api_secret:  process.env.CLOUDINARY_API_SECRET,
+  });
 
-const server = app.listen(process.env.PORT || 5000, () => {
-  logger.info(`Server running on http://localhost:${process.env.PORT || 5000} [${process.env.NODE_ENV || "development"}]`);
-});
+  const server = app.listen(process.env.PORT || 5000, () => {
+    logger.info(`Server running on http://localhost:${process.env.PORT || 5000} [${process.env.NODE_ENV || "development"}]`);
+  });
+})();
 
 // Handle unhandled promise rejections (e.g. bad DB URI)
 process.on("unhandledRejection", (err) => {
