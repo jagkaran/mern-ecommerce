@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import Seo from "./Seo";
 import {
   Section,
-  Container,
   Overline,
   Headline,
   PrimaryBtn,
@@ -30,8 +29,15 @@ function Search() {
         path="/search"
       />
       <Section>
-        <Container style={{ maxWidth: "640px" }}>
-          <div style={{ textAlign: "center", marginBottom: "48px" }}>
+        <div
+          style={{
+            maxWidth: 640,
+            marginInline: "auto",
+            paddingInline: "var(--t-grid-containerPad)",
+            textAlign: "center",
+          }}
+        >
+          <div style={{ marginBottom: 48 }}>
             <Overline>Find what you're after</Overline>
             <Headline level="2xl" style={{ marginTop: "4px" }}>
               Look through the shelves
@@ -82,7 +88,7 @@ function Search() {
               Search
             </PrimaryBtn>
           </form>
-        </Container>
+        </div>
       </Section>
     </>
   );
