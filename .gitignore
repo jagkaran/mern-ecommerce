@@ -9,6 +9,8 @@ backend/config/config.env
 .env
 .env.*
 !.env.example
+# Note: frontend/.env follows CRA convention (defaults tracked, .env.local ignored).
+# See frontend/.gitignore for frontend-specific env rules.
 
 # ─── Build output ─────────────────────────────────────────────────────────────
 frontend/build/
@@ -49,3 +51,13 @@ logs/
 *.pem
 *.key
 *.cert
+# TypeScript incremental build cache
+*.tsbuildinfo
+# ESLint cache
+.eslintcache
+**/.eslintcache
+# Lighthouse CI cache / reports
+.lighthouseci/
+lighthouse-report*.json
+# SDD scratch ledger (task briefs, reports, review diffs)
+.superpowers/sdd/
