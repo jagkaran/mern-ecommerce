@@ -6,9 +6,11 @@ import {
   Box,
   MenuItem,
   TextField,
+  Chip,
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { useToast } from "../../hooks/useToast";
+import { useCurrency } from "../../utils/currencyContext";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams, useSearchParams } from "react-router-dom";
 import { getProduct, getActiveCategories } from "../../actions/productAction";
@@ -29,6 +31,7 @@ const ratingLabels = { 0: "Any", 1: "1+", 2: "2+", 3: "3+", 4: "4+", 5: "5 only"
 
 function Products() {
   const toast = useToast();
+  const { fmt } = useCurrency();
   const dispatch = useDispatch();
   const [currentPage, setCurrentPage] = useState(1);
   const [price, setPrice] = useState([0, 5000]);
@@ -39,6 +42,12 @@ function Products() {
   const [ratingValue, setRatingValue] = useState(0);
   const urlSort = searchParams.get("sort") || "newest";
   const [sort, setSort] = useState(urlSort);
+
+  const hasActiveFilters =
+    !!category ||
+    ratingValue > 0 ||
+    priceRange[0] > (dbPriceRange?.min ?? 0) ||
+    priceRange[1] < (dbPriceRange?.max ?? 5000);
 
   const {
     loading,
@@ -281,6 +290,72 @@ function Products() {
                   <MenuItem value="name-asc">Name (A–Z)</MenuItem>
                 </TextField>
               </Box>
+
+              {hasActiveFilters && (
+                <Box
+                  role="region"
+                  aria-label="Active filters"
+                  sx={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: 1,
+                    alignItems: "center",
+                    mb: 2,
+                  }}
+                >
+                  {category && (
+                    <Chip
+                      size="small"
+                      label={category}
+                      onDelete={() => {
+                        setSearchParams((prev) => {
+                          const next = new URLSearchParams(prev);
+                          next.delete("category");
+                          return next;
+                        });
+                        setCurrentPage(1);
+                      }}
+                      sx={{ bgcolor: "var(--t-neutral-100)", color: "var(--t-neutral-700)" }}
+                    />
+                  )}
+                  {ratingValue > 0 && (
+                    <Chip
+                      size="small"
+                      label={`${ratingValue}+ stars`}
+                      onDelete={() => { setRatingValue(0); setCurrentPage(1); }}
+                      sx={{ bgcolor: "var(--t-neutral-100)", color: "var(--t-neutral-700)" }}
+                    />
+                  )}
+                  {(priceRange[0] > (dbPriceRange?.min ?? 0) || priceRange[1] < (dbPriceRange?.max ?? 5000)) && (
+                    <Chip
+                      size="small"
+                      label={`${fmt(priceRange[0])} – ${fmt(priceRange[1])}`}
+                      onDelete={() => {
+                        const min = dbPriceRange?.min ?? 0;
+                        const max = dbPriceRange?.max ?? 5000;
+                        setPrice([min, max]);
+                        setPriceRange([min, max]);
+                        setCurrentPage(1);
+                      }}
+                      sx={{ bgcolor: "var(--t-neutral-100)", color: "var(--t-neutral-700)" }}
+                    />
+                  )}
+                  <GhostBtn
+                    onClick={() => {
+                      setSearchParams({});
+                      const min = dbPriceRange?.min ?? 0;
+                      const max = dbPriceRange?.max ?? 5000;
+                      setPrice([min, max]);
+                      setPriceRange([min, max]);
+                      setRatingValue(0);
+                      setCurrentPage(1);
+                    }}
+                    sx={{ ml: "auto" }}
+                  >
+                    Clear all
+                  </GhostBtn>
+                </Box>
+              )}
 
               <ProductGrid products={products} />
 
