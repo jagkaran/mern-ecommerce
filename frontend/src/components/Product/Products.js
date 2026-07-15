@@ -25,6 +25,7 @@ import {
   BodyText,
   GhostBtn,
   Breadcrumb,
+  Disclosure,
 } from "../../design/primitives";
 
 const ratingLabels = { 0: "Any", 1: "1+", 2: "2+", 3: "3+", 4: "4+", 5: "5 only" };
@@ -158,94 +159,203 @@ function Products() {
           }}
         >
           <Box className="filter-grid" sx={{ alignItems: "start" }}>
-            {/* Filters — quiet shelf */}
-            <QuietFilter title="Browse">
-              <FilterGroup label="Category">
-                <FilterOption
-                  label="All"
-                  count={productsCount}
-                  active={!category}
-                  onClick={() => {
-                    setSearchParams({});
-                    setCurrentPage(1);
-                  }}
-                />
-                {categories.map((cat) => (
+            {/* Mobile filters — collapsible disclosure below 1024px */}
+            <Box sx={{ display: { xs: "block", md: "none" }, mb: 2 }}>
+              <Disclosure
+                title={
+                  hasActiveFilters
+                    ? `Filters · ${
+                        (category ? 1 : 0) +
+                        (ratingValue > 0 ? 1 : 0) +
+                        ((priceRange[0] > (dbPriceRange?.min ?? 0) ||
+                          priceRange[1] < (dbPriceRange?.max ?? 5000))
+                          ? 1
+                          : 0)
+                      } active`
+                    : "Filters"
+                }
+                defaultOpen={false}
+              >
+                <QuietFilter title="Browse">
+                  <FilterGroup label="Category">
+                    <FilterOption
+                      label="All"
+                      count={productsCount}
+                      active={!category}
+                      onClick={() => {
+                        setSearchParams({});
+                        setCurrentPage(1);
+                      }}
+                    />
+                    {categories.map((cat) => (
+                      <FilterOption
+                        key={cat}
+                        label={cat}
+                        count={categoryCounts ? categoryCounts[cat] : undefined}
+                        active={category === cat}
+                        onClick={() => {
+                          setSearchParams({ category: cat });
+                          setCurrentPage(1);
+                        }}
+                      />
+                    ))}
+                  </FilterGroup>
+
+                  <FilterGroup label="Price">
+                    <Slider
+                      value={price}
+                      onChange={(_, v) => setPrice(v)}
+                      onChangeCommitted={(_, v) => setPriceRange(v)}
+                      valueLabelDisplay="auto"
+                      min={dbPriceRange?.min ?? 0}
+                      max={dbPriceRange?.max ?? 5000}
+                      step={Math.max(1, Math.round(((dbPriceRange?.max ?? 5000) - (dbPriceRange?.min ?? 0)) / 100))}
+                      sx={{
+                        color: "var(--t-primary-600)",
+                        mt: 1,
+                        "& .MuiSlider-thumb": {
+                          transition: "all var(--t-motion-duration-fast) var(--t-motion-easing-out)",
+                        },
+                      }}
+                    />
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        fontSize: "var(--t-fontSize-sm)",
+                        color: "var(--t-neutral-500)",
+                        fontVariantNumeric: "tabular-nums",
+                      }}
+                    >
+                      <span>{price[0]}</span>
+                      <span>{price[1]}</span>
+                    </Box>
+                  </FilterGroup>
+
+                  <FilterGroup label="Rating">
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+                      {[0, 1, 2, 3, 4, 5].map((r) => (
+                        <FilterOption
+                          key={r}
+                          label={ratingLabels[r]}
+                          active={ratingValue === r}
+                          onClick={() => {
+                            setRatingValue(r);
+                            setCurrentPage(1);
+                          }}
+                        />
+                      ))}
+                    </Box>
+                  </FilterGroup>
+
+                  {(category || priceRange[0] > 0 || priceRange[1] < 5000 || ratingValue > 0) && (
+                    <GhostBtn
+                      onClick={() => {
+                        setSearchParams({});
+                        setPrice([0, 5000]);
+                        setPriceRange([0, 5000]);
+                        setRatingValue(0);
+                        setCurrentPage(1);
+                      }}
+                      sx={{ alignSelf: "flex-start", mt: 1 }}
+                    >
+                      Clear filters
+                    </GhostBtn>
+                  )}
+                </QuietFilter>
+              </Disclosure>
+            </Box>
+
+            {/* Desktop filters — sidebar at 1024px+ */}
+            <Box sx={{ display: { xs: "none", md: "block" } }}>
+              <QuietFilter title="Browse">
+                <FilterGroup label="Category">
                   <FilterOption
-                    key={cat}
-                    label={cat}
-                    count={categoryCounts ? categoryCounts[cat] : undefined}
-                    active={category === cat}
+                    label="All"
+                    count={productsCount}
+                    active={!category}
                     onClick={() => {
-                      setSearchParams({ category: cat });
+                      setSearchParams({});
                       setCurrentPage(1);
                     }}
                   />
-                ))}
-              </FilterGroup>
-
-              <FilterGroup label="Price">
-                <Slider
-                  value={price}
-                  onChange={(_, v) => setPrice(v)}
-                  onChangeCommitted={(_, v) => setPriceRange(v)}
-                  valueLabelDisplay="auto"
-                  min={dbPriceRange?.min ?? 0}
-                  max={dbPriceRange?.max ?? 5000}
-                  step={Math.max(1, Math.round(((dbPriceRange?.max ?? 5000) - (dbPriceRange?.min ?? 0)) / 100))}
-                  sx={{
-                    color: "var(--t-primary-600)",
-                    mt: 1,
-                    "& .MuiSlider-thumb": {
-                      transition: "all var(--t-motion-duration-fast) var(--t-motion-easing-out)",
-                    },
-                  }}
-                />
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    fontSize: "var(--t-fontSize-sm)",
-                    color: "var(--t-neutral-500)",
-                    fontVariantNumeric: "tabular-nums",
-                  }}
-                >
-                  <span>{price[0]}</span>
-                  <span>{price[1]}</span>
-                </Box>
-              </FilterGroup>
-
-              <FilterGroup label="Rating">
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-                  {[0, 1, 2, 3, 4, 5].map((r) => (
+                  {categories.map((cat) => (
                     <FilterOption
-                      key={r}
-                      label={ratingLabels[r]}
-                      active={ratingValue === r}
+                      key={cat}
+                      label={cat}
+                      count={categoryCounts ? categoryCounts[cat] : undefined}
+                      active={category === cat}
                       onClick={() => {
-                        setRatingValue(r);
+                        setSearchParams({ category: cat });
                         setCurrentPage(1);
                       }}
                     />
                   ))}
-                </Box>
-              </FilterGroup>
+                </FilterGroup>
 
-              {(category || priceRange[0] > 0 || priceRange[1] < 5000 || ratingValue > 0) && (
-                <GhostBtn
-                  onClick={() => {
-                    setSearchParams({});
-                    setPrice([0, 5000]);
-                    setPriceRange([0, 5000]);
-                    setRatingValue(0);
-                    setCurrentPage(1);
-                  }}
-                  sx={{ alignSelf: "flex-start", mt: 1 }}
-                >
-                  Clear filters
-                </GhostBtn>
-              )}
-            </QuietFilter>
+                <FilterGroup label="Price">
+                  <Slider
+                    value={price}
+                    onChange={(_, v) => setPrice(v)}
+                    onChangeCommitted={(_, v) => setPriceRange(v)}
+                    valueLabelDisplay="auto"
+                    min={dbPriceRange?.min ?? 0}
+                    max={dbPriceRange?.max ?? 5000}
+                    step={Math.max(1, Math.round(((dbPriceRange?.max ?? 5000) - (dbPriceRange?.min ?? 0)) / 100))}
+                    sx={{
+                      color: "var(--t-primary-600)",
+                      mt: 1,
+                      "& .MuiSlider-thumb": {
+                        transition: "all var(--t-motion-duration-fast) var(--t-motion-easing-out)",
+                      },
+                    }}
+                  />
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      fontSize: "var(--t-fontSize-sm)",
+                      color: "var(--t-neutral-500)",
+                      fontVariantNumeric: "tabular-nums",
+                    }}
+                  >
+                    <span>{price[0]}</span>
+                    <span>{price[1]}</span>
+                  </Box>
+                </FilterGroup>
+
+                <FilterGroup label="Rating">
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+                    {[0, 1, 2, 3, 4, 5].map((r) => (
+                      <FilterOption
+                        key={r}
+                        label={ratingLabels[r]}
+                        active={ratingValue === r}
+                        onClick={() => {
+                          setRatingValue(r);
+                          setCurrentPage(1);
+                        }}
+                      />
+                    ))}
+                  </Box>
+                </FilterGroup>
+
+                {(category || priceRange[0] > 0 || priceRange[1] < 5000 || ratingValue > 0) && (
+                  <GhostBtn
+                    onClick={() => {
+                      setSearchParams({});
+                      setPrice([0, 5000]);
+                      setPriceRange([0, 5000]);
+                      setRatingValue(0);
+                      setCurrentPage(1);
+                    }}
+                    sx={{ alignSelf: "flex-start", mt: 1 }}
+                  >
+                    Clear filters
+                  </GhostBtn>
+                )}
+              </QuietFilter>
+            </Box>
 
             {/* Grid + sort + pagination */}
             <Box>
