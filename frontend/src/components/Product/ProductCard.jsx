@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { Rating } from '@mui/material';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import FavoriteIcon from '@mui/icons-material/Favorite';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCartOutlined';
+import CheckIcon from '@mui/icons-material/Check';
 import { useCurrency } from '../../utils/currencyContext';
 import { useWishlist } from '../../hooks/useWishlist';
 import { Badge } from '../../design/primitives';
@@ -234,38 +236,43 @@ function ProductCard({
             )}
           </button>
 
-          {/* Permanent Add-to-Cart button — visible at all times */}
-          <button
-            type="button"
-            onClick={handleAddToCart}
-            disabled={oos}
-            aria-label={oos ? `${name} out of stock` : `Add ${name} to cart`}
-            style={{
-              position: 'absolute',
-              left: 12,
-              right: 12,
-              bottom: 12,
-              height: 44,
-              border: 'none',
-              borderRadius: 'var(--t-border-radius-sm)',
-              background: oos
-                ? 'var(--t-neutral-300)'
-                : added
-                  ? 'var(--t-semantic-success)'
-                  : 'var(--t-primary-600)',
-              color: '#FFF',
-              fontSize: 'var(--t-fontSize-sm)',
-              fontWeight: 500,
-              letterSpacing: '0.04em',
-              cursor: oos ? 'not-allowed' : 'pointer',
-              opacity: oos ? 0.55 : 1,
-              transition:
-                'background var(--t-motion-duration-fast) var(--t-motion-easing-out)',
-              zIndex: 2,
-            }}
-          >
-            {oos ? 'Out of stock' : added ? '✓ Added' : 'Add to cart'}
-          </button>
+          {/* Permanent Add-to-Cart icon — sits left of the wishlist heart,
+              hidden when OOS since the badge already conveys it */}
+          {!oos && (
+            <button
+              type="button"
+              onClick={handleAddToCart}
+              aria-label={`Add ${name} to cart`}
+              style={{
+                position: 'absolute',
+                top: 8,
+                right: 60,
+                width: 44,
+                height: 44,
+                minWidth: 44,
+                minHeight: 44,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: added ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.85)',
+                border: 'none',
+                borderRadius: '50%',
+                cursor: 'pointer',
+                color: added ? 'var(--t-semantic-success)' : 'var(--t-neutral-700)',
+                transition:
+                  'background var(--t-motion-duration-fast) var(--t-motion-easing-out)',
+                backdropFilter: 'blur(4px)',
+                boxShadow: added ? '0 0 0 1.5px var(--t-semantic-success)' : 'none',
+                zIndex: 2,
+              }}
+            >
+              {added ? (
+                <CheckIcon sx={{ fontSize: 18 }} />
+              ) : (
+                <ShoppingCartIcon sx={{ fontSize: 18 }} />
+              )}
+            </button>
+          )}
         </div>
       </Link>
 
