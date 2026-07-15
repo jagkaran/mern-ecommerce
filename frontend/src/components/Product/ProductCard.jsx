@@ -7,7 +7,9 @@ import { useCurrency } from '../../utils/currencyContext';
 import { useWishlist } from '../../hooks/useWishlist';
 import { Badge } from '../../design/primitives';
 import { cld, srcset } from '../../utils/cloudinary';
-import QuickViewDialog from './QuickViewDialog';
+import { useDispatch } from 'react-redux';
+import { useToast } from '../../hooks/useToast';
+import { addItemsToCart } from '../../actions/cartAction';
 
 /**
  * ProductCard — Adidas-inspired.
@@ -15,9 +17,8 @@ import QuickViewDialog from './QuickViewDialog';
  * - Hover: scale + secondary image cross-fade
  * - Top-left: badge (New, Out of Stock)
  * - Top-right: wishlist heart (real toggle via useWishlist hook)
- * - Bottom hover: Quick view button → opens modal (desktop only;
- *   touch devices skip the modal and use the image link to PDP, per
- *   mobile UX guidance)
+ * - Bottom: permanent Add-to-Cart button (44px, primary) — visible at
+ *   all times for desktop and touch. Stock=0 disables + shows OOS.
  * - Category overline, 2-line clamp title, tabular price
  */
 function ProductCard({
@@ -40,7 +41,9 @@ function ProductCard({
   const wished = isWished(productId);
   const [hover, setHover] = useState(false);
   const [wishAnim, setWishAnim] = useState(false);
-  const [quickOpen, setQuickOpen] = useState(false);
+  const [added, setAdded] = useState(false);
+  const dispatch = useDispatch();
+  const toast = useToast();
 
   const primary = images?.[0]?.url;
   const secondary = images?.[1]?.url;
@@ -57,12 +60,16 @@ function ProductCard({
   };
 
   // ponytail: button must beat the wrapping <Link>, so preventDefault +
-  // stopPropagation. Desktop only — touch devices never see this bar
-  // (no hover state) and deep-link to PDP via the image link.
-  const openQuickView = (e) => {
+  // stopPropagation. Visible at all times — desktop + touch — so OOS
+  // stock surfaces immediately and the user never has to hunt for it.
+  const handleAddToCart = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    setQuickOpen(true);
+    if (oos) return;
+    dispatch(addItemsToCart(productId, 1));
+    toast.success('Added to cart');
+    setAdded(true);
+    setTimeout(() => setAdded(false), 1200);
   };
 
   return (
@@ -227,47 +234,38 @@ function ProductCard({
             )}
           </button>
 
-          {/* Hover quick-view bar — real button, opens modal on click */}
-          {hover && (
-            <div
-              style={{
-                position: 'absolute',
-                left: 0,
-                right: 0,
-                bottom: 0,
-                padding: 12,
-                background:
-                  'linear-gradient(to top, rgba(28,25,23,0.55), transparent)',
-                opacity: hover ? 1 : 0,
-                transform: hover ? 'translateY(0)' : 'translateY(8px)',
-                transition:
-                  'opacity var(--t-motion-duration-base) var(--t-motion-easing-out), transform var(--t-motion-duration-base) var(--t-motion-easing-out)',
-                zIndex: 1,
-              }}
-            >
-              <button
-                type="button"
-                onClick={openQuickView}
-                aria-label={`Quick view ${name}`}
-                style={{
-                  width: '100%',
-                  padding: '10px 16px',
-                  backgroundColor: 'var(--t-primary-600)',
-                  color: '#FFF',
-                  fontSize: 'var(--t-fontSize-sm)',
-                  fontWeight: 500,
-                  letterSpacing: '0.04em',
-                  border: 'none',
-                  borderRadius: 'var(--t-border-radius-sm)',
-                  boxShadow: 'var(--t-shadow-md)',
-                  cursor: 'pointer',
-                  pointerEvents: 'auto',
-                }}
-              >
-                Quick view
-              </button>
-            </div>
-          )}
+          {/* Permanent Add-to-Cart button — visible at all times */}
+          <button
+            type="button"
+            onClick={handleAddToCart}
+            disabled={oos}
+            aria-label={oos ? `${name} out of stock` : `Add ${name} to cart`}
+            style={{
+              position: 'absolute',
+              left: 12,
+              right: 12,
+              bottom: 12,
+              height: 44,
+              border: 'none',
+              borderRadius: 'var(--t-border-radius-sm)',
+              background: oos
+                ? 'var(--t-neutral-300)'
+                : added
+                  ? 'var(--t-semantic-success)'
+                  : 'var(--t-primary-600)',
+              color: '#FFF',
+              fontSize: 'var(--t-fontSize-sm)',
+              fontWeight: 500,
+              letterSpacing: '0.04em',
+              cursor: oos ? 'not-allowed' : 'pointer',
+              opacity: oos ? 0.55 : 1,
+              transition:
+                'background var(--t-motion-duration-fast) var(--t-motion-easing-out)',
+              zIndex: 2,
+            }}
+          >
+            {oos ? 'Out of stock' : added ? '✓ Added' : 'Add to cart'}
+          </button>
         </div>
       </Link>
 
@@ -396,14 +394,6 @@ function ProductCard({
           )}
         </div>
       </div>
-
-      {quickOpen && (
-        <QuickViewDialog
-          open={quickOpen}
-          productId={productId}
-          onClose={() => setQuickOpen(false)}
-        />
-      )}
     </article>
   );
 }
