@@ -105,8 +105,9 @@ export const TokenCSS = () => (
     }
     .account-grid {
       display: grid;
-      grid-template-columns: 1fr 380px;
+      grid-template-columns: 280px 1fr;
       gap: var(--t-grid-gutter);
+      align-items: start;
     }
     .filter-grid {
       display: grid;
@@ -124,11 +125,13 @@ export const TokenCSS = () => (
       .cart-layout, .checkout-grid, .account-grid, .filter-grid {
         grid-template-columns: 1fr;
       }
+      .account-grid > :first-child { max-width: 360px; }
     }
     @media (max-width: 768px) {
       .prod-grid, .cat-grid { grid-template-columns: repeat(2, 1fr); }
       .pdp-grid, .order-details-grid { grid-template-columns: 1fr !important; }
       .filter-grid { grid-template-columns: 1fr; }
+      .account-grid > :first-child { max-width: 100%; }
     }
     @media (max-width: 480px) {
       .prod-grid, .cat-grid { grid-template-columns: 1fr; }
