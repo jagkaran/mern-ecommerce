@@ -1,157 +1,204 @@
-import {
-  Box,
-  Button,
-  Card,
-  CardHeader,
-  CircularProgress,
-  Container,
-  Grid,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  TableSortLabel,
-  Tooltip,
-} from "@mui/material";
-import ArrowRightIcon from "@mui/icons-material/ArrowRight";
-import { format, parseISO } from "date-fns";
+import React, { useEffect, useState, useMemo } from "react";
+import { useToast } from "../../hooks/useToast";
 import { useDispatch, useSelector } from "react-redux";
-import { useAlert } from "react-alert";
-import { useEffect, useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { clearErrors, myOrders } from "../../actions/orderAction";
-import { useNavigate } from "react-router-dom";
-import SeverityPill from "./SeverityPill";
 import Seo from "../Seo";
-import Copyright from "../Copyright";
-import ZeroOrders from "../ZeroOrders";
-import "../Cart/Table.css";
-import { formatPrice } from "../../utils/fmt";
+import SeverityPill from "./SeverityPill";
+import {
+  Card,
+  CardBody,
+  Overline,
+  Headline,
+  BodyText,
+  Price,
+  PrimaryBtn,
+  GhostBtn,
+  Table,
+} from "../../design/primitives";
+import { fmtInCurrency } from "../../utils/fmtInCurrency";
+import { format, parseISO } from "date-fns";
 
-//   10 Digit order number prepended by country code
 export const createOrderNumber = (id, country) => {
   if (!id || !country) return "";
   return country + id.replace(/\D/g, "").substring(0, 8);
 };
 
-const CELL_SX = { px: 3, py: 1.75 };
+const STATUS_VARIANT = {
+  Delivered: "success",
+  Processing: "warning",
+  Shipped: "info",
+};
+
+function dateValue(o) {
+  return o.createdAt ? new Date(o.createdAt).getTime() : 0;
+}
 
 function MyOrders() {
   const dispatch = useDispatch();
-  const alert = useAlert();
-  const { loading, error, orders, ordersCount } = useSelector(
-    (state) => state.myOrders
-  );
+  const toast = useToast();
+  const { loading, error, orders = [], ordersCount = 0 } = useSelector((state) => state.myOrders);
   const { user } = useSelector((state) => state.user);
-  const [sorting, setSorting] = useState(false);
-  const history = useNavigate();
+  const [sort, setSort] = useState({ by: "createdAt", dir: "desc" });
+  const navigate = useNavigate();
 
-  function sortByDate(a, b) {
-    if (a.createdAt < b.createdAt) return 1;
-    if (a.createdAt > b.createdAt) return -1;
-    return 0;
-  }
-
-  const sortedOrderArrayByDate = orders.slice().sort(sortByDate);
-
-  const linkToOrderDetails = (id) => {
-    history(`/order/${id}`);
-  };
+  const sortedRows = useMemo(() => {
+    const dir = sort.dir === "asc" ? 1 : -1;
+    return [...orders].sort((a, b) => {
+      const av = sort.by === "createdAt" ? dateValue(a) : a[sort.by];
+      const bv = sort.by === "createdAt" ? dateValue(b) : b[sort.by];
+      if (av < bv) return -1 * dir;
+      if (av > bv) return 1 * dir;
+      return 0;
+    });
+  }, [orders, sort]);
 
   useEffect(() => {
     if (error) {
-      alert.error(error.message);
+      toast.error(error.message);
       dispatch(clearErrors());
     }
     dispatch(myOrders());
-  }, [dispatch, error, alert]);
+  }, [dispatch, error, toast]);
 
-  const renderRow = ({ _id, orderStatus, createdAt, shippingInfo, orderItems, totalPrice }) => (
-    <TableRow hover key={_id} onClick={() => linkToOrderDetails(_id)} sx={{ cursor: "pointer" }}>
-      <TableCell sx={CELL_SX}>{createOrderNumber(_id, shippingInfo.country)}</TableCell>
-      <TableCell sx={CELL_SX}>{user.name}</TableCell>
-      <TableCell sx={CELL_SX}>{orderItems.length}</TableCell>
-      <TableCell sx={CELL_SX}>${formatPrice(totalPrice)}</TableCell>
-      <TableCell sx={CELL_SX}>{format(parseISO(createdAt), "dd.MM.yyyy HH:mm")}</TableCell>
-      <TableCell sx={CELL_SX}>
-        <SeverityPill
-          color={
-            (orderStatus === "Delivered" && "success") ||
-            (orderStatus === "Processing" && "warning") ||
-            (orderStatus === "Shipped" && "info") ||
-            "error"
-          }
+  if (loading) {
+    return (
+      <section style={{ paddingBlock: "var(--t-space-3xl)", minHeight: "100vh" }}>
+        <div
+          style={{
+            maxWidth: "var(--t-grid-containerMax)",
+            marginInline: "auto",
+            paddingInline: "var(--t-grid-containerPad)",
+            textAlign: "center",
+            paddingTop: "15vh",
+          }}
         >
-          {orderStatus}
+          <Headline level="2xl">Loading…</Headline>
+        </div>
+      </section>
+    );
+  }
+
+  const columns = [
+    {
+      key: "orderNumber",
+      label: "Order Number",
+      render: (o) => createOrderNumber(o._id, o.shippingInfo?.country),
+    },
+    {
+      key: "customer",
+      label: "Customer",
+      muted: true,
+      render: () => user?.name || "You",
+    },
+    {
+      key: "items",
+      label: "Items",
+      muted: true,
+      render: (o) => o.orderItems?.length || 0,
+    },
+    {
+      key: "amount",
+      label: "Amount",
+      render: (o) => (
+        <Price style={{ fontSize: "var(--t-fontSize-sm)" }}>
+          {fmtInCurrency(o.totalPrice, o.currency, o.currencyRate)}
+        </Price>
+      ),
+    },
+    {
+      key: "createdAt",
+      label: "Date",
+      sortable: true,
+      muted: true,
+      nowrap: true,
+      render: (o) => (o.createdAt ? format(parseISO(o.createdAt), "dd.MM.yyyy HH:mm") : "—"),
+    },
+    {
+      key: "status",
+      label: "Status",
+      render: (o) => (
+        <SeverityPill color={STATUS_VARIANT[o.orderStatus] || "error"}>
+          {o.orderStatus}
         </SeverityPill>
-      </TableCell>
-    </TableRow>
-  );
+      ),
+    },
+  ];
 
   return (
-    <>
+    <section
+      style={{
+        backgroundColor: "var(--t-neutral-50)",
+        paddingBlock: "var(--t-space-3xl)",
+      }}
+    >
       <Seo
-        title="My Orders - Click.it store"
-        description="My all recent orders placed on Click.it Store."
+        title="Your kept pieces | Hverdag"
+        description="Every order, kept on record."
         path="/myorders"
       />
-      {loading ? (
-        <div className="grid place-items-center h-screen">
-          <CircularProgress />
-        </div>
-      ) : ordersCount !== 0 ? (
-        <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <Card>
-                <CardHeader title={`My Orders (${ordersCount})`} />
-                <Paper className="container" sx={{ boxShadow: "none" }}>
-                  <Box sx={{ minWidth: 800 }}>
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell sx={CELL_SX}>Order Number</TableCell>
-                          <TableCell sx={CELL_SX}>Customer</TableCell>
-                          <TableCell sx={CELL_SX}>Quantity</TableCell>
-                          <TableCell sx={CELL_SX}>Amount</TableCell>
-                          <TableCell sx={CELL_SX} sortDirection="desc">
-                            <Tooltip enterDelay={300} title="Sort" onClick={() => setSorting((prev) => !prev)}>
-                              <TableSortLabel active direction={sorting ? "asc" : "desc"}>
-                                Date
-                              </TableSortLabel>
-                            </Tooltip>
-                          </TableCell>
-                          <TableCell sx={CELL_SX}>Status</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {sorting
-                          ? orders.map(renderRow)
-                          : sortedOrderArrayByDate.map(renderRow)}
-                      </TableBody>
-                    </Table>
-                  </Box>
-                </Paper>
-                <Box sx={{ display: "flex", justifyContent: "flex-end", p: 2 }}>
-                  <Button
-                    color="primary"
-                    endIcon={<ArrowRightIcon fontSize="small" />}
-                    size="small"
-                    variant="text"
-                  >
-                    View all
-                  </Button>
-                </Box>
-              </Card>
-            </Grid>
-          </Grid>
-        </Container>
-      ) : (
-        <ZeroOrders />
-      )}
-      <Copyright />
-    </>
+      <div
+        style={{
+          maxWidth: "var(--t-grid-containerMax)",
+          marginInline: "auto",
+          paddingInline: "var(--t-grid-containerPad)",
+        }}
+      >
+        <Overline style={{ marginBottom: 8 }}>Account</Overline>
+        <Headline level="2xl" style={{ marginBottom: 32, fontStyle: "italic" }}>
+          Kept pieces
+          {ordersCount !== 0 && (
+            <span
+              style={{
+                color: "var(--t-neutral-400)",
+                fontWeight: 400,
+                marginLeft: 8,
+                fontStyle: "normal",
+              }}
+            >
+              ({ordersCount})
+            </span>
+          )}
+        </Headline>
+
+        {orders.length === 0 ? (
+          <div style={{ textAlign: "center", paddingTop: "4rem" }}>
+            <BodyText style={{ color: "var(--t-neutral-400)", marginBottom: 24 }}>
+              No orders yet.
+            </BodyText>
+            <PrimaryBtn component={Link} to="/products">
+              Browse Collection
+            </PrimaryBtn>
+          </div>
+        ) : (
+          <Card>
+            <CardBody style={{ padding: 0 }}>
+              <Table
+                columns={columns}
+                rows={sortedRows}
+                rowKey={(o) => o._id}
+                sortBy={sort.by}
+                sortDir={sort.dir}
+                onSortChange={(by, dir) => setSort({ by, dir })}
+                onRowClick={(o) => navigate(`/order/${o._id}`)}
+                emptyMessage="No orders in this view."
+              />
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  padding: "12px 16px",
+                }}
+              >
+                <Link to="/myorders" style={{ textDecoration: "none" }}>
+                  <GhostBtn size="small">View all</GhostBtn>
+                </Link>
+              </div>
+            </CardBody>
+          </Card>
+        )}
+      </div>
+    </section>
   );
 }
 

@@ -1,47 +1,27 @@
-import * as React from "react";
-import { useTheme } from "@mui/material/styles";
-import Box from "@mui/material/Box";
-import CssBaseline from "@mui/material/CssBaseline";
+import React from "react";
+import { Box } from "@mui/material";
 import DashboardAppBar from "./Sidebar/DashboardAppBar";
 import DashboardDrawer from "./Sidebar/DashboardDrawer";
-import LastestSales from "./DashboardContent/LastestSales";
-import { Container, Grid } from "@mui/material";
+import AdminMobileNav from "./AdminMobileNav";
 import AllOrders from "./DashboardContent/AllOrders";
 import AllProducts from "./DashboardContent/AllProducts";
 import AllUsers from "./DashboardContent/AllUsers";
 import TotalRevenue from "./DashboardContent/TotalRevenue";
 import InventoryOverview from "./DashboardContent/InventoryOverview";
-import { useSelector, useDispatch } from "react-redux";
+import LastestSales from "./DashboardContent/LastestSales";
+import { useDispatch, useSelector } from "react-redux";
 import { getAdminProducts } from "../../actions/productAction";
 import { getAllOrders } from "../../actions/orderAction";
 import { getAllUsers } from "../../actions/userAction";
 import { Link } from "react-router-dom";
 import Seo from "../Seo";
-import Copyright from "../Copyright";
 
 export default function Dashboard() {
-  const theme = useTheme();
   const [open, setOpen] = React.useState(false);
 
-  const handleDrawerOpen = () => {
-    setOpen(true);
-  };
-
-  const handleDrawerClose = () => {
-    setOpen(false);
-  };
-
   const dispatch = useDispatch();
-
   const { products } = useSelector((state) => state.product);
-
-  // orderCount and totalAmount now come directly from the API response
-  // via the reducer — they reflect every order in the DB, not just the
-  // first page of results.
-  const { orders, orderCount, totalAmount } = useSelector(
-    (state) => state.allOrders
-  );
-
+  const { orders, orderCount, totalAmount } = useSelector((state) => state.allOrders);
   const { usersCount } = useSelector((state) => state.allUsers);
 
   let outOfStock = 0;
@@ -60,63 +40,62 @@ export default function Dashboard() {
 
   return (
     <>
-      <Box sx={{ display: "flex" }}>
-        <Seo
-          title="Click.it Dashboard - Admin access only"
-          description="Dashboard to manage products, orders, users and reviews"
-          path="/dashboard"
-        />
-        <CssBaseline />
-        <DashboardAppBar open={open} handleDrawerOpen={handleDrawerOpen} />
-        <DashboardDrawer
-          open={open}
-          handleDrawerClose={handleDrawerClose}
-          theme={theme}
-        />
-        <Box
-          component="main"
-          sx={{
-            flexGrow: 1,
-            py: 8,
-          }}
-        >
-          <Container maxWidth={false}>
-            <Grid container spacing={3}>
-              <Grid item lg={3} sm={6} xl={3} xs={12}>
-                <Link to="/admin/orders">
-                  {/* Use orderCount from API so the badge reflects ALL orders */}
-                  <AllOrders allOrders={orderCount ?? (orders && orders.length)} />
-                </Link>
-              </Grid>
-              <Grid item xl={3} lg={3} sm={6} xs={12}>
-                <Link to="/admin/products">
-                  <AllProducts allProducts={products && products.length} />
-                </Link>
-              </Grid>
-              <Grid item xl={3} lg={3} sm={6} xs={12}>
-                <Link to="/admin/users">
-                  <AllUsers allUserCount={usersCount && usersCount} />
-                </Link>
-              </Grid>
-              <Grid item xl={3} lg={3} sm={6} xs={12}>
-                {/* totalAmount from Redux state — aggregated in DB across all orders */}
-                <TotalRevenue totalRevenue={totalAmount ?? 0} />
-              </Grid>
-              <Grid item lg={8} md={12} xl={9} xs={12}>
-                <LastestSales totalRevenue={totalAmount ?? 0} />
-              </Grid>
-              <Grid item lg={4} md={12} xl={3} xs={12}>
-                <InventoryOverview
-                  outOfStock={outOfStock}
-                  inStock={products?.length - outOfStock}
-                  sx={{ height: "100%" }}
-                />
-              </Grid>
-            </Grid>
-          </Container>
+      <Seo
+        title="Ordinary — Dashboard"
+        description="Admin dashboard for managing products, orders, users and reviews"
+        path="/dashboard"
+      />
+      <div style={{ display: "flex" }}>
+        <DashboardAppBar open={open} handleDrawerOpen={() => setOpen(true)} />
+        <DashboardDrawer open={open} handleDrawerClose={() => setOpen(false)} />
+        <Box sx={{ flexGrow: 1, width: "100%" }}>
+          <AdminMobileNav />
+          <Box
+            sx={{
+              paddingTop: { xs: 16, md: 24 },
+              paddingBottom: { xs: 32, md: 48 },
+              paddingInline: { xs: 2, md: "var(--t-space-lg)" },
+              maxWidth: "var(--t-grid-containerMax)",
+              marginInline: "auto",
+              width: "100%",
+            }}
+          >
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: {
+                  xs: "1fr",
+                  sm: "repeat(2, 1fr)",
+                  md: "repeat(4, 1fr)",
+                },
+                gap: { xs: 2, md: "var(--t-space-md)" },
+              }}
+            >
+              <Link to="/admin/orders" style={{ textDecoration: "none" }}>
+                <AllOrders allOrders={orderCount ?? (orders && orders.length)} />
+              </Link>
+              <Link to="/admin/products" style={{ textDecoration: "none" }}>
+                <AllProducts allProducts={products && products.length} />
+              </Link>
+              <Link to="/admin/users" style={{ textDecoration: "none" }}>
+                <AllUsers allUserCount={usersCount && usersCount} />
+              </Link>
+              <TotalRevenue totalRevenue={totalAmount ?? 0} />
+            </Box>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: { xs: "1fr", md: "2fr 1fr" },
+                gap: { xs: 2, md: "var(--t-space-md)" },
+                marginTop: { xs: 2, md: "var(--t-space-md)" },
+              }}
+            >
+              <LastestSales totalRevenue={totalAmount ?? 0} />
+              <InventoryOverview outOfStock={outOfStock} inStock={products?.length - outOfStock} />
+            </Box>
+          </Box>
         </Box>
-      </Box>
-      <Copyright />
+      </div>
     </>
   );
 }

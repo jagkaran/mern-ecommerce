@@ -10,27 +10,20 @@ import {
 } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect } from "react";
-import { useAlert } from "react-alert";
+import { useToast } from "../../hooks/useToast";
 import { clearErrors, forgotUserPassword } from "../../actions/userAction";
 import LockResetIcon from "@mui/icons-material/LockReset";
-import Copyright from "../Copyright";
 import Seo from "../Seo";
 import { usePassForgotFormControls } from "../Admin/Hooks/usePasswordForgot";
 
 function ForgotPassword() {
   const dispatch = useDispatch();
-  const alert = useAlert();
+  const toast = useToast();
 
-  const { error, message, loading } = useSelector(
-    (state) => state.forgotPassword
-  );
+  const { error, message, loading } = useSelector((state) => state.forgotPassword);
 
-  const {
-    handlePassForgotInputValue,
-    passForgotFormIsValid,
-    errors,
-    passForgotFormValues,
-  } = usePassForgotFormControls();
+  const { handlePassForgotInputValue, passForgotFormIsValid, errors, passForgotFormValues } =
+    usePassForgotFormControls();
 
   const forgotPasswordSubmit = (event) => {
     event.preventDefault();
@@ -43,13 +36,13 @@ function ForgotPassword() {
 
   useEffect(() => {
     if (error) {
-      alert.error(error);
+      toast.error(error);
       dispatch(clearErrors());
     }
     if (message) {
-      alert.success(message);
+      toast.success(message);
     }
-  }, [dispatch, error, alert, message]);
+  }, [dispatch, error, toast, message]);
 
   return (
     <>
@@ -80,12 +73,7 @@ function ForgotPassword() {
               <Typography component="h1" variant="h5">
                 Forgot Password?
               </Typography>
-              <Box
-                component="form"
-                onSubmit={forgotPasswordSubmit}
-                noValidate
-                sx={{ mt: 1 }}
-              >
+              <Box component="form" onSubmit={forgotPasswordSubmit} noValidate sx={{ mt: 1 }}>
                 <TextField
                   margin="normal"
                   required={true}
@@ -114,7 +102,6 @@ function ForgotPassword() {
               </Box>
             </Box>
           </Container>
-          <Copyright />
         </>
       )}
     </>

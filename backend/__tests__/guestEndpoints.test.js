@@ -39,8 +39,12 @@ const paymentService = require("../services/paymentService");
 let productId;
 beforeAll(async () => {
   const p = await Product.create({
-    name: "EP", description: "d", price: 25, category: "Test", stock: 10,
-    images: [{ public_id:"e", url:"http://e.com/e.jpg" }],
+    name: "EP",
+    description: "d",
+    price: 25,
+    category: "Test",
+    stock: 10,
+    images: [{ public_id: "e", url: "http://e.com/e.jpg" }],
     createdBy: new mongoose.Types.ObjectId(),
   });
   productId = p._id;
@@ -51,21 +55,30 @@ beforeAll(async () => {
 // by claimTokenHash, so cross-test residue can interfere with HMAC matching).
 afterEach(async () => {
   const Order = require("../models/orderModel");
-  await Promise.all([
-    Order.deleteMany({}),
-    User.deleteMany({}),
-  ]);
+  await Promise.all([Order.deleteMany({}), User.deleteMany({})]);
   // Reset the paymentService mock between tests so leftover mock
   // implementations from prior tests don't satisfy a later test's call.
   paymentService.retrievePaymentIntent.mockReset();
 });
 
-const shipping = { address:"100 Test St", city:"Testville", state:"TS", country:"US", zip:"12345", phone:"9876543210" };
-const items = () => [{ name:"x", price:25, quantity:1, image:"http://e.com/i.jpg", product: productId }];
+const shipping = {
+  address: "100 Test St",
+  city: "Testville",
+  state: "TS",
+  country: "US",
+  zip: "12345",
+  phone: "9876543210",
+};
+const items = () => [
+  { name: "x", price: 25, quantity: 1, image: "http://e.com/i.jpg", product: productId },
+];
 
 async function stubMatchingIntent(paymentId, { amount = 9999 } = {}) {
   paymentService.retrievePaymentIntent.mockImplementationOnce(async (pid) => ({
-    id: pid, status: "succeeded", amount, currency: "usd",
+    id: pid,
+    status: "succeeded",
+    amount,
+    currency: "usd",
   }));
   return paymentId;
 }
@@ -76,11 +89,14 @@ describe("POST /order/new - guest path", () => {
     // Server pricing: 25 * 1 + tax(15%) + shipping(50) = 78.75 → 7875 cents.
     await stubMatchingIntent(paymentId, { amount: 7875 });
 
-    const res = await request(app).post("/api/v1/order/new").send({
-      shippingInfo: shipping, orderItems: items(),
-      paymentInfo: { id: paymentId, status: "succeeded" },
-      guestEmail: "guest_endpoint@y.io",
-    });
+    const res = await request(app)
+      .post("/api/v1/order/new")
+      .send({
+        shippingInfo: shipping,
+        orderItems: items(),
+        paymentInfo: { id: paymentId, status: "succeeded" },
+        guestEmail: "guest_endpoint@y.io",
+      });
     expect(res.status).toBe(201);
     expect(res.body.claimToken).toMatch(/^[0-9a-f]{64}$/);
     expect(res.body.order.guestEmail).toBe("guest_endpoint@y.io");
@@ -89,10 +105,13 @@ describe("POST /order/new - guest path", () => {
     const paymentId = `pi_ne_${Date.now()}`;
     await stubMatchingIntent(paymentId, { amount: 7875 });
 
-    const res = await request(app).post("/api/v1/order/new").send({
-      shippingInfo: shipping, orderItems: items(),
-      paymentInfo: { id: paymentId, status: "succeeded" },
-    });
+    const res = await request(app)
+      .post("/api/v1/order/new")
+      .send({
+        shippingInfo: shipping,
+        orderItems: items(),
+        paymentInfo: { id: paymentId, status: "succeeded" },
+      });
     expect(res.status).toBe(400);
   });
   it("400 STOCK_INSUFFICIENT when qty > stock (guest)", async () => {
@@ -103,12 +122,14 @@ describe("POST /order/new - guest path", () => {
     // server will reject anyway.
     await stubMatchingIntent(paymentId, { amount: 1 });
 
-    const res = await request(app).post("/api/v1/order/new").send({
-      shippingInfo: shipping,
-      orderItems: oversized,
-      paymentInfo: { id: paymentId, status: "succeeded" },
-      guestEmail: "stockguest@y.io",
-    });
+    const res = await request(app)
+      .post("/api/v1/order/new")
+      .send({
+        shippingInfo: shipping,
+        orderItems: oversized,
+        paymentInfo: { id: paymentId, status: "succeeded" },
+        guestEmail: "stockguest@y.io",
+      });
     expect(res.status).toBe(400);
   });
 });
@@ -118,13 +139,18 @@ describe("POST /order/claim", () => {
     const createPaymentId = `pi_cl_${Date.now()}`;
     await stubMatchingIntent(createPaymentId, { amount: 7875 });
 
-    const created = await request(app).post("/api/v1/order/new").send({
-      shippingInfo: shipping, orderItems: items(),
-      paymentInfo: { id: createPaymentId, status: "succeeded" },
-      guestEmail: "claimme@y.io",
-    });
+    const created = await request(app)
+      .post("/api/v1/order/new")
+      .send({
+        shippingInfo: shipping,
+        orderItems: items(),
+        paymentInfo: { id: createPaymentId, status: "succeeded" },
+        guestEmail: "claimme@y.io",
+      });
     const token = created.body.claimToken;
-    const claim = await request(app).post("/api/v1/order/claim").send({ claimToken: token, password: "passw0rd!" });
+    const claim = await request(app)
+      .post("/api/v1/order/claim")
+      .send({ claimToken: token, password: "passw0rd!" });
     expect(claim.status).toBe(201);
     expect(claim.headers["set-cookie"]).toBeDefined();
     const me = await request(app).get("/api/v1/me").set("Cookie", claim.headers["set-cookie"][0]);
@@ -135,32 +161,51 @@ describe("POST /order/claim", () => {
     const createPaymentId = `pi_clr_${Date.now()}`;
     await stubMatchingIntent(createPaymentId, { amount: 7875 });
 
-    const created = await request(app).post("/api/v1/order/new").send({
-      shippingInfo: shipping, orderItems: items(),
-      paymentInfo: { id: createPaymentId, status: "succeeded" },
-      guestEmail: "replay@y.io",
-    });
+    const created = await request(app)
+      .post("/api/v1/order/new")
+      .send({
+        shippingInfo: shipping,
+        orderItems: items(),
+        paymentInfo: { id: createPaymentId, status: "succeeded" },
+        guestEmail: "replay@y.io",
+      });
     const token = created.body.claimToken;
-    const first = await request(app).post("/api/v1/order/claim").send({ claimToken: token, password: "passw0rd!" });
+    const first = await request(app)
+      .post("/api/v1/order/claim")
+      .send({ claimToken: token, password: "passw0rd!" });
     expect(first.status).toBe(201);
-    const second = await request(app).post("/api/v1/order/claim").send({ claimToken: token, password: "passw0rd!" });
+    const second = await request(app)
+      .post("/api/v1/order/claim")
+      .send({ claimToken: token, password: "passw0rd!" });
     expect(second.status).toBe(400);
   });
   it("409 when email matches existing User", async () => {
-    await User.create({ name: "Dup2", email: "dup2@y.io", password: "Existing1!", profilePic: { public_id:"x", url:"http://e.com/x.jpg" } });
+    await User.create({
+      name: "Dup2",
+      email: "dup2@y.io",
+      password: "Existing1!",
+      profilePic: { public_id: "x", url: "http://e.com/x.jpg" },
+    });
     const createPaymentId = `pi_dup_${Date.now()}`;
     await stubMatchingIntent(createPaymentId, { amount: 7875 });
 
-    const created = await request(app).post("/api/v1/order/new").send({
-      shippingInfo: shipping, orderItems: items(),
-      paymentInfo: { id: createPaymentId, status: "succeeded" },
-      guestEmail: "dup2@y.io",
-    });
-    const res = await request(app).post("/api/v1/order/claim").send({ claimToken: created.body.claimToken, password: "passw0rd!" });
+    const created = await request(app)
+      .post("/api/v1/order/new")
+      .send({
+        shippingInfo: shipping,
+        orderItems: items(),
+        paymentInfo: { id: createPaymentId, status: "succeeded" },
+        guestEmail: "dup2@y.io",
+      });
+    const res = await request(app)
+      .post("/api/v1/order/claim")
+      .send({ claimToken: created.body.claimToken, password: "passw0rd!" });
     expect(res.status).toBe(409);
   });
   it("400 on malformed claim token (non-hex)", async () => {
-    const res = await request(app).post("/api/v1/order/claim").send({ claimToken: "Z".repeat(64), password: "passw0rd!" });
+    const res = await request(app)
+      .post("/api/v1/order/claim")
+      .send({ claimToken: "Z".repeat(64), password: "passw0rd!" });
     expect(res.status).toBe(400);
   });
 });

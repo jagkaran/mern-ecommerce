@@ -38,6 +38,53 @@ exports.logout = catchAsyncErrors(async (req, res, _next) => {
   res.status(200).json({ success: true, message: "User logged out" });
 });
 
+// ---------------- Wishlist ----------------
+// GET /api/v1/wishlist — returns user's wishlist with populated product data
+exports.getWishlist = catchAsyncErrors(async (req, res, next) => {
+  const user = await User.findById(req.user.id).populate({
+    path: "wishlist.product",
+    select: "name price ratings images category stock numOfReviews",
+  });
+  if (!user) return next(new ErrorHandler("User not found", 404));
+  // Filter out wishlist entries whose product was deleted
+  const items = (user.wishlist || [])
+    .filter((w) => w.product)
+    .map((w) => ({ ...w.product.toObject(), addedAt: w.addedAt }));
+  res.status(200).json({ success: true, items, count: items.length });
+});
+
+// PUT /api/v1/wishlist/:productId — idempotent add
+exports.addToWishlist = catchAsyncErrors(async (req, res, next) => {
+  const { productId } = req.params;
+  if (!productId.match(/^[0-9a-fA-F]{24}$/)) {
+    return next(new ErrorHandler("Invalid product id", 400));
+  }
+  const user = await User.findById(req.user.id);
+  if (!user) return next(new ErrorHandler("User not found", 404));
+  const already = user.wishlist.some((w) => String(w.product) === productId);
+  if (!already) {
+    user.wishlist.push({ product: productId });
+    await user.save({ validateBeforeSave: false });
+  }
+  res.status(200).json({ success: true, count: user.wishlist.length });
+});
+
+// DELETE /api/v1/wishlist/:productId — idempotent remove
+exports.removeFromWishlist = catchAsyncErrors(async (req, res, next) => {
+  const { productId } = req.params;
+  if (!productId.match(/^[0-9a-fA-F]{24}$/)) {
+    return next(new ErrorHandler("Invalid product id", 400));
+  }
+  const user = await User.findById(req.user.id);
+  if (!user) return next(new ErrorHandler("User not found", 404));
+  const before = user.wishlist.length;
+  user.wishlist = user.wishlist.filter((w) => String(w.product) !== productId);
+  if (user.wishlist.length !== before) {
+    await user.save({ validateBeforeSave: false });
+  }
+  res.status(200).json({ success: true, count: user.wishlist.length });
+});
+
 exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
   const user = await User.findOne({ email: req.body.email });
   if (!user) {
@@ -58,10 +105,7 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
 });
 
 exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
-  const resetPasswordToken = crypto
-    .createHash("sha256")
-    .update(req.params.token)
-    .digest("hex");
+  const resetPasswordToken = crypto.createHash("sha256").update(req.params.token).digest("hex");
   const user = await User.findOne({
     resetPasswordToken,
     resetPasswordExpire: { $gt: Date.now() },

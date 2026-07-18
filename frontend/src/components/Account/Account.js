@@ -1,38 +1,30 @@
-import {
-  Box,
-  Container,
-  Grid,
-  Typography,
-  CardHeader,
-  TextField,
-  Avatar,
-  Button,
-  Card,
-  CardActions,
-  CardContent,
-  Divider,
-  CircularProgress,
-} from "@mui/material";
-import PhotoCamera from "@mui/icons-material/PhotoCamera";
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useEffect, useState } from "react";
-import { useAlert } from "react-alert";
+import { useToast } from "../../hooks/useToast";
+import PhotoCameraIcon from "@mui/icons-material/PhotoCamera";
 import KeyIcon from "@mui/icons-material/Key";
 import { useNavigate } from "react-router-dom";
-import {
-  clearErrors,
-  loadUser,
-  updateUserProfile,
-} from "../../actions/userAction";
+import { clearErrors, loadUser, updateUserProfile } from "../../actions/userAction";
 import Seo from "../Seo";
-import Copyright from "../Copyright";
 import { format, parseISO } from "date-fns";
 import { useAcountFormControls } from "../Admin/Hooks/useAccountForm";
+import { avatarUrl } from "../../utils/avatar";
+import {
+  Card,
+  CardBody,
+  Overline,
+  Headline,
+  BodyText,
+  Divider,
+  PrimaryBtn,
+  Field,
+  FieldRow,
+} from "../../design/primitives";
 
 const Account = () => {
   const dispatch = useDispatch();
-  const history = useNavigate();
-  const alert = useAlert();
+  const navigate = useNavigate();
+  const toast = useToast();
   const { user } = useSelector((state) => state.user);
   const { error, isUpdated, loading } = useSelector((state) => state.profile);
   const [avatar, setAvatar] = useState();
@@ -67,198 +59,225 @@ const Account = () => {
     };
     const file = event.target.files[0];
     if (file.size > 760000) {
-      alert.error("Please upload an image smaller than 750 KB");
-      return false;
+      toast.error("Please upload an image smaller than 750 KB");
+      return;
     }
     reader.readAsDataURL(file);
   };
 
-  // setAcountFormValues is a stable setter from useAcountFormControls —
-  // adding it to deps would cause an infinite re-render loop.
-    useEffect(() => {
+  useEffect(() => {
     if (user) {
       setAcountFormValues({
         name: user.name,
         email: user.email,
       });
-      setAvatarPreview(user.profilePic?.url);
+      setAvatarPreview(avatarUrl(user));
     }
     if (error) {
-      alert.error(error);
+      toast.error(error);
       dispatch(clearErrors());
     }
     if (isUpdated) {
-      alert.success("Profile Updated Successfully");
+      toast.success("Profile Updated Successfully");
       dispatch(loadUser());
-      history("/account");
+      navigate("/account");
       dispatch({ type: "UpdateProfileReset" });
     }
-  }, [dispatch, error, alert, history, user, isUpdated, setAcountFormValues]);
+  }, [dispatch, error, toast, navigate, user, isUpdated, setAcountFormValues]);
+
+  if (loading) {
+    return (
+      <section
+        style={{
+          paddingBlock: "var(--t-space-3xl)",
+          minHeight: "100vh",
+          textAlign: "center",
+          paddingTop: "15vh",
+        }}
+      >
+        <Headline level="2xl">Loading…</Headline>
+      </section>
+    );
+  }
 
   return (
-    <>
+    <section
+      style={{
+        backgroundColor: "var(--t-neutral-50)",
+        paddingBlock: "var(--t-space-3xl)",
+        minHeight: "100vh",
+      }}
+    >
       <Seo
-        title="Your Profile - Click.it store"
-        description="Verify your account details"
+        title="Welcome back | Hverdag"
+        description="Your details, and the pieces you've kept."
         path="/account"
       />
-      {loading ? (
-        <div className="grid place-items-center h-screen">
-          <CircularProgress />
-        </div>
-      ) : (
-        <Box
-          component="form"
-          noValidate
-          onSubmit={updateProfile}
-          sx={{ flexGrow: 1, py: 8 }}
-        >
-          <Container maxWidth="lg">
-            <Typography sx={{ mb: 3 }} variant="h4">
-              Account
-            </Typography>
-            <Grid container spacing={3}>
-              <Grid item lg={4} md={6} xs={12}>
-                <Card>
-                  <CardContent>
-                    <Box
-                      sx={{
-                        alignItems: "center",
-                        display: "flex",
-                        flexDirection: "column",
+      <div
+        style={{
+          maxWidth: "var(--t-grid-containerMax)",
+          marginInline: "auto",
+          paddingInline: "var(--t-grid-containerPad)",
+        }}
+      >
+        <Overline style={{ marginBottom: 8 }}>Account</Overline>
+        <Headline level="2xl" style={{ marginBottom: 32 }}>
+          Your Profile
+        </Headline>
+
+        <div className="account-grid">
+          {/* Left: Avatar Card */}
+          <Card>
+            <CardBody>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 12,
+                }}
+              >
+                <div
+                  style={{
+                    width: 86,
+                    height: 86,
+                    borderRadius: "50%",
+                    background: "var(--t-neutral-100)",
+                    overflow: "hidden",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    border: "1px solid var(--t-neutral-200)",
+                  }}
+                >
+                  {avatarPreview && avatarPreview !== "/Profile.png" ? (
+                    <img
+                      src={avatarPreview}
+                      alt={user.name}
+                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    />
+                  ) : (
+                    <BodyText
+                      small
+                      style={{
+                        color: "var(--t-neutral-400)",
+                        fontSize: "var(--t-fontSize-2xl)",
+                        fontWeight: 600,
                       }}
                     >
-                      <Avatar
-                        src={avatarPreview}
-                        sx={{ height: 86, mb: 2, width: 86 }}
-                      />
-                      <Typography
-                        sx={{ textTransform: "uppercase" }}
-                        color="textPrimary"
-                        gutterBottom
-                        variant="h5"
-                      >
-                        {user.name}
-                      </Typography>
-                      <Typography color="textSecondary" variant="body2">
-                        Joined on:{" "}
-                        {format(parseISO(user.createdAt), `do MMM yyyy`)}
-                      </Typography>
-                      <Typography
-                        color="textSecondary"
-                        variant="body2"
-                        sx={{ textTransform: "capitalize" }}
-                      >
-                        Assigned Role: {user.role}
-                      </Typography>
-                      <Typography
-                        variant="caption"
-                        display="block"
-                        gutterBottom
-                        color="red"
-                        mt={2}
-                      >
-                        Image size should not be more than 750KB
-                      </Typography>
-                    </Box>
-                  </CardContent>
-                  <Divider />
-                  <CardActions>
-                    <Button
-                      color="primary"
-                      fullWidth
-                      variant="text"
-                      component="label"
-                      startIcon={<PhotoCamera />}
-                    >
-                      Upload picture
-                      <input
-                        type="file"
-                        name="avatar"
-                        accept="image/*"
-                        onChange={registerDataChange}
-                        hidden
-                      />
-                    </Button>
-                  </CardActions>
-                </Card>
-              </Grid>
-              <Grid item lg={8} md={6} xs={12}>
-                <Card>
-                  <CardHeader
-                    subheader="The information can be edited"
-                    title="Profile"
+                      {user.name?.charAt(0)?.toUpperCase()}
+                    </BodyText>
+                  )}
+                </div>
+                <Headline level="sm" style={{ textTransform: "uppercase" }}>
+                  {user.name}
+                </Headline>
+                <BodyText small style={{ color: "var(--t-neutral-500)" }}>
+                  Joined on: {format(parseISO(user.createdAt), "do MMM yyyy")}
+                </BodyText>
+                <BodyText
+                  small
+                  style={{ color: "var(--t-neutral-500)", textTransform: "capitalize" }}
+                >
+                  Role: {user.role}
+                </BodyText>
+                <BodyText small style={{ color: "var(--t-semantic-error)", marginTop: 8 }}>
+                  Image size should not be more than 750KB
+                </BodyText>
+              </div>
+            </CardBody>
+            <Divider />
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                paddingBlock: 3,
+              }}
+            >
+              <label
+                htmlFor="avatar-upload"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
+                  cursor: "pointer",
+                  fontSize: "var(--t-fontSize-sm)",
+                  fontWeight: 500,
+                  color: "var(--t-neutral-700)",
+                  padding: "6px 16px",
+                  borderRadius: "var(--t-border-radius-base)",
+                  transition: "color var(--t-motion-duration-fast) var(--t-motion-easing-out)",
+                }}
+              >
+                <PhotoCameraIcon fontSize="small" />
+                Upload picture
+                <input
+                  type="file"
+                  id="avatar-upload"
+                  name="avatar"
+                  accept="image/*"
+                  onChange={registerDataChange}
+                  style={{ display: "none" }}
+                />
+              </label>
+            </div>
+          </Card>
+
+          {/* Right: Profile Form */}
+          <Card>
+            <CardBody>
+              <Overline style={{ marginBottom: 4 }}>Profile</Overline>
+              <BodyText small style={{ color: "var(--t-neutral-400)", marginBottom: 24 }}>
+                The information can be edited
+              </BodyText>
+              <Divider style={{ marginBottom: 24 }} />
+              <form onSubmit={updateProfile}>
+                <FieldRow columns={2}>
+                  <Field
+                    id="name"
+                    name="name"
+                    label="Name"
+                    autoComplete="given-name"
+                    value={accountFormValues.name}
+                    onChange={handleAccountInputValue}
+                    error={errors.name}
                   />
-                  <Divider />
-                  <CardContent>
-                    <Grid container spacing={3}>
-                      <Grid item md={6} xs={12}>
-                        <TextField
-                          autoComplete="given-name"
-                          id="name"
-                          fullWidth
-                          label="Name"
-                          name="name"
-                          onChange={handleAccountInputValue}
-                          value={accountFormValues.name}
-                          variant="outlined"
-                          {...(errors.name && {
-                            error: true,
-                            helperText: errors.name,
-                          })}
-                        />
-                      </Grid>
-                      <Grid item md={6} xs={12}>
-                        <TextField
-                          id="email"
-                          autoComplete="email"
-                          fullWidth
-                          label="Email Address"
-                          name="email"
-                          onChange={handleAccountInputValue}
-                          value={accountFormValues.email}
-                          variant="outlined"
-                          {...(errors.email && {
-                            error: true,
-                            helperText: errors.email,
-                          })}
-                        />
-                      </Grid>
-                    </Grid>
-                  </CardContent>
-                  <Divider />
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      p: 2,
-                    }}
-                  >
-                    <Button
-                      href="/password/update"
-                      sx={{ backgroundColor: "secondary.main" }}
-                      variant="contained"
-                      startIcon={<KeyIcon />}
-                    >
-                      Change Password
-                    </Button>
-                    <Button
-                      type="submit"
-                      sx={{ backgroundColor: "secondary.main" }}
-                      variant="contained"
-                      disabled={!accountFormIsValid()}
-                    >
-                      Save details
-                    </Button>
-                  </Box>
-                </Card>
-              </Grid>
-            </Grid>
-          </Container>
-        </Box>
-      )}
-      <Copyright />
-    </>
+                  <Field
+                    id="email"
+                    name="email"
+                    label="Email Address"
+                    type="email"
+                    autoComplete="email"
+                    value={accountFormValues.email}
+                    onChange={handleAccountInputValue}
+                    error={errors.email}
+                  />
+                </FieldRow>
+
+                <Divider style={{ margin: "24px 0" }} />
+
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    gap: 16,
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <PrimaryBtn component="a" href="/password/update">
+                    <KeyIcon sx={{ fontSize: 16, marginRight: 1 }} />
+                    Change Password
+                  </PrimaryBtn>
+                  <PrimaryBtn type="submit" disabled={!accountFormIsValid()}>
+                    Save details
+                  </PrimaryBtn>
+                </div>
+              </form>
+            </CardBody>
+          </Card>
+        </div>
+      </div>
+    </section>
   );
 };
 

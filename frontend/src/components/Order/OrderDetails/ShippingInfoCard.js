@@ -1,45 +1,28 @@
 import React from "react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  Divider,
-  Grid,
-  Typography,
-} from "@mui/material";
+import { Card, CardBody, Overline, BodyText, Divider } from "../../../design/primitives";
 
 function ShippingInfoCard({ name, phone, address }) {
   return (
     <Card>
-      <CardHeader
-        subheader="Actual address for delivering items"
-        title="Shipping Info"
-      />
-      <Divider />
-      <CardContent>
-        <Grid container spacing={6} wrap="wrap">
-          <Grid
-            item
-            md={4}
-            sm={6}
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-            }}
-            xs={12}
-          >
-            <Typography gutterBottom variant="body1">
-              Name: {name}
-            </Typography>
-            <Typography gutterBottom variant="body1">
-              Phone: {phone}
-            </Typography>
-            <Typography gutterBottom variant="body1">
-              Address: {address}
-            </Typography>
-          </Grid>
-        </Grid>
-      </CardContent>
+      <CardBody>
+        <Overline style={{ marginBottom: 4 }}>Shipping Info</Overline>
+        <BodyText small style={{ color: "var(--t-neutral-400)", marginBottom: 16 }}>
+          Actual address for delivering items
+        </BodyText>
+        <Divider style={{ marginBottom: 16 }} />
+        <div style={{ display: "grid", gap: 4 }}>
+          <BodyText>
+            <span style={{ color: "var(--t-neutral-500)" }}>Name:</span>{" "}
+            <span style={{ fontWeight: 500 }}>{name}</span>
+          </BodyText>
+          <BodyText>
+            <span style={{ color: "var(--t-neutral-500)" }}>Phone:</span> {phone}
+          </BodyText>
+          <BodyText>
+            <span style={{ color: "var(--t-neutral-500)" }}>Address:</span> {address}
+          </BodyText>
+        </div>
+      </CardBody>
     </Card>
   );
 }

@@ -1,11 +1,7 @@
-import { Rating } from "@mui/material";
 import React from "react";
+import { Rating } from "@mui/material";
+import { avatarUrl } from "../utils/avatar";
 
-/**
- * Returns a human-readable date string like "27 Apr 2026".
- * Works with ISO strings, JS Date objects, and MongoDB date values.
- * Returns null (renders nothing) if the value is absent or unparseable.
- */
 function formatReviewDate(createdAt) {
   if (!createdAt) return null;
   const d = new Date(createdAt);
@@ -17,63 +13,100 @@ function formatReviewDate(createdAt) {
   });
 }
 
-function Reviewcard({ name, rating, comment, profileImg, createdAt }) {
+const StarShield = ({ size = 14 }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 20 20"
+    width={size}
+    height={size}
+    style={{
+      position: "absolute",
+      top: -2,
+      right: -2,
+      width: size,
+      height: size,
+      borderRadius: "50%",
+      background: "var(--t-accent-sage-400)",
+      fill: "#fff",
+    }}
+    aria-hidden
+  >
+    <path d="M19 11a7.5 7.5 0 0 1-3.5 5.94L10 20l-5.5-3.06A7.5 7.5 0 0 1 1 11V3c3.38 0 6.5-1.12 9-3 2.5 1.89 5.62 3 9 3v8zm-9 1.08l2.92 2.04-1.03-3.41 2.84-2.15-3.56-.08L10 5.12 8.83 8.48l-3.56.08L8.1 10.7l-1.03 3.4L10 12.09z" />
+  </svg>
+);
+
+export default function Reviewcard({ name, rating, comment, profileImg, createdAt }) {
   const dateLabel = formatReviewDate(createdAt);
+  const avatarSrc = profileImg || avatarUrl({ name, profilePic: { url: "" } });
 
   return (
-    <div className="relative bg-white dark:bg-gray-800 w-full rounded-lg p-4 mb-6 shadow sm:inline-block">
-      {/* Date — top-right corner, always rendered if present */}
-      {dateLabel && (
-        <span className="absolute top-3 right-4 text-xs text-gray-400 dark:text-gray-500 select-none">
-          {dateLabel}
-        </span>
-      )}
+    <article
+      style={{
+        display: "flex",
+        gap: 16,
+        padding: "1.25rem 0",
+        borderTop: "1px solid var(--t-neutral-200)",
+      }}
+    >
+      <div style={{ position: "relative", flexShrink: 0 }}>
+        <img
+          alt={name}
+          src={avatarSrc}
+          style={{
+            width: 44,
+            height: 44,
+            borderRadius: "50%",
+            objectFit: "cover",
+            background: "var(--t-neutral-100)",
+            display: "block",
+          }}
+        />
+        <StarShield size={16} />
+      </div>
 
-      <div className="flex items-start text-left">
-        {/* Avatar */}
-        <div className="flex-shrink-0">
-          <div className="inline-block relative">
-            <a href="/abc" className="block relative">
-              <img
-                alt="profil"
-                src={
-                  profileImg
-                    ? profileImg
-                    : "https://icon-library.com/images/white-profile-icon/white-profile-icon-24.jpg"
-                }
-                className="mx-auto object-cover rounded-full h-16 w-16"
-              />
-            </a>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              className="fill-current text-white bg-green-600 rounded-full p-1 absolute bottom-0 right-0 w-6 h-6 -mx-1 -my-1"
-            >
-              <path d="M19 11a7.5 7.5 0 0 1-3.5 5.94L10 20l-5.5-3.06A7.5 7.5 0 0 1 1 11V3c3.38 0 6.5-1.12 9-3 2.5 1.89 5.62 3 9 3v8zm-9 1.08l2.92 2.04-1.03-3.41 2.84-2.15-3.56-.08L10 5.12 8.83 8.48l-3.56.08L8.1 10.7l-1.03 3.4L10 12.09z"></path>
-            </svg>
-          </div>
-        </div>
-
-        {/* Content */}
-        <div className="ml-6">
-          <span className="text-gray-600 capitalize dark:text-gray-200 font-bold">
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "baseline",
+            gap: 12,
+            flexWrap: "wrap",
+            marginBottom: 4,
+          }}
+        >
+          <span
+            style={{
+              color: "var(--t-neutral-900)",
+              fontWeight: 500,
+              fontSize: "var(--t-fontSize-base)",
+            }}
+          >
             {name}
           </span>
-          <div className="flex items-center mt-1">
-            <Rating
-              name="half-rating-read"
-              value={rating}
-              precision={0.5}
-              readOnly
-            />
-          </div>
-          <div className="mt-3">
-            <p className="mt-1 max-w-xs dark:text-white">{comment}</p>
-          </div>
+          {dateLabel && (
+            <span
+              style={{
+                color: "var(--t-neutral-500)",
+                fontSize: "var(--t-fontSize-sm)",
+              }}
+            >
+              {dateLabel}
+            </span>
+          )}
         </div>
+        <Rating value={rating} precision={0.5} readOnly size="small" sx={{ mb: 1 }} />
+        <p
+          style={{
+            color: "var(--t-neutral-700)",
+            fontSize: "var(--t-fontSize-base)",
+            lineHeight: 1.6,
+            margin: 0,
+          }}
+        >
+          {comment}
+        </p>
       </div>
-    </div>
+    </article>
   );
 }
-
-export default Reviewcard;

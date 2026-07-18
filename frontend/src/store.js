@@ -28,6 +28,7 @@ import { wishlistReducer } from "./reducers/wishlistReducer";
 import { toastReducer } from "./reducers/toastReducer";
 import { apiReducer, apiMiddleware } from "./slices/apiSlice";
 import checkoutReducer, { persistMiddleware } from "./slices/checkoutSlice";
+import { couponReducer } from "./reducers/couponReducer";
 
 const store = configureStore({
   reducer: {
@@ -54,6 +55,7 @@ const store = configureStore({
     wishlist: wishlistReducer,
     toast: toastReducer,
     checkout: checkoutReducer,
+    coupon: couponReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(apiMiddleware, persistMiddleware),

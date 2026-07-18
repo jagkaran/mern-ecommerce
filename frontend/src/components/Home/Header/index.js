@@ -28,6 +28,21 @@ function Header() {
   const cartCount = cartItems.reduce((a, i) => a + i.quantity, 0);
   const [anchorEl, setAnchorEl] = useState(null);
   const scrolled = useHeaderScroll();
+  // On checkout-style pages the sticky stepper is the user focus — slide
+  // the global Header out of the way once the user has scrolled past the
+  // hero so the stepper is the only top bar. Restored when they return.
+  const isCheckoutRoute = location.pathname === "/checkout" || location.pathname === "/shipping";
+  const [hideOnCheckout, setHideOnCheckout] = useState(false);
+  useEffect(() => {
+    if (!isCheckoutRoute) {
+      setHideOnCheckout(false);
+      return undefined;
+    }
+    const onScroll = () => setHideOnCheckout(window.scrollY > 60);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [isCheckoutRoute]);
   const {
     code: currency,
     rates: currencyRates,
@@ -52,7 +67,7 @@ function Header() {
       navigate("/signin", { replace: true });
       return;
     }
-    setAnchorEl(event.currentTarget);
+    setAnchorEl(event?.currentTarget || null);
   };
 
   const handleAccountClose = () => setAnchorEl(null);
@@ -76,12 +91,13 @@ function Header() {
         alignItems: "center",
         width: "100%",
         backgroundColor: "var(--t-neutral-50)",
-        borderBottom: scrolled
-          ? "1px solid var(--t-neutral-200)"
-          : "1px solid transparent",
-        boxShadow: scrolled ? "var(--t-shadow-sm)" : "none",
+        borderBottom:
+          scrolled && !hideOnCheckout ? "1px solid var(--t-neutral-200)" : "1px solid transparent",
+        boxShadow: scrolled && !hideOnCheckout ? "var(--t-shadow-sm)" : "none",
+        transform: hideOnCheckout ? "translateY(-100%)" : "translateY(0)",
+        pointerEvents: hideOnCheckout ? "none" : "auto",
         transition:
-          "border-color 200ms cubic-bezier(0, 0, 0.2, 1), box-shadow 200ms cubic-bezier(0, 0, 0.2, 1)",
+          "transform 200ms cubic-bezier(0, 0, 0.2, 1), border-color 200ms cubic-bezier(0, 0, 0.2, 1), box-shadow 200ms cubic-bezier(0, 0, 0.2, 1)",
       }}
     >
       <SkipLink />
@@ -128,10 +144,17 @@ function Header() {
         />
 
         <MobileDrawer
+          pathname={location.pathname}
           wishlistCount={wishlistCount}
           cartCount={cartCount}
           isAuthenticated={isAuthenticated}
-          onAccountClick={handleAccountClick}
+          currency={currency}
+          currencyLoaded={currencyLoaded}
+          currencyLocked={currencyLocked}
+          currencyRates={currencyRates}
+          setCurrency={setCurrency}
+          user={user}
+          onLogout={handleLogout}
         />
       </div>
 

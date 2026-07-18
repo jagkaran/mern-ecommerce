@@ -1,53 +1,76 @@
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require("@playwright/test");
+const SignInPage = require("./pages/SignInPage");
 
-test.describe('Sign In page', () => {
+// POM proof: every selector in this spec flows through SignInPage. Future
+// specs can copy the same pattern. See docs/TESTING.md.
+
+test.describe("Sign In page", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/signin');
+    await new SignInPage(page).goto();
   });
 
-  test('renders sign-in form', async ({ page }) => {
-    await expect(page.getByRole('heading', { name: /sign in/i })).toBeVisible();
-    await expect(page.getByLabel(/email/i)).toBeVisible();
-    await expect(page.locator('input#password')).toBeVisible();
-    await expect(page.getByRole('button', { name: /sign in/i })).toBeVisible();
+  test("renders sign-in form", async ({ page }) => {
+    // Arrange
+    const signIn = new SignInPage(page);
+
+    // Act + Assert
+    await signIn.expectHeading();
+    await expect(signIn.emailInput).toBeVisible();
+    await expect(signIn.passwordInput).toBeVisible();
+    await expect(signIn.submitButton).toBeVisible();
   });
 
-  test('has link to sign up page', async ({ page }) => {
-    await expect(
-      page.getByRole('link', { name: /sign up|register/i })
-    ).toBeVisible();
+  test("has link to sign up page", async ({ page }) => {
+    // Arrange
+    const signIn = new SignInPage(page);
+
+    // Act + Assert
+    await expect(signIn.signUpLink).toBeVisible();
   });
 });
 
-test.describe('Register page', () => {
+test.describe("Register page", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/signup');
+    await new SignInPage(page).gotoSignUp();
   });
 
-  test('renders register form', async ({ page }) => {
-    await expect(page.getByLabel(/name/i)).toBeVisible();
-    await expect(page.getByLabel(/email/i)).toBeVisible();
-    await expect(page.locator('input#password')).toBeVisible();
+  test("renders register form", async ({ page }) => {
+    // Arrange
+    const signIn = new SignInPage(page);
+
+    // Act + Assert
+    await expect(signIn.nameInput).toBeVisible();
+    await expect(signIn.emailInput).toBeVisible();
+    await expect(signIn.passwordInput).toBeVisible();
   });
 
-  test('sign up button disabled until form valid and avatar uploaded', async ({ page }) => {
-    const submitBtn = page.getByRole('button', { name: /sign up|register/i });
-    await expect(submitBtn).toBeDisabled();
+  test("sign up button disabled until form valid and avatar uploaded", async ({ page }) => {
+    // Arrange
+    const signIn = new SignInPage(page);
+
+    // Act + Assert
+    await expect(signIn.signUpButton).toBeDisabled();
   });
 
-  test('has link back to sign in', async ({ page }) => {
-    await expect(
-      page.getByRole('link', { name: /sign in|log in/i })
-    ).toBeVisible();
+  test("has link back to sign in", async ({ page }) => {
+    // Arrange
+    const signIn = new SignInPage(page);
+
+    // Act + Assert
+    await expect(signIn.signInLink).toBeVisible();
   });
 });
 
-test.describe('Forgot Password page', () => {
+test.describe("Forgot Password page", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/password/forgot');
+    await new SignInPage(page).gotoForgotPassword();
   });
 
-  test('renders forgot password form', async ({ page }) => {
-    await expect(page.getByLabel(/email/i)).toBeVisible();
+  test("renders forgot password form", async ({ page }) => {
+    // Arrange
+    const signIn = new SignInPage(page);
+
+    // Act + Assert
+    await expect(signIn.emailInput).toBeVisible();
   });
 });

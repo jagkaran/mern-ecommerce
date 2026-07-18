@@ -4,23 +4,23 @@ import Box from "@mui/material/Box";
 import CssBaseline from "@mui/material/CssBaseline";
 import DashboardAppBar from "../Sidebar/DashboardAppBar";
 import DashboardDrawer from "../Sidebar/DashboardDrawer";
+import AdminMobileNav from "../AdminMobileNav";
 import { CircularProgress, Container, Grid } from "@mui/material";
 import { useSelector, useDispatch } from "react-redux";
 import { clearErrors, getAdminProducts } from "../../../actions/productAction";
 import AllProductsList from "./AllProductsList";
-import { useAlert } from "react-alert";
+import { useToast } from "../../../hooks/useToast";
 import Seo from "../../Seo";
-import Copyright from "../../Copyright";
 
 function AllAdminProducts() {
   const theme = useTheme();
   const [open, setOpen] = React.useState(false);
 
-  const handleDrawerOpen  = () => setOpen(true);
+  const handleDrawerOpen = () => setOpen(true);
   const handleDrawerClose = () => setOpen(false);
 
   const dispatch = useDispatch();
-  const alert    = useAlert();
+  const toast = useToast();
 
   const { loading, error, products } = useSelector((state) => state.product);
 
@@ -28,7 +28,7 @@ function AllAdminProducts() {
   // appears immediately without requiring a manual browser refresh.
   React.useEffect(() => {
     if (error) {
-      alert.error(error);
+      toast.error(error);
       dispatch(clearErrors());
     }
     dispatch(getAdminProducts());
@@ -38,16 +38,16 @@ function AllAdminProducts() {
   // Error side-effect handled separately so it doesn’t re-trigger the fetch
   React.useEffect(() => {
     if (error) {
-      alert.error(error);
+      toast.error(error);
       dispatch(clearErrors());
     }
-  }, [error, alert, dispatch]);
+  }, [error, toast, dispatch]);
 
   // Backend already returns products sorted newest-first, but keep the
   // client-side sort as a safety net in case the order ever changes.
-  const sortedProducts = (products || []).slice().sort(
-    (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-  );
+  const sortedProducts = (products || [])
+    .slice()
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
   return (
     <>
@@ -59,12 +59,9 @@ function AllAdminProducts() {
         />
         <CssBaseline />
         <DashboardAppBar open={open} handleDrawerOpen={handleDrawerOpen} />
-        <DashboardDrawer
-          open={open}
-          handleDrawerClose={handleDrawerClose}
-          theme={theme}
-        />
+        <DashboardDrawer open={open} handleDrawerClose={handleDrawerClose} theme={theme} />
         <Box component="main" sx={{ flexGrow: 1, py: 8 }}>
+          <AdminMobileNav />
           <Container maxWidth="lg" sx={{ mt: 2, mb: 2 }}>
             <Grid container spacing={3}>
               <Grid item xs={12}>
@@ -80,7 +77,6 @@ function AllAdminProducts() {
           </Container>
         </Box>
       </Box>
-      <Copyright />
     </>
   );
 }

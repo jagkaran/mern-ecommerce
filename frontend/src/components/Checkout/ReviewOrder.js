@@ -1,28 +1,11 @@
 import React, { useEffect, useMemo } from "react";
-import Typography from "@mui/material/Typography";
-import List from "@mui/material/List";
-import ListItem from "@mui/material/ListItem";
-import ListItemText from "@mui/material/ListItemText";
-import Grid from "@mui/material/Grid";
 import { useSelector } from "react-redux";
-import { Avatar } from "@mui/material";
-import { Country, State } from "country-state-city";
-import { fmt, fmtNum } from "../../utils/formatCurrency";
+import { useCurrency } from "../../utils/currencyContext";
+import { Headline, BodyText, Price, Divider, Overline } from "../../design/primitives";
 
 function ReviewOrder({ reviewData, handleReviewDataChange }) {
+  const { fmt } = useCurrency();
   const { shippingInfo, cartItems } = useSelector((state) => state.cart);
-  const country = Country.getCountryByCode(shippingInfo.country);
-  const state = State.getStateByCodeAndCountry(
-    shippingInfo.state,
-    shippingInfo.country
-  );
-  const addresses = [
-    shippingInfo.address,
-    shippingInfo.city,
-    state?.name,
-    shippingInfo.zip,
-    country.name,
-  ];
 
   const computed = useMemo(() => {
     const subTotal = cartItems.reduce((acc, item) => acc + item.quantity * item.price, 0);
@@ -32,109 +15,142 @@ function ReviewOrder({ reviewData, handleReviewDataChange }) {
     return { subTotal, shippingCharges, tax, totalPrice };
   }, [cartItems]);
 
-  // Update parent state when computed values change
   useEffect(() => {
     const { subTotal, shippingCharges, tax, totalPrice } = computed;
     if (reviewData?.subTotal !== subTotal) handleReviewDataChange("subTotal", subTotal);
-    if (reviewData?.shippingCharges !== shippingCharges) handleReviewDataChange("shippingCharges", shippingCharges);
+    if (reviewData?.shippingCharges !== shippingCharges)
+      handleReviewDataChange("shippingCharges", shippingCharges);
     if (reviewData?.tax !== tax) handleReviewDataChange("tax", tax);
     if (reviewData?.totalPrice !== totalPrice) handleReviewDataChange("totalPrice", totalPrice);
-  }, [computed, handleReviewDataChange]);
-
-  // handleReviewDataChange is now wrapped in useCallback in the parent (Shipping.js)
-  // so it is safe to include in the dependency array without causing infinite re-renders.
-  useEffect(() => {
-    if (reviewData?.subTotal !== "") {
-      handleReviewDataChange("subTotal", reviewData.subTotal);
-    }
-    if (reviewData?.shippingCharges !== "") {
-      handleReviewDataChange("shippingCharges", reviewData.shippingCharges);
-    }
-    if (reviewData?.tax !== "") {
-      handleReviewDataChange("tax", reviewData.tax);
-    }
-    if (reviewData?.totalPrice !== "") {
-      handleReviewDataChange("totalPrice", reviewData.totalPrice);
-    }
-  }, [
-    reviewData.subTotal,
-    reviewData.shippingCharges,
-    reviewData.tax,
-    reviewData.totalPrice,
-    handleReviewDataChange,
-  ]);
+  }, [computed, handleReviewDataChange, reviewData]);
 
   return (
     <div>
-      <Typography variant="h5" gutterBottom>
+      <Overline style={{ marginBottom: 8 }}>Review</Overline>
+      <Headline level="xl" style={{ marginBottom: 24 }}>
         Order Summary
-      </Typography>
-      <List disablePadding>
-        {cartItems.map((product) => (
-          <ListItem key={product.product} sx={{ py: 1, px: 0 }}>
-            <Avatar
-              src={product.image}
-              sx={{ mr: 2, width: 90, height: 120 }}
-              variant="square"
-            />
-            <ListItemText
-              primary={product.name}
-              secondary={`Quantity: ${product.quantity}`}
-            />
-            <Typography variant="body2">
-              {fmtNum(product.price)} X {product.quantity} ={" "}
-              {fmtNum(product.price * product.quantity)}
-            </Typography>
-          </ListItem>
+      </Headline>
+
+      <BodyText style={{ color: "var(--t-neutral-700)", marginBottom: 8 }}>
+        <strong>
+          {shippingInfo?.firstName} {shippingInfo?.lastName}
+        </strong>
+      </BodyText>
+      <BodyText small style={{ color: "var(--t-neutral-500)", marginBottom: 24 }}>
+        {shippingInfo?.address}, {shippingInfo?.city}, {shippingInfo?.state} {shippingInfo?.zip}
+      </BodyText>
+
+      <Divider />
+      <BodyText
+        style={{
+          fontSize: "var(--t-fontSize-sm)",
+          fontWeight: 600,
+          textTransform: "uppercase",
+          letterSpacing: "0.05em",
+          margin: "24px 0",
+          color: "var(--t-neutral-700)",
+        }}
+      >
+        Items
+      </BodyText>
+
+      <div style={{ display: "grid", gap: 16 }}>
+        {cartItems.map((item, index) => (
+          <React.Fragment key={item.product || index}>
+            {index > 0 && <Divider />}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "72px 1fr auto",
+                gap: 16,
+                alignItems: "center",
+              }}
+            >
+              <div
+                style={{
+                  width: 72,
+                  height: 80,
+                  background: "var(--t-neutral-100)",
+                  borderRadius: "var(--t-border-radius-base)",
+                  overflow: "hidden",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {item.image ? (
+                  <img
+                    src={item.image}
+                    alt={item.name}
+                    style={{
+                      maxWidth: "100%",
+                      maxHeight: "100%",
+                      objectFit: "contain",
+                      padding: 4,
+                    }}
+                  />
+                ) : (
+                  <BodyText small style={{ color: "var(--t-neutral-400)" }}>
+                    No image
+                  </BodyText>
+                )}
+              </div>
+              <div>
+                <BodyText>
+                  <strong>{item.name}</strong>
+                </BodyText>
+                <BodyText small style={{ color: "var(--t-neutral-400)" }}>
+                  Qty: {item.quantity}
+                </BodyText>
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <Price style={{ fontSize: "var(--t-fontSize-base)" }}>
+                  {fmt(item.price * item.quantity)}
+                </Price>
+                <BodyText small style={{ color: "var(--t-neutral-400)" }}>
+                  {fmt(item.price)} each
+                </BodyText>
+              </div>
+            </div>
+          </React.Fragment>
         ))}
+      </div>
 
-        <ListItem sx={{ mt: 3, py: 1, px: 0 }}>
-          <ListItemText primary="Sub Total" />
-          <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-            {fmt(reviewData.subTotal)}
-          </Typography>
-        </ListItem>
+      <Divider style={{ marginTop: 24 }} />
 
-        <ListItem sx={{ py: 1, px: 0 }}>
-          <ListItemText primary="Shipping Charges" />
-          <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-            {reviewData.shippingCharges === 0
-              ? "Free"
-              : fmt(reviewData.shippingCharges)}
-          </Typography>
-        </ListItem>
-
-        <ListItem sx={{ py: 1, px: 0 }}>
-          <ListItemText primary="Tax" />
-          <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-            {fmt(reviewData.tax)}
-          </Typography>
-        </ListItem>
-
-        <ListItem sx={{ py: 1, px: 0 }}>
-          <ListItemText primary="Total" />
-          <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-            {fmt(reviewData.totalPrice)}
-          </Typography>
-        </ListItem>
-      </List>
-
-      <Grid container spacing={2}>
-        <Grid item xs={12} sm={12}>
-          <Typography variant="h5" gutterBottom sx={{ mt: 2 }}>
-            Shipping Details
-          </Typography>
-          <Typography gutterBottom>
-            <b>Name:</b> {shippingInfo.firstName} {shippingInfo.lastName}
-          </Typography>
-          <Typography gutterBottom>
-            <b>Phone No:</b> {shippingInfo.phone}
-          </Typography>
-          <Typography gutterBottom>
-            <b>Shipping Address:</b> {addresses.join(", ")}
-          </Typography>
-        </Grid>
-      </Grid>
+      <div style={{ maxWidth: 320, marginLeft: "auto" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+          <BodyText>Subtotal</BodyText>
+          <BodyText>{fmt(reviewData?.subTotal ?? 0)}</BodyText>
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+          <BodyText>Tax (15%)</BodyText>
+          <BodyText>{fmt(reviewData?.tax ?? 0)}</BodyText>
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
+          <BodyText>Shipping</BodyText>
+          <BodyText
+            style={{
+              color:
+                reviewData?.shippingCharges === 0 ? "var(--t-primary-600)" : "var(--t-neutral-900)",
+            }}
+          >
+            {reviewData?.shippingCharges === 0 ? "Free" : fmt(reviewData?.shippingCharges ?? 0)}
+          </BodyText>
+        </div>
+        <Divider />
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            marginTop: 16,
+            alignItems: "center",
+          }}
+        >
+          <BodyText style={{ fontWeight: 600 }}>Total</BodyText>
+          <Price>{fmt(reviewData?.totalPrice ?? 0)}</Price>
+        </div>
+      </div>
     </div>
   );
 }

@@ -48,7 +48,7 @@ function Home() {
         ctaLabel="Meet the makers"
         ctaHref="/aboutus"
         imageSrc={products[2]?.images?.[0]?.url}
-        imageAlt={products[2]?.name || 'A maker at work'}
+        imageAlt={products[2]?.name || "A maker at work"}
         reverse={false}
       />
       <Manifesto />
@@ -60,7 +60,7 @@ function Home() {
         ctaLabel="How the covenant works"
         ctaHref="/aboutus"
         imageSrc={products[3]?.images?.[0]?.url}
-        imageAlt={products[3]?.name || 'A piece being restored'}
+        imageAlt={products[3]?.name || "A piece being restored"}
         reverse={true}
       />
     </>

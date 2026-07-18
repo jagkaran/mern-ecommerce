@@ -42,6 +42,7 @@ Each PR independently revertable. No DB migrations, no env changes, no API break
 **Why first**: measure before changing. Re-running `npm run perf` after PR2/PR3 quantifies wins.
 
 **Changes**:
+
 - `package.json`: add devDeps `lighthouse@^12`, `chrome-launcher@^1`. Add script `"perf": "node scripts/lhci/local-lighthouse.mjs"`.
 - `scripts/lhci/local-lighthouse.mjs` (new, ~80 lines): launches Chrome via `chrome-launcher`, runs `lighthouse` programmatically on:
   - URLs: `/` and `/product/<id>` (uses seeded product slug).
@@ -63,16 +64,16 @@ Each PR independently revertable. No DB migrations, no env changes, no API break
 
 ```js
 export function cld(url, { w, h } = {}) {
-  if (!url || !url.includes('res.cloudinary.com')) return url;
-  const transforms = ['f_auto', 'q_auto'];
+  if (!url || !url.includes("res.cloudinary.com")) return url;
+  const transforms = ["f_auto", "q_auto"];
   if (w) transforms.push(`w_${w}`);
   if (h) transforms.push(`h_${h}`);
-  const sep = url.includes('?') ? '&' : '?';
-  return url.replace('/upload/', `/upload/${transforms.join(',')}/`);
+  const sep = url.includes("?") ? "&" : "?";
+  return url.replace("/upload/", `/upload/${transforms.join(",")}/`);
 }
 
 export function srcset(url, widths = [320, 480, 768, 1200]) {
-  return widths.map(w => `${cld(url, { w })} ${w}w`).join(', ');
+  return widths.map((w) => `${cld(url, { w })} ${w}w`).join(", ");
 }
 ```
 
@@ -82,11 +83,11 @@ export function srcset(url, widths = [320, 480, 768, 1200]) {
 
 **Consumer changes**:
 
-| File | Change |
-|---|---|
-| `frontend/src/components/Product/ProductCard.jsx` | `<img src={url}>` → `<img src={cld(url, { w: 480 })} srcSet={srcset(url)} sizes="(max-width:600px) 50vw, 25vw" loading="lazy" decoding="async" />` |
-| `frontend/src/components/Product/PDP/MainImage.js` | Same swap, `loading="eager"` + `fetchpriority="high"` (LCP image). |
-| `frontend/src/components/Product/QuickView/QuickViewDialog.jsx` | Same swap as card. |
+| File                                                            | Change                                                                                                                                             |
+| --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `frontend/src/components/Product/ProductCard.jsx`               | `<img src={url}>` → `<img src={cld(url, { w: 480 })} srcSet={srcset(url)} sizes="(max-width:600px) 50vw, 25vw" loading="lazy" decoding="async" />` |
+| `frontend/src/components/Product/PDP/MainImage.js`              | Same swap, `loading="eager"` + `fetchpriority="high"` (LCP image).                                                                                 |
+| `frontend/src/components/Product/QuickView/QuickViewDialog.jsx` | Same swap as card.                                                                                                                                 |
 
 ### JSON-LD structured data
 
@@ -104,7 +105,7 @@ export default function JsonLd({ data }) {
       />
     );
   } catch (err) {
-    if (process.env.NODE_ENV !== 'production') console.warn('JsonLd: stringify failed', err);
+    if (process.env.NODE_ENV !== "production") console.warn("JsonLd: stringify failed", err);
     return null;
   }
 }
@@ -116,31 +117,35 @@ export default function JsonLd({ data }) {
 export function productJsonLd(product) {
   if (!product) return null;
   return {
-    '@context': 'https://schema.org',
-    '@type': 'Product',
+    "@context": "https://schema.org",
+    "@type": "Product",
     name: product.name,
     image: Array.isArray(product.images) ? product.images : [product.images].filter(Boolean),
     description: product.description,
     sku: product._id,
     aggregateRating: product.avgRating
-      ? { '@type': 'AggregateRating', ratingValue: product.avgRating, reviewCount: product.numOfReviews ?? 0 }
+      ? {
+          "@type": "AggregateRating",
+          ratingValue: product.avgRating,
+          reviewCount: product.numOfReviews ?? 0,
+        }
       : undefined,
-    review: (product.reviews || []).slice(0, 3).map(r => ({
-      '@type': 'Review',
+    review: (product.reviews || []).slice(0, 3).map((r) => ({
+      "@type": "Review",
       author: r.name,
       datePublished: r.createdAt,
       reviewBody: r.comment,
-      reviewRating: { '@type': 'Rating', ratingValue: r.rating },
+      reviewRating: { "@type": "Rating", ratingValue: r.rating },
     })),
   };
 }
 
 export function organizationJsonLd() {
   return {
-    '@context': 'https://schema.org',
-    '@type': 'Organization',
-    name: 'Hverdag',
-    url: typeof window !== 'undefined' ? window.location.origin : '',
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "Hverdag",
+    url: typeof window !== "undefined" ? window.location.origin : "",
     logo: siteConfig.logoUrl, // single source of truth in frontend/src/config/site.js (or existing theme/config module)
   };
 }
@@ -148,10 +153,10 @@ export function organizationJsonLd() {
 
 **Consumer changes**:
 
-| File | Change |
-|---|---|
+| File                                                      | Change                                                      |
+| --------------------------------------------------------- | ----------------------------------------------------------- |
 | `frontend/src/components/Product/PDP/ProductDetailsV2.js` | Render `<JsonLd data={productJsonLd(product)} />` near top. |
-| `frontend/src/components/Home/Home.js` | Render `<JsonLd data={organizationJsonLd()} />`. |
+| `frontend/src/components/Home/Home.js`                    | Render `<JsonLd data={organizationJsonLd()} />`.            |
 
 **Data source**: Product object already carries `avgRating`, `numOfReviews`, `reviews[]` from existing `getProduct` API response. No backend change.
 
@@ -183,7 +188,7 @@ export function organizationJsonLd() {
 **New component**: `frontend/src/components/SkipLink.jsx`
 
 ```jsx
-export default function SkipLink({ targetId = 'main' }) {
+export default function SkipLink({ targetId = "main" }) {
   return (
     <a href={`#${targetId}`} className="skip-link">
       Skip to main content
@@ -217,24 +222,28 @@ export default function SkipLink({ targetId = 'main' }) {
 ```
 
 **Wire-up**:
+
 - `frontend/src/components/Home/Header/index.js`: render `<SkipLink />` as first child.
 - `frontend/src/App.js`: wrap route outlet in `<Box component="main" id="main" tabIndex={-1}>` so skip-link target is focusable but not in tab order.
 
 ### 44px touch targets
 
 **File**: `frontend/src/components/Product/ProductCard.jsx`
+
 - Wishlist heart `IconButton` size `small` → `medium` (36px → 44px).
 - Quick-add cart button: confirm `minWidth: 44, minHeight: 44` (audit).
 
 ### Hero image alt text
 
 **File**: `frontend/src/components/Product/PDP/MainImage.js`
+
 - Change `alt=""` (decorative) → `alt={product?.name || 'Product image'}`.
 - Hero image is informative, not decorative.
 
 ### Contrast tokens
 
 **File**: `frontend/src/design/tokens-css.js`
+
 - Add `--t-neutral-700: #3D3D3D` (AA-compliant ≥4.5:1 against `#FAFAF9` background for body text).
 - Migrate known offenders:
   - `frontend/src/components/Product/ProductCard.jsx` review-count span → `color: var(--t-neutral-700)`.
@@ -250,20 +259,20 @@ export default function SkipLink({ targetId = 'main' }) {
 
 ## Error Handling Summary
 
-| Failure | Behavior |
-|---|---|
-| Non-Cloudinary URL passed to `cld` | Pass-through unchanged. |
-| `JSON.stringify` throws on JsonLd data | Render nothing. `console.warn` in dev only. |
-| Skip-link target `#main` missing | Browser shows "anchor not found" in dev; no crash. |
-| Cloudinary CDN cache cold | Old image format for ~1hr post-deploy until CDN propagates. |
+| Failure                                | Behavior                                                    |
+| -------------------------------------- | ----------------------------------------------------------- |
+| Non-Cloudinary URL passed to `cld`     | Pass-through unchanged.                                     |
+| `JSON.stringify` throws on JsonLd data | Render nothing. `console.warn` in dev only.                 |
+| Skip-link target `#main` missing       | Browser shows "anchor not found" in dev; no crash.          |
+| Cloudinary CDN cache cold              | Old image format for ~1hr post-deploy until CDN propagates. |
 
 ## Testing Summary
 
-| Suite | Existing | New | Status |
-|---|---|---|---|
-| Backend Jest | 210 | 0 | Must stay green (no BE change) |
-| Frontend Jest | 43 | 10 (6 cloudinary + 4 jsonLd) | Must pass |
-| Playwright E2E | 80 | 4 (3 JSON-LD + 1 skip-link) | Must pass |
+| Suite          | Existing | New                          | Status                         |
+| -------------- | -------- | ---------------------------- | ------------------------------ |
+| Backend Jest   | 210      | 0                            | Must stay green (no BE change) |
+| Frontend Jest  | 43       | 10 (6 cloudinary + 4 jsonLd) | Must pass                      |
+| Playwright E2E | 80       | 4 (3 JSON-LD + 1 skip-link)  | Must pass                      |
 
 ## Success Criteria
 

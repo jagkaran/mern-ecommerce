@@ -1,7 +1,29 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import { Provider } from "react-redux";
+import { configureStore } from "@reduxjs/toolkit";
 import ProductCard from "../components/Product/ProductCard";
+import { wishlistReducer } from "../reducers/wishlistReducer";
+import { userReducer } from "../reducers/User";
+
+function renderWithProviders(ui) {
+  const store = configureStore({
+    reducer: {
+      wishlist: wishlistReducer,
+      user: userReducer,
+    },
+    preloadedState: {
+      wishlist: { items: [], ids: [], loading: false, error: null },
+      user: { isAuthenticated: false, user: null },
+    },
+  });
+  return render(
+    <Provider store={store}>
+      <MemoryRouter>{ui}</MemoryRouter>
+    </Provider>
+  );
+}
 
 describe("ProductCard", () => {
   const baseProps = {
@@ -16,49 +38,28 @@ describe("ProductCard", () => {
   };
 
   it("renders product name and price", () => {
-    render(
-      <MemoryRouter>
-        <ProductCard {...baseProps} />
-      </MemoryRouter>
-    );
+    renderWithProviders(<ProductCard {...baseProps} />);
     expect(screen.getByText("Test Product")).toBeInTheDocument();
     expect(screen.getByText("$49.99")).toBeInTheDocument();
   });
 
-  it("shows placeholder image when images array is empty", () => {
-    render(
-      <MemoryRouter>
-        <ProductCard {...baseProps} images={[]} />
-      </MemoryRouter>
-    );
-    const img = screen.getByRole("img");
-    expect(img.getAttribute("src")).toMatch(/No image|svg/i);
+  it("shows 'No image' text when images array is empty", () => {
+    renderWithProviders(<ProductCard {...baseProps} images={[]} />);
+    expect(screen.getByText("No image")).toBeInTheDocument();
   });
 
   it("shows 'Out of Stock' badge when stock is 0", () => {
-    render(
-      <MemoryRouter>
-        <ProductCard {...baseProps} stock={0} />
-      </MemoryRouter>
-    );
+    renderWithProviders(<ProductCard {...baseProps} stock={0} />);
     expect(screen.getByText("Out of Stock")).toBeInTheDocument();
   });
 
-  it("shows '1 Review' singular when numOfReviews is 1", () => {
-    render(
-      <MemoryRouter>
-        <ProductCard {...baseProps} numOfReviews={1} />
-      </MemoryRouter>
-    );
-    expect(screen.getByText(/1 Review\b/)).toBeInTheDocument();
+  it("shows singular '1 review' when review count is 1", () => {
+    renderWithProviders(<ProductCard {...baseProps} numOfReviews={1} />);
+    expect(screen.getByText("1 review")).toBeInTheDocument();
   });
 
-  it("shows '2 Reviews' plural when numOfReviews is 2", () => {
-    render(
-      <MemoryRouter>
-        <ProductCard {...baseProps} numOfReviews={2} />
-      </MemoryRouter>
-    );
-    expect(screen.getByText(/2 Reviews/)).toBeInTheDocument();
+  it("shows plural review count text", () => {
+    renderWithProviders(<ProductCard {...baseProps} numOfReviews={2} />);
+    expect(screen.getByText("2 reviews")).toBeInTheDocument();
   });
 });

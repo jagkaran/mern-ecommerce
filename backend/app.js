@@ -89,16 +89,16 @@ app.use("/api/v1/products/categories", productLimiter);
 // These paths are registered BEFORE body parsers so limits engage early,
 // but the actual user resolution happens inside isAuthenticatedUser which
 // runs per-route — the keyGenerator falls back to IP until user is known.
-app.use("/api/v1/review",          userRateLimiter);
-app.use("/api/v1/order/new",       userRateLimiter);
+app.use("/api/v1/review", userRateLimiter);
+app.use("/api/v1/order/new", userRateLimiter);
 app.use("/api/v1/payment/process", userRateLimiter);
-app.use("/api/v1/admin/",          userRateLimiter);
+app.use("/api/v1/admin/", userRateLimiter);
 app.use("/api/v1/password/update", sensitiveUserLimiter);
-app.use("/api/v1/me/update",       sensitiveUserLimiter);
+app.use("/api/v1/me/update", sensitiveUserLimiter);
 // /order/claim mints a User and a JWT — same blast radius as
 // /password/update. Throttle it the same way to keep brute-force attacks
 // expensive. Keyed by IP because the requester is anonymous here.
-app.use("/api/v1/order/claim",     sensitiveUserLimiter);
+app.use("/api/v1/order/claim", sensitiveUserLimiter);
 
 // ─── Body parsers ─────────────────────────────────────────────────────────────
 
@@ -113,8 +113,8 @@ app.use("/api/v1/payment/webhook", express.raw({ type: "application/json" }));
 const uploadJsonParser = express.json({ limit: "10mb" });
 const uploadUrlencodedParser = express.urlencoded({ limit: "10mb", extended: true });
 
-app.use("/api/v1/register",          uploadJsonParser, uploadUrlencodedParser);
-app.use("/api/v1/me/update",         uploadJsonParser, uploadUrlencodedParser);
+app.use("/api/v1/register", uploadJsonParser, uploadUrlencodedParser);
+app.use("/api/v1/me/update", uploadJsonParser, uploadUrlencodedParser);
 app.use("/api/v1/admin/product/new", uploadJsonParser, uploadUrlencodedParser);
 app.use("/api/v1/admin/product/:id", uploadJsonParser, uploadUrlencodedParser);
 
@@ -161,14 +161,14 @@ const requestLogger = require("./middleware/logger");
 app.use(requestLogger);
 
 // ─── API Routes ───────────────────────────────────────────────────────────────
-const product    = require("./routes/productRoute");
-const user       = require("./routes/userRoute");
-const order      = require("./routes/orderRoute");
-const payment    = require("./routes/paymentRoute");
-const health     = require("./routes/healthRoute");
-const currency   = require("./routes/currencyRoute");
-const geo        = require("./routes/geoRoute");
-const coupon     = require("./routes/couponRoute");
+const product = require("./routes/productRoute");
+const user = require("./routes/userRoute");
+const order = require("./routes/orderRoute");
+const payment = require("./routes/paymentRoute");
+const health = require("./routes/healthRoute");
+const currency = require("./routes/currencyRoute");
+const geo = require("./routes/geoRoute");
+const { publicRouter: couponPublic, adminRouter: couponAdmin } = require("./routes/couponRoute");
 
 app.use("/api/v1/", health);
 app.use("/api/v1/", product);
@@ -177,7 +177,8 @@ app.use("/api/v1/", order);
 app.use("/api/v1/", payment);
 app.use("/api/v1/currency", currency);
 app.use("/api/v1/geo", geo);
-app.use("/api/v1/coupon", coupon);
+app.use("/api/v1/coupon", couponPublic);
+app.use("/api/v1/", couponAdmin);
 
 // API 404 catch-all — any /api route that didn't match above
 app.use("/api", (_req, res) => {

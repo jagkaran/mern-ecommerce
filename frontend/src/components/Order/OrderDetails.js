@@ -1,6 +1,5 @@
-import { Box, CircularProgress, Container, Typography } from "@mui/material";
 import React, { useEffect } from "react";
-import { useAlert } from "react-alert";
+import { useToast } from "../../hooks/useToast";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import { clearErrors, getOrderDetails } from "../../actions/orderAction";
@@ -11,94 +10,97 @@ import PaymentInfoCard from "./OrderDetails/PaymentInfoCard";
 import OrderStatusCard from "./OrderDetails/OrderStatusCard";
 import OrderItemsCard from "./OrderDetails/OrderItemsCard";
 import Seo from "../Seo";
-import Copyright from "../Copyright";
+import { useCurrency } from "../../utils/currencyContext";
+import { Headline, Overline } from "../../design/primitives";
 
 function OrderDetails() {
   const dispatch = useDispatch();
-  const alert = useAlert();
+  const toast = useToast();
   const { id } = useParams();
   const { order, error, loading } = useSelector((state) => state.orderDetails);
-  const country = Country.getCountryByCode(order.shippingInfo?.country);
-  const state = State.getStateByCodeAndCountry(
-    order.shippingInfo?.state,
-    order.shippingInfo?.country
-  );
+  const { code, rate } = useCurrency();
+  // Derive a safe country code once. order is `{}` until the fetch resolves,
+  // so unguarded `order.shippingInfo.country` reads blow up on first render.
+  const shippingCountry = order?.shippingInfo?.country || "IN";
+  const country = Country.getCountryByCode(shippingCountry);
+  const stateObj = State.getStateByCodeAndCountry(order?.shippingInfo?.state, shippingCountry);
 
   const addresses = [
-    order.shippingInfo?.address,
-    order.shippingInfo?.city,
-    state?.name,
-    order.shippingInfo?.zip,
+    order?.shippingInfo?.address,
+    order?.shippingInfo?.city,
+    stateObj?.name,
+    order?.shippingInfo?.zip,
     country?.name,
   ];
 
+  const displayCurrency = order?.currency || code;
+  const displayRate = order?.currencyRate || rate;
+
   useEffect(() => {
     if (error) {
-      alert.error(error);
+      toast.error(error);
       dispatch(clearErrors());
     }
     dispatch(getOrderDetails(id));
-  }, [dispatch, error, alert, id]);
+  }, [dispatch, error, toast, id]);
 
   return (
-    <>
-      {loading ? (
-        <div className="grid place-items-center h-screen">
-          <CircularProgress />
-        </div>
-      ) : (
-        order &&
-        order.shippingInfo && (
-          <Box
-            component="main"
-            sx={{
-              flexGrow: 1,
-              py: 8,
+    <section style={{ backgroundColor: "var(--t-neutral-50)", paddingBlock: "var(--t-space-3xl)" }}>
+      <Seo
+        title={`Order ${createOrderNumber(order?._id, shippingCountry)} - Ordinary`}
+        description="My Recent Order details - Ordinary"
+        path="/order"
+      />
+      <div
+        style={{
+          maxWidth: "var(--t-grid-containerMax)",
+          marginInline: "auto",
+          paddingInline: "var(--t-grid-containerPad)",
+        }}
+      >
+        <Overline style={{ marginBottom: 8 }}>Order</Overline>
+        <Headline level="2xl" style={{ marginBottom: 32 }}>
+          {createOrderNumber(order?._id, shippingCountry)}
+        </Headline>
+
+        {loading ? (
+          <div style={{ textAlign: "center", paddingTop: "8rem" }}>
+            <Headline level="lg">Loading…</Headline>
+          </div>
+        ) : order && order.shippingInfo ? (
+          <div
+            style={{
+              display: "grid",
+              gap: 24,
+              gridTemplateColumns: "minmax(0, 1fr)",
             }}
           >
-            <Seo
-              title={`My Order ${createOrderNumber(
-                order._id,
-                order.shippingInfo.country ? order.shippingInfo.country : "IN"
-              )} - Click.it store`}
-              description="My Recent Order details - Click.it store"
-              path="/account"
+            <ShippingInfoCard
+              name={order.user.name}
+              phone={order.shippingInfo.phone}
+              address={addresses.filter(Boolean).join(", ")}
             />
-            <Container maxWidth="lg">
-              <Typography sx={{ mb: 3 }} variant="h4">
-                Order:{" "}
-                {createOrderNumber(
-                  order._id,
-                  order.shippingInfo.country ? order.shippingInfo.country : "IN"
-                )}
-              </Typography>
-              <ShippingInfoCard
-                name={order.user.name}
-                phone={order.shippingInfo.phone}
-                address={addresses.join(", ")}
-              />
-              <Box sx={{ pt: 3 }}>
-                <PaymentInfoCard
-                  status={order.paymentInfo.status}
-                  amount={order.totalPrice}
-                  tax={order.taxPrice}
-                />
-              </Box>
-              <Box sx={{ pt: 3 }}>
-                <OrderStatusCard
-                  status={order.orderStatus}
-                  deliveredAt={order.deliveredAt}
-                />
-              </Box>
-              <Box sx={{ pt: 3 }}>
-                <OrderItemsCard orderItems={order.orderItems} />
-              </Box>
-            </Container>
-          </Box>
-        )
-      )}
-      <Copyright />
-    </>
+            <PaymentInfoCard
+              status={order.paymentInfo.status}
+              amount={order.totalPrice}
+              tax={order.taxPrice}
+              itemPrice={order.itemPrice}
+              shippingPrice={order.shippingPrice}
+              discount={order.discount}
+              coupon={order.coupon}
+              currency={displayCurrency}
+              rate={displayRate}
+            />
+            <OrderStatusCard status={order.orderStatus} deliveredAt={order.deliveredAt} />
+            <OrderItemsCard
+              orderItems={order.orderItems}
+              currency={displayCurrency}
+              rate={displayRate}
+            />
+          </div>
+        ) : null}
+      </div>
+    </section>
   );
 }
 

@@ -5,21 +5,23 @@ import { useDispatch, useSelector } from "react-redux";
 import AddIcon from "@mui/icons-material/Add";
 import { clearErrors, deleteProduct } from "../../../actions/productAction";
 import { useCurrency } from "../../../utils/currencyContext";
-import { useAlert } from "react-alert";
+import { useToast } from "../../../hooks/useToast";
 import { Card, CardBody, Overline, Headline, BodyText, GhostBtn } from "../../../design/primitives";
 import useAdminPagination, { PER_PAGE_OPTIONS } from "../Hooks/useAdminPagination";
 
 function AllProductsList({ products }) {
   const dispatch = useDispatch();
   const history = useNavigate();
-  const alert = useAlert();
+  const toast = useToast();
   const { fmt } = useCurrency();
 
   const [open, setOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState({});
 
-  const { page, perPage, totalPages, paginated, setPage, setPerPage } =
-    useAdminPagination(products, 10);
+  const { page, perPage, totalPages, paginated, setPage, setPerPage } = useAdminPagination(
+    products,
+    10
+  );
 
   const handleClickOpen = (product) => {
     setOpen(true);
@@ -27,9 +29,7 @@ function AllProductsList({ products }) {
   };
   const handleClose = () => setOpen(false);
 
-  const { error: deleteError, isDeleted } = useSelector(
-    (state) => state.modifiedProduct
-  );
+  const { error: deleteError, isDeleted } = useSelector((state) => state.modifiedProduct);
 
   const deleteProductHandler = (id) => {
     dispatch(deleteProduct(id));
@@ -38,23 +38,21 @@ function AllProductsList({ products }) {
 
   useEffect(() => {
     if (deleteError) {
-      alert.error(deleteError);
+      toast.error(deleteError);
       dispatch(clearErrors());
     }
     if (isDeleted) {
-      alert.success("Product Deleted Successfully");
+      toast.success("Product Deleted Successfully");
       history("/admin/products");
       dispatch({ type: "DeleteProductReset" });
     }
-  }, [dispatch, alert, deleteError, history, isDeleted]);
+  }, [dispatch, toast, deleteError, history, isDeleted]);
 
   if (!products || products.length === 0) {
     return (
       <Card>
         <CardBody>
-          <BodyText style={{ color: "var(--t-neutral-400)" }}>
-            No products found.
-          </BodyText>
+          <BodyText style={{ color: "var(--t-neutral-400)" }}>No products found.</BodyText>
         </CardBody>
       </Card>
     );
@@ -99,23 +97,21 @@ function AllProductsList({ products }) {
                   letterSpacing: "0.05em",
                 }}
               >
-                {["Product ID", "Name", "Ratings", "Stock", "Price", "Actions"].map(
-                  (h) => (
-                    <th
-                      key={h}
-                      style={{
-                        padding: "12px 16px",
-                        textAlign: "left",
-                        fontWeight: 600,
-                        color: "var(--t-neutral-500)",
-                        fontSize: "var(--t-fontSize-xs)",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {h}
-                    </th>
-                  )
-                )}
+                {["Product ID", "Name", "Ratings", "Stock", "Price", "Actions"].map((h) => (
+                  <th
+                    key={h}
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "left",
+                      fontWeight: 600,
+                      color: "var(--t-neutral-500)",
+                      fontSize: "var(--t-fontSize-xs)",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {h}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
@@ -124,14 +120,11 @@ function AllProductsList({ products }) {
                   key={product._id}
                   style={{
                     borderBottom: "1px solid var(--t-neutral-100)",
-                    transition: "background var(--t-motion-duration-fast) var(--t-motion-easing-out)",
+                    transition:
+                      "background var(--t-motion-duration-fast) var(--t-motion-easing-out)",
                   }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.background = "var(--t-neutral-50)")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.background = "transparent")
-                  }
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "var(--t-neutral-50)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                 >
                   <td
                     style={{
@@ -143,16 +136,9 @@ function AllProductsList({ products }) {
                   >
                     {product._id}
                   </td>
-                  <td style={{ padding: "12px 16px", fontWeight: 500 }}>
-                    {product.name}
-                  </td>
+                  <td style={{ padding: "12px 16px", fontWeight: 500 }}>{product.name}</td>
                   <td style={{ padding: "12px 16px" }}>
-                    <Rating
-                      value={product.ratings}
-                      precision={0.5}
-                      readOnly
-                      size="small"
-                    />
+                    <Rating value={product.ratings} precision={0.5} readOnly size="small" />
                   </td>
                   <td
                     style={{
@@ -185,12 +171,8 @@ function AllProductsList({ products }) {
                           textDecoration: "none",
                           transition: "color 150ms",
                         }}
-                        onMouseEnter={(e) =>
-                          (e.currentTarget.style.color = "var(--t-primary-600)")
-                        }
-                        onMouseLeave={(e) =>
-                          (e.currentTarget.style.color = "var(--t-neutral-500)")
-                        }
+                        onMouseEnter={(e) => (e.currentTarget.style.color = "var(--t-primary-600)")}
+                        onMouseLeave={(e) => (e.currentTarget.style.color = "var(--t-neutral-500)")}
                       >
                         ✎
                       </Link>
@@ -226,10 +208,7 @@ function AllProductsList({ products }) {
                             }}
                             onClick={(e) => e.stopPropagation()}
                           >
-                            <Headline
-                              level="lg"
-                              style={{ marginBottom: 12 }}
-                            >
+                            <Headline level="lg" style={{ marginBottom: 12 }}>
                               Delete Confirmation
                             </Headline>
                             <BodyText
@@ -253,9 +232,7 @@ function AllProductsList({ products }) {
                               </GhostBtn>
                               <GhostBtn
                                 size="small"
-                                onClick={() =>
-                                  deleteProductHandler(selectedProduct._id)
-                                }
+                                onClick={() => deleteProductHandler(selectedProduct._id)}
                                 style={{
                                   color: "var(--t-semantic-error)",
                                   borderColor: "var(--t-semantic-error)",
@@ -323,33 +300,23 @@ function AllProductsList({ products }) {
               >
                 ‹
               </GhostBtn>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                (p) => (
-                  <GhostBtn
-                    key={p}
-                    size="small"
-                    onClick={() => setPage(p)}
-                    style={{
-                      background:
-                        p === page
-                          ? "var(--t-primary-600)"
-                          : "transparent",
-                      color: p === page ? "#fff" : "var(--t-neutral-700)",
-                      borderColor:
-                        p === page
-                          ? "var(--t-primary-600)"
-                          : "var(--t-neutral-300)",
-                    }}
-                  >
-                    {p}
-                  </GhostBtn>
-                )
-              )}
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                <GhostBtn
+                  key={p}
+                  size="small"
+                  onClick={() => setPage(p)}
+                  style={{
+                    background: p === page ? "var(--t-primary-600)" : "transparent",
+                    color: p === page ? "#fff" : "var(--t-neutral-700)",
+                    borderColor: p === page ? "var(--t-primary-600)" : "var(--t-neutral-300)",
+                  }}
+                >
+                  {p}
+                </GhostBtn>
+              ))}
               <GhostBtn
                 size="small"
-                onClick={() =>
-                  setPage(Math.min(totalPages, page + 1))
-                }
+                onClick={() => setPage(Math.min(totalPages, page + 1))}
                 disabled={page >= totalPages}
               >
                 ›

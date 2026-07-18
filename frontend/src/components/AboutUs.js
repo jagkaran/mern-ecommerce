@@ -1,207 +1,486 @@
 import React from "react";
+import { Box, Container } from "@mui/material";
+import { Link } from "react-router-dom";
+import { Overline, PrimaryBtn, GhostBtn, Reveal, Breadcrumb } from "../design/primitives";
+import Seo from "./Seo";
+import EditorialSplit from "./Home/EditorialSplit";
 
-function AboutUs() {
+const PILLARS = [
+  {
+    title: "Mended, not replaced",
+    body: "Every piece we sell carries a lifetime care covenant. Wood is re-oiled. Ceramic is re-glazed. Linen is re-stitched. Knives are re-sharpened. Forever, at no charge.",
+  },
+  {
+    title: "Traced to the maker",
+    body: "We name every workshop we work with. A woodworker in Värmland. A ceramicist in Provence. A linen weaver in the Belgian Ardennes. We visit when we can, and we pay what the work is worth.",
+  },
+  {
+    title: "Plastic-free, by default",
+    body: "Every order leaves in recyclable packaging with a handwritten note. Returns come back the same way. We compost the cellophane from our samples.",
+  },
+  {
+    title: "Quiet, on purpose",
+    body: 'No countdown timers. No urgency nudges. No "you might also like" carousels. We make the site calm because we hope the objects will bring you some of the same.',
+  },
+];
+
+const STACK = [
+  {
+    area: "Frontend",
+    detail: "React 17, Redux Toolkit, Material UI v5, Framer-style organic motion",
+  },
+  { area: "Backend", detail: "Node.js 20, Express 4, Mongoose 8" },
+  { area: "Database", detail: "MongoDB Atlas" },
+  { area: "Auth", detail: "JWT in httpOnly cookie + double-submit CSRF token" },
+  { area: "Payments", detail: "Stripe Elements + webhook HMAC verification" },
+  { area: "Storage", detail: "Cloudinary" },
+];
+
+export default function AboutUs() {
   return (
     <>
-      <div className="relative mt-14 flex items-center h-96 w-full justify-center">
-        <div className="text-center mb-4 absolute -top-10 right-1/2 transform translate-x-1/2">
-          <a
-            href="https://www.linkedin.com/in/jagkaran-singh/"
-            className="block relative"
+      <Seo
+        title="About | Hverdag"
+        description="The keeper's covenant — who makes our pieces, how we mend them, and why we believe in fewer, better things."
+        path="/aboutus"
+      />
+
+      {/* Hero — manifesto */}
+      <Box
+        component="section"
+        sx={{
+          backgroundColor: "var(--t-neutral-50)",
+          backgroundImage:
+            "radial-gradient(at 18% 22%, rgba(146, 89, 63, 0.06) 0, transparent 55%), radial-gradient(at 82% 70%, rgba(138, 154, 123, 0.06) 0, transparent 55%)",
+          py: { xs: 8, md: 14 },
+          px: "var(--t-grid-containerPad)",
+        }}
+      >
+        <Container maxWidth="md" sx={{ textAlign: "center" }}>
+          <Breadcrumb
+            items={[{ label: "Home", to: "/" }, { label: "Our story" }]}
+            sx={{ justifyContent: "center", mb: 3 }}
+          />
+          <Overline sx={{ display: "block", color: "var(--t-neutral-500)", mb: 2 }}>
+            Our keeper's covenant
+          </Overline>
+          <h1
+            style={{
+              fontFamily: "var(--t-fontFamily-display)",
+              fontSize: "clamp(2.5rem, 5vw, 3.75rem)",
+              fontWeight: 500,
+              lineHeight: 1.1,
+              letterSpacing: "var(--t-letterSpacing-tight)",
+              color: "var(--t-neutral-900)",
+              marginBottom: "1.5rem",
+            }}
           >
-            <img
-              alt="profil"
-              src="Pic-JK-min.jpg"
-              className="mx-auto object-cover rounded-lg h-40 w-40  border-2 border-white dark:border-gray-800"
-            />
-          </a>
-        </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow px-8 py-4 pt-24">
-          <div className="text-center">
-            <p className="text-2xl text-gray-800 dark:text-white">
-              Jagkaran Singh
+            Made by hand.{" "}
+            <span style={{ fontStyle: "italic", color: "var(--t-primary-600)" }}>
+              Kept by hand.
+            </span>
+          </h1>
+          <p
+            style={{
+              fontFamily: "var(--t-fontFamily-display)",
+              fontStyle: "italic",
+              fontSize: "1.25rem",
+              lineHeight: 1.6,
+              color: "var(--t-neutral-600)",
+              maxWidth: "var(--t-measure-base)",
+              margin: "0 auto 2.5rem",
+            }}
+          >
+            Hverdag is a Nordic-rooted purveyor of thoughtfully sourced everyday essentials — for
+            people who value calm over clutter. Every piece is a deliberate replacement for a
+            throwaway habit.
+          </p>
+          <Box sx={{ display: "flex", gap: 1.5, justifyContent: "center", flexWrap: "wrap" }}>
+            <PrimaryBtn component={Link} to="/products">
+              Browse the collection
+            </PrimaryBtn>
+            <GhostBtn component={Link} to="/wishlist">
+              See your kept pieces
+            </GhostBtn>
+          </Box>
+        </Container>
+      </Box>
+
+      {/* Story */}
+      <Container
+        maxWidth={false}
+        sx={{
+          maxWidth: "var(--t-grid-containerMax)",
+          py: { xs: 6, md: 10 },
+          px: "var(--t-grid-containerPad)",
+        }}
+      >
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
+            gap: { xs: 4, md: 8 },
+            alignItems: "start",
+          }}
+        >
+          <Reveal>
+            <Overline sx={{ display: "block", color: "var(--t-neutral-500)", mb: 2 }}>
+              The story
+            </Overline>
+            <h2
+              style={{
+                fontFamily: "var(--t-fontFamily-display)",
+                fontSize: "clamp(1.875rem, 3.5vw, 2.5rem)",
+                fontWeight: 500,
+                lineHeight: 1.2,
+                letterSpacing: "var(--t-letterSpacing-tight)",
+                color: "var(--t-neutral-900)",
+                marginBottom: "1.5rem",
+              }}
+            >
+              Hverdag began in a kitchen, not a boardroom.
+            </h2>
+          </Reveal>
+          <Box
+            sx={{
+              color: "var(--t-neutral-700)",
+              fontSize: "var(--t-fontSize-base)",
+              lineHeight: 1.75,
+            }}
+          >
+            <p style={{ marginBottom: "1.25rem" }}>
+              Hverdag grew out of a frustration with things that didn't last. A wooden spoon that
+              cracked after two winters. A knife that dulled past sharpening. A favourite shirt
+              whose first button fell off in the wash.
             </p>
-            <p className="text-xl text-gray-500 dark:text-gray-200 font-light">
-              SFCC consultant & React Enthusiast
+            <p style={{ marginBottom: "1.25rem" }}>
+              We started looking for the makers who still take the time to do it properly — and
+              asking them quietly if they'd make us a few pieces. They did. People we know came by
+              to see them, and ask if they could have one too. So we started a small shop.
             </p>
-            <p className="text-md text-gray-500 w-60 dark:text-gray-400 mx-auto py-4 font-light">
-              jagkarans43@gmail.com
+            <p style={{ marginBottom: 0 }}>
+              That was the beginning of the keeper's covenant: when something wears, we mend it.
+              When something breaks, we fix it. When something lasts past its usefulness, we help it
+              find a new home.
             </p>
-          </div>
-          <div className="pt-8 flex border-t border-gray-200 w-40 mx-auto text-gray-500 items-center justify-center">
-            <a href="https://www.linkedin.com/in/jagkaran-singh/">
-              <svg
-                width="30"
-                height="30"
-                fill="currentColor"
-                className="text-xl hover:text-linkdein_blue dark:hover:text-white transition-colors duration-200"
-                viewBox="0 0 1792 1792"
-                xmlns="http://www.w3.org/2000/svg"
+          </Box>
+        </Box>
+      </Container>
+
+      {/* Pillars */}
+      <Box
+        component="section"
+        sx={{ backgroundColor: "var(--t-neutral-100)", py: { xs: 6, md: 10 } }}
+      >
+        <Container
+          maxWidth={false}
+          sx={{ maxWidth: "var(--t-grid-containerMax)", px: "var(--t-grid-containerPad)" }}
+        >
+          <Box
+            sx={{
+              textAlign: "center",
+              mb: { xs: 5, md: 7 },
+              maxWidth: "var(--t-measure-base)",
+              mx: "auto",
+            }}
+          >
+            <Overline sx={{ display: "block", color: "var(--t-neutral-500)", mb: 2 }}>
+              What we promise
+            </Overline>
+            <h2
+              style={{
+                fontFamily: "var(--t-fontFamily-display)",
+                fontSize: "clamp(1.875rem, 3.5vw, 2.5rem)",
+                fontWeight: 500,
+                lineHeight: 1.2,
+                letterSpacing: "var(--t-letterSpacing-tight)",
+                color: "var(--t-neutral-900)",
+              }}
+            >
+              Four small promises.
+            </h2>
+          </Box>
+
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", md: "repeat(4, 1fr)" },
+              gap: { xs: 3, md: 4 },
+            }}
+          >
+            {PILLARS.map((p, i) => (
+              <Reveal key={p.title} delay={i * 80}>
+                <Box
+                  sx={{
+                    backgroundColor: "#FFF",
+                    borderRadius: "var(--t-border-radius-md)",
+                    p: { xs: 3, md: 4 },
+                    boxShadow: "var(--t-shadow-base)",
+                    height: "100%",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 2,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: "var(--t-border-radius-pill)",
+                      backgroundColor: "var(--t-primary-50)",
+                      color: "var(--t-primary-600)",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontFamily: "var(--t-fontFamily-display)",
+                      fontWeight: 500,
+                      fontSize: "1rem",
+                    }}
+                  >
+                    {i + 1}
+                  </Box>
+                  <h3
+                    style={{
+                      fontFamily: "var(--t-fontFamily-display)",
+                      fontSize: "1.25rem",
+                      fontWeight: 500,
+                      color: "var(--t-neutral-900)",
+                      letterSpacing: "var(--t-letterSpacing-tight)",
+                      margin: 0,
+                    }}
+                  >
+                    {p.title}
+                  </h3>
+                  <p
+                    style={{
+                      color: "var(--t-neutral-600)",
+                      fontSize: "var(--t-fontSize-base)",
+                      lineHeight: 1.65,
+                      margin: 0,
+                    }}
+                  >
+                    {p.body}
+                  </p>
+                </Box>
+              </Reveal>
+            ))}
+          </Box>
+        </Container>
+      </Box>
+
+      {/* Maker story editorial */}
+      <EditorialSplit
+        overline="From the workshop"
+        title="Made by hand, kept by hand."
+        body="Each piece in our collection passes through the hands of an artisan we know by name. A woodworker in Värmland. A ceramicist in Provence. A linen weaver in the Belgian Ardennes. We pay them what the work is worth, visit when we can, and mend what they make — for as long as you keep it."
+        ctaLabel="Meet Jagkaran"
+        ctaHref="https://www.linkedin.com/in/jagkaran-singh/"
+        ctaIcon="linkedin"
+        imageSrc="/Pic-JK-min.jpg"
+        imageAlt="Jagkaran Singh — maker of Hverdag"
+        reverse={false}
+      />
+
+      {/* The covenant — mending explained */}
+      <Box
+        component="section"
+        sx={{ backgroundColor: "var(--t-neutral-50)", py: { xs: 6, md: 10 } }}
+      >
+        <Container maxWidth="md">
+          <Box sx={{ textAlign: "center", mb: { xs: 4, md: 6 } }}>
+            <Overline sx={{ display: "block", color: "var(--t-neutral-500)", mb: 2 }}>
+              The covenant, in detail
+            </Overline>
+            <h2
+              style={{
+                fontFamily: "var(--t-fontFamily-display)",
+                fontSize: "clamp(1.875rem, 3.5vw, 2.5rem)",
+                fontWeight: 500,
+                lineHeight: 1.2,
+                letterSpacing: "var(--t-letterSpacing-tight)",
+                color: "var(--t-neutral-900)",
+                marginBottom: "1.25rem",
+              }}
+            >
+              How mending actually works.
+            </h2>
+            <p
+              style={{
+                color: "var(--t-neutral-600)",
+                fontSize: "var(--t-fontSize-base)",
+                lineHeight: 1.7,
+                maxWidth: "var(--t-measure-base)",
+                margin: "0 auto",
+              }}
+            >
+              When a piece you bought from us shows wear, send us a photo. If the damage is in scope
+              for mending (most things are), we'll send a prepaid return label. The work usually
+              takes two to three weeks. We post it back to you, sharpened / re-oiled / re-glazed /
+              re-stitched — whichever it needed. No charge, no fine print, no upsell.
+            </p>
+          </Box>
+
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: { xs: "1fr", sm: "repeat(3, 1fr)" },
+              gap: 3,
+              mt: 4,
+            }}
+          >
+            {[
+              { num: "~14 days", label: "Most mends back to you" },
+              { num: "£0", label: "Postage, both ways" },
+              { num: "∞", label: "For the life of the piece" },
+            ].map((s) => (
+              <Box
+                key={s.label}
+                sx={{
+                  textAlign: "center",
+                  backgroundColor: "#FFF",
+                  borderRadius: "var(--t-border-radius-md)",
+                  p: 3,
+                  boxShadow: "var(--t-shadow-base)",
+                }}
               >
-                <path d="M477 625v991h-330v-991h330zm21-306q1 73-50.5 122t-135.5 49h-2q-82 0-132-49t-50-122q0-74 51.5-122.5t134.5-48.5 133 48.5 51 122.5zm1166 729v568h-329v-530q0-105-40.5-164.5t-126.5-59.5q-63 0-105.5 34.5t-63.5 85.5q-11 30-11 81v553h-329q2-399 2-647t-1-296l-1-48h329v144h-2q20-32 41-56t56.5-52 87-43.5 114.5-15.5q171 0 275 113.5t104 332.5z"></path>
-              </svg>
-            </a>
-          </div>
-        </div>
-      </div>
-      <div className="py-20 px-4">
-        <div className="mx-auto max-w-6xl flex flex-col md:flex-row ">
-          <h2 className="mr-8 w-full md:w-1/3 text-3xl font-bold leading-9 ">
-            About this app 💻
+                <Box
+                  sx={{
+                    fontFamily: "var(--t-fontFamily-display)",
+                    fontSize: "1.75rem",
+                    fontWeight: 500,
+                    color: "var(--t-primary-700)",
+                    lineHeight: 1,
+                    mb: 1,
+                  }}
+                >
+                  {s.num}
+                </Box>
+                <Box sx={{ fontSize: "var(--t-fontSize-sm)", color: "var(--t-neutral-500)" }}>
+                  {s.label}
+                </Box>
+              </Box>
+            ))}
+          </Box>
+        </Container>
+      </Box>
+
+      {/* Stack — short, honest */}
+      <Container
+        maxWidth={false}
+        sx={{
+          maxWidth: "var(--t-grid-containerMax)",
+          py: { xs: 6, md: 10 },
+          px: "var(--t-grid-containerPad)",
+        }}
+      >
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", md: "1fr 2fr" },
+            gap: { xs: 3, md: 6 },
+          }}
+        >
+          <Box>
+            <Overline sx={{ display: "block", color: "var(--t-neutral-500)", mb: 2 }}>
+              Under the hood
+            </Overline>
+            <h2
+              style={{
+                fontFamily: "var(--t-fontFamily-display)",
+                fontSize: "1.75rem",
+                fontWeight: 500,
+                color: "var(--t-neutral-900)",
+                letterSpacing: "var(--t-letterSpacing-tight)",
+                margin: 0,
+              }}
+            >
+              How this shop is built.
+            </h2>
+          </Box>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+            {STACK.map((row, i) => (
+              <Box
+                key={row.area}
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: { xs: "1fr", sm: "140px 1fr" },
+                  gap: 2,
+                  alignItems: "baseline",
+                  py: 1.5,
+                  borderTop: i === 0 ? "none" : "1px solid var(--t-neutral-200)",
+                  borderBottom: i === STACK.length - 1 ? "1px solid var(--t-neutral-200)" : "none",
+                }}
+              >
+                <Box
+                  sx={{
+                    fontSize: "var(--t-fontSize-xs)",
+                    fontWeight: 500,
+                    letterSpacing: "0.12em",
+                    textTransform: "uppercase",
+                    color: "var(--t-neutral-500)",
+                  }}
+                >
+                  {row.area}
+                </Box>
+                <Box sx={{ fontSize: "var(--t-fontSize-base)", color: "var(--t-neutral-700)" }}>
+                  {row.detail}
+                </Box>
+              </Box>
+            ))}
+          </Box>
+        </Box>
+      </Container>
+
+      {/* Closing CTA */}
+      <Box
+        component="section"
+        sx={{
+          backgroundColor: "var(--t-neutral-900)",
+          color: "var(--t-neutral-100)",
+          pt: { xs: 8, md: 12 },
+          pb: { xs: 6, md: 10 },
+          textAlign: "center",
+          px: "var(--t-grid-containerPad)",
+        }}
+      >
+        <Container maxWidth="md">
+          <h2
+            style={{
+              fontFamily: "var(--t-fontFamily-display)",
+              fontSize: "clamp(2rem, 4vw, 2.75rem)",
+              fontWeight: 500,
+              color: "var(--t-neutral-50)",
+              lineHeight: 1.2,
+              letterSpacing: "var(--t-letterSpacing-tight)",
+              marginBottom: "1rem",
+            }}
+          >
+            Find something to keep.
           </h2>
-          <dl className="w-full md:w-2/3">
-            <dt className="mb-4">
-              <h3 className="text-xl font-semibold">
-                What is the purpose of this app?
-              </h3>
-            </dt>
-            <dd className="mb-10">
-              <p>
-                This is a MERN stack app created for learning purpose. This app
-                is rolled out in MVP mode with bare minimum functionality.
-                However, i will try to add more functionalties over the period
-                of time 😎
-              </p>
-            </dd>
-            <dt className="mb-4">
-              <h3 className="text-xl font-semibold">
-                What is the Technology Stack?
-              </h3>
-            </dt>
-            <dd className="mb-10">
-              <p>
-                Backend:{" "}
-                <a href="https://nodejs.org/en/">
-                  <u>Node.js</u>
-                </a>{" "}
-                and{" "}
-                <a href="https://expressjs.com/">
-                  <u>Express.js</u>
-                </a>
-              </p>
-              <p>
-                Frontend:{" "}
-                <a href="https://reactjs.org/">
-                  <u>React.js and Redux</u>
-                </a>
-              </p>
-              <p>
-                Database:{" "}
-                <a href="https://www.mongodb.com/">
-                  <u>Mongo DB</u>
-                </a>
-              </p>
-              <p>
-                Styling:{" "}
-                <a href="https://mui.com/">
-                  <u>MUI v5</u>
-                </a>{" "}
-                and{" "}
-                <a href="https://tailwindcss.com/">
-                  <u>Tailwind CSS</u>
-                </a>
-              </p>
-              <p>
-                Image Hosting:{" "}
-                <a href="https://cloudinary.com/">
-                  <u>Cloudinary</u>
-                </a>
-              </p>
-              <p>
-                Payment Processor:{" "}
-                <a href="https://stripe.com/en-de">
-                  <u>Stripe</u>
-                </a>
-              </p>
-            </dd>
-            <dt className="mb-4">
-              <h3 className="text-xl font-semibold">
-                What is the functionality of this app?
-              </h3>
-            </dt>
-            <dd className="mb-10">
-              <p className="font-semibold">
-                <u>AS a USER:</u>
-              </p>
-
-              <p>
-                - You can browse through the list of products made available by
-                your admin.
-              </p>
-
-              <p>
-                - Search for a specific product with our global search
-                functionality.
-              </p>
-
-              <p>
-                - Filter through the list of products based on price, category
-                and ratings.
-              </p>
-
-              <p>
-                - Submit and modify your ratings and reviews for a selected
-                product.
-              </p>
-
-              <p>- Add selected items to your cart.</p>
-              <p>
-                - Checkout your cart and place and order with test stripe card
-                payment.
-              </p>
-              <p>- View all the orders created by you.</p>
-
-              <p className="font-semibold mt-5">
-                <u>AS an ADMIN:</u>
-              </p>
-
-              <p>- You can do all the things as a normal user would do.</p>
-
-              <p>
-                - Additonally, you have access to view Dashboard to see overall
-                sales and manage ecommerce entities.
-              </p>
-
-              <p>
-                - Create or Modify or Delete a Product by assigning multiple
-                properties to it. For example: Name, Description, Price, Images,
-                Stock etc.
-              </p>
-
-              <p>
-                - Modify a user role from <i>Admin</i> to <i>User</i> and vice
-                versa. Also you can delete a user if needed.
-              </p>
-              <p>
-                - Process an order by changing the status to shipping and
-                delivered. Aurtomatic Stock level deduction happens during this
-                step. Also you can delete an order if needed.
-              </p>
-              <p>
-                - Access to see all the reviews created by users and delete them
-                if needed.
-              </p>
-            </dd>
-
-            <dt className="mb-4">
-              <h3 className="text-xl font-semibold">Known Issues?</h3>
-            </dt>
-            <dd className="mb-10">
-              <p>- My orders Load more/View all option is not available atm.</p>
-
-              <p>- Payment's page has frontend console errors.</p>
-
-              <p>- Reviews doesn't support the created date atm.</p>
-
-              <p>- Form Validations are missing atm.</p>
-
-              <p>- You might face responsiveness issues with mobile.</p>
-            </dd>
-          </dl>
-        </div>
-      </div>
+          <p
+            style={{
+              fontFamily: "var(--t-fontFamily-display)",
+              fontStyle: "italic",
+              color: "var(--t-neutral-400)",
+              fontSize: "1.125rem",
+              lineHeight: 1.6,
+              marginBottom: "2.5rem",
+            }}
+          >
+            Or send us a question. We read every one.
+          </p>
+          <Box
+            sx={{ display: "inline-flex", gap: 1.5, flexWrap: "wrap", justifyContent: "center" }}
+          >
+            <PrimaryBtn component={Link} to="/products">
+              Browse the collection
+            </PrimaryBtn>
+            <GhostBtn component={Link} to="/signup">
+              Join the covenant
+            </GhostBtn>
+          </Box>
+        </Container>
+      </Box>
     </>
   );
 }
-
-export default AboutUs;

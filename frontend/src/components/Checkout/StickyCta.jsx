@@ -1,53 +1,56 @@
 import React from "react";
-import { Button } from "@mui/material";
+import { Box } from "@mui/material";
+import { PrimaryBtn } from "../../design/primitives";
 
 /**
- * StickyCta — mobile bottom-bar Place Order button.
- * On viewports >= 900px, becomes inline via media query.
+ * StickyCta — Place Order button.
+ * Mobile (<900px): fixed bottom bar with shadow + border.
+ * Desktop (>=900px): inline when `inline` prop is set, otherwise fixed.
  */
-export default function StickyCta({ totalLabel, onClick, submitting }) {
+export default function StickyCta({ totalLabel, onClick, submitting, inline = false }) {
+  const btn = (
+    <PrimaryBtn
+      type="button"
+      onClick={onClick}
+      disabled={submitting}
+      aria-busy={submitting}
+      fullWidth
+      sx={{
+        py: 1.75,
+        fontSize: "var(--t-fontSize-base)",
+        minHeight: 48,
+      }}
+    >
+      {submitting ? "Placing order…" : `Place order · ${totalLabel}`}
+    </PrimaryBtn>
+  );
+
+  if (inline) {
+    return <Box sx={{ width: "100%" }}>{btn}</Box>;
+  }
+
   return (
-    <div
+    <Box
       className="co-sticky-cta"
-      data-mobile={typeof window !== "undefined" && window.innerWidth < 900}
-      style={{
+      sx={{
         position: "fixed",
         bottom: 0,
         left: 0,
         right: 0,
         zIndex: 50,
-        background: "#fff",
-        borderTop: "1px solid var(--t-neutral-200, #e5e5e5)",
+        backgroundColor: "rgba(250, 250, 249, 0.96)",
+        backdropFilter: "blur(8px)",
+        borderTop: "1px solid var(--t-neutral-200)",
         padding: "12px 16px",
-        boxShadow: "0 -4px 12px rgba(0,0,0,0.06)",
+        paddingBottom: "max(12px, env(safe-area-inset-bottom))",
+        boxShadow: "0 -4px 16px rgba(28, 25, 23, 0.06)",
+        // ponytail: keep `inline` callers out of the fixed flow on >=900px
+        "@media (min-width: 900px)": {
+          display: "none",
+        },
       }}
     >
-      <style>{`
-        @media (min-width: 900px) {
-          .co-sticky-cta { position: static !important; box-shadow: none !important; border-top: 0 !important; padding: 0 !important; }
-        }
-      `}</style>
-      <Button
-        type="button"
-        variant="contained"
-        fullWidth
-        onClick={onClick}
-        disabled={submitting}
-        aria-busy={submitting}
-        sx={{
-          bgcolor: "var(--t-primary-600, #1a1a1a)",
-          color: "#fff",
-          fontWeight: 600,
-          py: 1.5,
-          borderRadius: "var(--t-border-radius-base, 6px)",
-          textTransform: "none",
-          fontSize: "var(--t-fontSize-base, 1rem)",
-          "&:hover": { bgcolor: "var(--t-primary-700, #000)" },
-          "&:disabled": { opacity: 0.6 },
-        }}
-      >
-        {submitting ? "Placing order…" : `Place order · ${totalLabel}`}
-      </Button>
-    </div>
+      <Box sx={{ maxWidth: "var(--t-grid-containerMax)", marginInline: "auto" }}>{btn}</Box>
+    </Box>
   );
 }

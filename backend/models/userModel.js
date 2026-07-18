@@ -30,7 +30,7 @@ const userSchema = new mongoose.Schema({
   },
   profilePic: {
     public_id: String,
-    url:      String,
+    url: String,
     // Both fields default to undefined when missing. Required only when a
     // client uploads an avatar; bare register-without-avatar now succeeds
     // and the auth flow no longer 500s on missing Cloudinary config.
@@ -48,6 +48,19 @@ const userSchema = new mongoose.Schema({
   },
   resetPasswordToken: String,
   resetPasswordExpire: Date,
+  wishlist: [
+    {
+      product: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Product",
+        required: true,
+      },
+      addedAt: {
+        type: Date,
+        default: Date.now,
+      },
+    },
+  ],
 });
 
 // Only non-unique secondary indexes go here.
@@ -85,10 +98,7 @@ userSchema.methods.getResetPasswordToken = function () {
 
   // Hash the token before storing — plain-text tokens in the DB would be
   // exploitable if the collection is ever read by an attacker.
-  this.resetPasswordToken = crypto
-    .createHash("sha256")
-    .update(resetToken)
-    .digest("hex");
+  this.resetPasswordToken = crypto.createHash("sha256").update(resetToken).digest("hex");
 
   // Reset token expire time
   this.resetPasswordExpire = Date.now() + 15 * 60 * 1000;

@@ -56,7 +56,9 @@ exports.validateRegistration = [
     .isLength({ min: 8, max: 50 })
     .withMessage("Password must be between 8 and 50 characters")
     .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
-    .withMessage("Password must contain at least one uppercase letter, one lowercase letter, and one number")
+    .withMessage(
+      "Password must contain at least one uppercase letter, one lowercase letter, and one number"
+    )
     .custom(async (value) => {
       if (await isPasswordBreached(value)) {
         throw new Error("This password has appeared in a data breach; choose another.");
@@ -64,10 +66,7 @@ exports.validateRegistration = [
       return true;
     }),
 
-  body("avatar")
-    .optional()
-    .isString()
-    .withMessage("Avatar must be a string"),
+  body("avatar").optional().isString().withMessage("Avatar must be a string"),
 
   this.handleValidationErrors,
 ];
@@ -114,10 +113,7 @@ exports.validateUpdateProfile = [
     .isLength({ max: 100 })
     .withMessage("Email is too long"),
 
-  body("avatar")
-    .optional()
-    .isString()
-    .withMessage("Avatar must be a string"),
+  body("avatar").optional().isString().withMessage("Avatar must be a string"),
 
   this.handleValidationErrors,
 ];
@@ -138,7 +134,9 @@ exports.validateUpdatePassword = [
     .isLength({ min: 8, max: 50 })
     .withMessage("New password must be between 8 and 50 characters")
     .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
-    .withMessage("New password must contain at least one uppercase letter, one lowercase letter, and one number")
+    .withMessage(
+      "New password must contain at least one uppercase letter, one lowercase letter, and one number"
+    )
     .custom(async (value) => {
       if (await isPasswordBreached(value)) {
         throw new Error("This password has appeared in a data breach; choose another.");
@@ -190,7 +188,9 @@ exports.validateResetPassword = [
     .isLength({ min: 8, max: 50 })
     .withMessage("Password must be between 8 and 50 characters")
     .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
-    .withMessage("Password must contain at least one uppercase letter, one lowercase letter, and one number")
+    .withMessage(
+      "Password must contain at least one uppercase letter, one lowercase letter, and one number"
+    )
     .custom(async (value) => {
       if (await isPasswordBreached(value)) {
         throw new Error("This password has appeared in a data breach; choose another.");
@@ -251,10 +251,7 @@ exports.validateCreateProduct = [
     .isLength({ max: 4 })
     .withMessage("Stock cannot exceed 4 figures"),
 
-  body("images")
-    .optional()
-    .isArray()
-    .withMessage("Images must be an array"),
+  body("images").optional().isArray().withMessage("Images must be an array"),
 
   this.handleValidationErrors,
 ];
@@ -301,10 +298,7 @@ exports.validateUpdateProduct = [
     .isLength({ max: 4 })
     .withMessage("Stock cannot exceed 4 figures"),
 
-  body("images")
-    .optional()
-    .isArray()
-    .withMessage("Images must be an array"),
+  body("images").optional().isArray().withMessage("Images must be an array"),
 
   this.handleValidationErrors,
 ];
@@ -619,10 +613,7 @@ exports.validateWishlistProductId = [
  * Pagination validation
  */
 exports.validatePagination = [
-  query("page")
-    .optional()
-    .isInt({ min: 1 })
-    .withMessage("Page must be a positive integer"),
+  query("page").optional().isInt({ min: 1 }).withMessage("Page must be a positive integer"),
 
   query("limit")
     .optional()
@@ -638,18 +629,11 @@ exports.validatePagination = [
  * payload that authenticated orders accept.
  */
 exports.validateGuestOrder = [
-  body("guestEmail")
-    .isEmail()
-    .withMessage("Valid email required")
-    .normalizeEmail(),
+  body("guestEmail").isEmail().withMessage("Valid email required").normalizeEmail(),
 
-  body("shippingInfo")
-    .isObject()
-    .withMessage("Shipping information must be an object"),
+  body("shippingInfo").isObject().withMessage("Shipping information must be an object"),
 
-  body("orderItems")
-    .isArray({ min: 1 })
-    .withMessage("At least one order item is required"),
+  body("orderItems").isArray({ min: 1 }).withMessage("At least one order item is required"),
 
   this.handleValidationErrors,
 ];
@@ -659,15 +643,96 @@ exports.validateGuestOrder = [
  * registered user via the emailed claim token and a new account password.
  */
 exports.validateClaim = [
-  body("claimToken")
-    .isString()
-    .isLength({ min: 64, max: 64 })
-    .withMessage("Invalid claim token"),
+  body("claimToken").isString().isLength({ min: 64, max: 64 }).withMessage("Invalid claim token"),
 
   body("password")
     .isString()
     .isLength({ min: 8, max: 128 })
     .withMessage("Password must be 8-128 chars"),
 
+  this.handleValidationErrors,
+];
+
+// ─── Coupon validation ──────────────────────────────────────────────────────
+// Used by the admin CRUD endpoints. The engine re-validates eligibility
+// rules at order time, so these are wire-format checks only.
+
+const COUPON_DISCOUNT_TYPES = ["percentage", "flat", "freeShipping", "tiered", "bogo"];
+const COUPON_STACK_POLICIES = ["best", "first", "none", "allow"];
+
+exports.validateCreateCoupon = [
+  body("code")
+    .isString()
+    .trim()
+    .matches(/^[A-Za-z0-9_-]{3,32}$/)
+    .withMessage("Coupon code must be 3-32 chars [A-Z0-9_-]"),
+
+  body("name")
+    .isString()
+    .trim()
+    .isLength({ min: 1, max: 80 })
+    .withMessage("Name is required (max 80 chars)"),
+
+  body("description")
+    .optional({ checkFalsy: true })
+    .isString()
+    .isLength({ max: 280 })
+    .withMessage("Description max 280 chars"),
+
+  body("discountType")
+    .isIn(COUPON_DISCOUNT_TYPES)
+    .withMessage(`discountType must be one of: ${COUPON_DISCOUNT_TYPES.join(", ")}`),
+
+  body("discountValue")
+    .optional({ checkFalsy: true })
+    .isFloat({ min: 0 })
+    .withMessage("discountValue must be a non-negative number"),
+
+  body("usageLimit")
+    .optional({ checkFalsy: true })
+    .isInt({ min: 1 })
+    .withMessage("usageLimit must be a positive integer"),
+
+  body("startAt").optional({ checkFalsy: true }).isISO8601().withMessage("startAt must be ISO8601"),
+
+  body("endAt").optional({ checkFalsy: true }).isISO8601().withMessage("endAt must be ISO8601"),
+
+  body("active").optional().isBoolean().withMessage("active must be boolean"),
+
+  body("stackPolicy")
+    .optional()
+    .isIn(COUPON_STACK_POLICIES)
+    .withMessage(`stackPolicy must be one of: ${COUPON_STACK_POLICIES.join(", ")}`),
+
+  this.handleValidationErrors,
+];
+
+exports.validateUpdateCoupon = [
+  // code is immutable on update — refuse if present so admins can't bypass uniqueness.
+  body("code")
+    .custom((v) => v === undefined)
+    .withMessage("code is immutable; omit on update"),
+
+  body("name").optional().isString().trim().isLength({ min: 1, max: 80 }),
+
+  body("discountType").optional().isIn(COUPON_DISCOUNT_TYPES),
+
+  body("discountValue").optional({ checkFalsy: true }).isFloat({ min: 0 }),
+
+  body("usageLimit").optional({ checkFalsy: true }).isInt({ min: 1 }),
+
+  body("startAt").optional({ checkFalsy: true }).isISO8601(),
+
+  body("endAt").optional({ checkFalsy: true }).isISO8601(),
+
+  body("active").optional().isBoolean(),
+
+  body("stackPolicy").optional().isIn(COUPON_STACK_POLICIES),
+
+  this.handleValidationErrors,
+];
+
+exports.validateCouponId = [
+  param("id").isMongoId().withMessage("Invalid coupon id"),
   this.handleValidationErrors,
 ];

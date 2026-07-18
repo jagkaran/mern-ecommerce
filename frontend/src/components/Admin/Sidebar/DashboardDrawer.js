@@ -1,4 +1,4 @@
-import { styled } from "@mui/material/styles";
+import { styled, useTheme } from "@mui/material/styles";
 import React from "react";
 import MuiDrawer from "@mui/material/Drawer";
 import IconButton from "@mui/material/IconButton";
@@ -63,7 +63,8 @@ const DrawerHeader = styled("div")(({ theme }) => ({
   ...theme.mixins.toolbar,
 }));
 
-function DashboardDrawer({ open, handleDrawerClose, theme }) {
+function DashboardDrawer({ open, handleDrawerClose }) {
+  const theme = useTheme();
   const classes = useStyles();
   return (
     <Drawer
@@ -72,7 +73,10 @@ function DashboardDrawer({ open, handleDrawerClose, theme }) {
       classes={{
         paper: classes.drawerPaper,
       }}
-      sx={{ "& .MuiDrawer-paper": { borderWidth: 0 } }}
+      sx={{
+        display: { xs: "none", md: "block" },
+        "& .MuiDrawer-paper": { borderWidth: 0 },
+      }}
     >
       <DrawerHeader>
         <IconButton onClick={handleDrawerClose}>

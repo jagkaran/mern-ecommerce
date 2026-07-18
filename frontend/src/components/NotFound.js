@@ -1,68 +1,83 @@
 import React from "react";
-import { Box, Button, Container, Typography } from "@mui/material";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { Link } from "react-router-dom";
 import Seo from "./Seo";
-import Copyright from "./Copyright";
+import { Headline, BodyText, Overline, PrimaryBtn } from "../design/primitives";
 
 function NotFound() {
   return (
     <>
       <Seo
-        title="404: Oops - Click.it Store"
-        description="404: The page you are looking for isn’t here. You either tried some shady route or you came here by mistake.
-        Whichever it is, try using the navigation"
+        title="Not found | Hverdag"
+        description="The page you were looking for has wandered off. Try the navigation."
         path="/notfound"
       />
-      <Box
-        component="main"
-        sx={{
-          alignItems: "center",
-          display: "flex",
-          flexGrow: 1,
-          minHeight: "100%",
+      <section
+        style={{
+          paddingBlock: "var(--t-space-4xl)",
+          backgroundColor: "var(--t-neutral-50)",
+          minHeight: "60vh",
         }}
       >
-        <Container maxWidth="md">
-          <Box
-            sx={{
-              alignItems: "center",
-              display: "flex",
-              flexDirection: "column",
+        <div
+          style={{
+            maxWidth: "640px",
+            marginInline: "auto",
+            paddingInline: "var(--t-grid-containerPad)",
+            textAlign: "center",
+            paddingTop: "var(--t-space-2xl)",
+          }}
+        >
+          <Overline sx={{ display: "block", mb: 2, color: "var(--t-neutral-500)" }}>
+            Lost in the workshop
+          </Overline>
+          <Headline level="3xl" style={{ marginBottom: 16 }}>
+            We can't find that page.
+          </Headline>
+          <BodyText
+            lead
+            style={{
+              color: "var(--t-neutral-500)",
+              fontFamily: "var(--t-fontFamily-display)",
+              fontStyle: "italic",
+              marginBottom: 40,
             }}
           >
-            <Typography align="center" color="textPrimary" variant="h2">
-              404: The page you are looking for isn’t here
-            </Typography>
-            <Typography align="center" color="textPrimary" variant="subtitle2">
-              You either tried some shady route or you came here by mistake.
-              Whichever it is, try using the navigation
-            </Typography>
-            <Box sx={{ textAlign: "center" }}>
-              <img
-                alt="Under development"
-                src="/undraw_page_not_found_su7k.svg"
-                style={{
-                  marginTop: 50,
-                  display: "inline-block",
-                  maxWidth: "100%",
-                  width: 560,
-                }}
-              />
-            </Box>
-            <Link to="/">
-              <Button
-                startIcon={<ArrowBackIcon fontSize="small" />}
-                sx={{ mt: 3 }}
-                variant="outlined"
-              >
-                Go back to Homepage
-              </Button>
+            It may have wandered off, or never existed. Try the navigation, or head back to the
+            front door.
+          </BodyText>
+          <div
+            style={{
+              display: "flex",
+              gap: 16,
+              justifyContent: "center",
+              flexWrap: "wrap",
+            }}
+          >
+            <Link to="/" style={{ textDecoration: "none" }}>
+              <PrimaryBtn>Back to home</PrimaryBtn>
             </Link>
-          </Box>
-        </Container>
-      </Box>
-      <Copyright />
+            <Link to="/products" style={{ textDecoration: "none" }}>
+              <PrimaryBtn
+                component="span"
+                sx={{
+                  bgcolor: "transparent",
+                  color: "var(--t-neutral-900)",
+                  boxShadow: "none",
+                  border: "1px solid var(--t-neutral-300)",
+                  "&:hover": {
+                    bgcolor: "var(--t-neutral-100)",
+                    borderColor: "var(--t-neutral-500)",
+                    boxShadow: "none",
+                    transform: "translateY(-1px)",
+                  },
+                }}
+              >
+                Browse the collection
+              </PrimaryBtn>
+            </Link>
+          </div>
+        </div>
+      </section>
     </>
   );
 }

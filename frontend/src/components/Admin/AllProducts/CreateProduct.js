@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { useAlert } from "react-alert";
+import { useToast } from "../../../hooks/useToast";
 import { useTheme } from "@mui/material/styles";
 import Box from "@mui/material/Box";
 import CssBaseline from "@mui/material/CssBaseline";
@@ -24,7 +24,6 @@ import {
 import CategoryIcon from "@mui/icons-material/Category";
 import { createProduct, clearErrors } from "../../../actions/productAction";
 import { useProductForm, CATEGORIES } from "../../../hooks/useProductForm";
-import Copyright from "../../Copyright";
 import Seo from "../../Seo";
 
 function CreateProduct() {
@@ -35,7 +34,7 @@ function CreateProduct() {
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const alert = useAlert();
+  const toast = useToast();
 
   const { loading, error, success } = useSelector((state) => state.newProduct);
 
@@ -47,15 +46,15 @@ function CreateProduct() {
 
   useEffect(() => {
     if (error) {
-      alert.error(error);
+      toast.error(error);
       dispatch(clearErrors());
     }
     if (success) {
-      alert.success("Product created successfully");
+      toast.success("Product created successfully");
       navigate("/admin/products");
       dispatch({ type: "NewProductReset" });
     }
-  }, [error, success, alert, navigate, dispatch]);
+  }, [error, success, toast, navigate, dispatch]);
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
@@ -96,11 +95,7 @@ function CreateProduct() {
         />
         <CssBaseline />
         <DashboardAppBar open={open} handleDrawerOpen={handleDrawerOpen} />
-        <DashboardDrawer
-          open={open}
-          handleDrawerClose={handleDrawerClose}
-          theme={theme}
-        />
+        <DashboardDrawer open={open} handleDrawerClose={handleDrawerClose} theme={theme} />
         <Box component="main" sx={{ flexGrow: 1, py: 8 }}>
           <Container maxWidth="sm" sx={{ mt: 2, mb: 2 }}>
             <Box
@@ -217,7 +212,11 @@ function CreateProduct() {
                   </Grid>
 
                   {/* Image upload */}
-                  <Grid item xs={12} sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 1 }}>
+                  <Grid
+                    item
+                    xs={12}
+                    sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 1 }}
+                  >
                     <Button
                       variant="contained"
                       component="label"
@@ -252,18 +251,13 @@ function CreateProduct() {
                   disabled={!isValid() || loading}
                   sx={{ mt: 3, mb: 2, bgcolor: "secondary.main" }}
                 >
-                  {loading ? (
-                    <CircularProgress size={24} color="inherit" />
-                  ) : (
-                    "Create Product"
-                  )}
+                  {loading ? <CircularProgress size={24} color="inherit" /> : "Create Product"}
                 </Button>
               </Box>
             </Box>
           </Container>
         </Box>
       </Box>
-      <Copyright />
     </>
   );
 }

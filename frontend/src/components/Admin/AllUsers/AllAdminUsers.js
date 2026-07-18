@@ -4,18 +4,14 @@ import Box from "@mui/material/Box";
 import CssBaseline from "@mui/material/CssBaseline";
 import DashboardAppBar from "../Sidebar/DashboardAppBar";
 import DashboardDrawer from "../Sidebar/DashboardDrawer";
+import AdminMobileNav from "../AdminMobileNav";
 import { CircularProgress, Container, Grid } from "@mui/material";
 import { useSelector, useDispatch } from "react-redux";
-import { useAlert } from "react-alert";
+import { useToast } from "../../../hooks/useToast";
 import { useNavigate } from "react-router-dom";
 import AllUsersList from "./AllUsersList";
-import {
-  clearErrors,
-  deleteUser,
-  getAllUsers,
-} from "../../../actions/userAction";
+import { clearErrors, deleteUser, getAllUsers } from "../../../actions/userAction";
 import Seo from "../../Seo";
-import Copyright from "../../Copyright";
 
 function AllAdminUsers() {
   const theme = useTheme();
@@ -30,18 +26,12 @@ function AllAdminUsers() {
   };
 
   const dispatch = useDispatch();
-  const alert = useAlert();
+  const toast = useToast();
   const history = useNavigate();
 
-  const { loading, error, users, usersCount } = useSelector(
-    (state) => state.allUsers
-  );
+  const { loading, error, users, usersCount } = useSelector((state) => state.allUsers);
 
-  const {
-    error: deleteError,
-    isDeleted,
-    message,
-  } = useSelector((state) => state.profile);
+  const { error: deleteError, isDeleted, message } = useSelector((state) => state.profile);
 
   function sortByDate(a, b) {
     if (a.createdAt < b.createdAt) {
@@ -61,20 +51,20 @@ function AllAdminUsers() {
 
   React.useEffect(() => {
     if (error) {
-      alert.error(error);
+      toast.error(error);
       dispatch(clearErrors());
     }
     if (deleteError) {
-      alert.error(deleteError);
+      toast.error(deleteError);
       dispatch(clearErrors());
     }
     if (isDeleted) {
-      alert.success(message);
+      toast.success(message);
       history("/dashboard");
       dispatch({ type: "DeleteUserReset" });
     }
     dispatch(getAllUsers());
-  }, [dispatch, error, alert, deleteError, history, isDeleted, message]);
+  }, [dispatch, error, toast, deleteError, history, isDeleted, message]);
 
   return (
     <>
@@ -86,11 +76,7 @@ function AllAdminUsers() {
         />
         <CssBaseline />
         <DashboardAppBar open={open} handleDrawerOpen={handleDrawerOpen} />
-        <DashboardDrawer
-          open={open}
-          handleDrawerClose={handleDrawerClose}
-          theme={theme}
-        />
+        <DashboardDrawer open={open} handleDrawerClose={handleDrawerClose} theme={theme} />
         <Box
           component="main"
           sx={{
@@ -98,6 +84,7 @@ function AllAdminUsers() {
             py: 8,
           }}
         >
+          <AdminMobileNav />
           <Container maxWidth="lg" sx={{ mt: 2, mb: 2 }}>
             <Grid container spacing={3}>
               <Grid item xs={12}>
@@ -117,7 +104,6 @@ function AllAdminUsers() {
           </Container>
         </Box>
       </Box>
-      <Copyright />
     </>
   );
 }

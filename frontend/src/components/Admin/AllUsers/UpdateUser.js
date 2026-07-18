@@ -14,21 +14,16 @@ import {
   Select,
 } from "@mui/material";
 import { useSelector, useDispatch } from "react-redux";
-import { useAlert } from "react-alert";
+import { useToast } from "../../../hooks/useToast";
 import { useNavigate, useParams } from "react-router-dom";
 import Avatar from "@mui/material/Avatar";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { useEffect } from "react";
-import {
-  clearErrors,
-  getUserDetails,
-  updateUser,
-} from "../../../actions/userAction";
+import { clearErrors, getUserDetails, updateUser } from "../../../actions/userAction";
 import PersonIcon from "@mui/icons-material/Person";
 import Seo from "../../Seo";
-import Copyright from "../../Copyright";
 
 function UpdateUser() {
   const theme = useTheme();
@@ -44,7 +39,7 @@ function UpdateUser() {
   };
 
   const dispatch = useDispatch();
-  const alert = useAlert();
+  const toast = useToast();
 
   const { loading, error, user } = useSelector((state) => state.userDetails);
   const {
@@ -80,20 +75,20 @@ function UpdateUser() {
       setRole(user.role);
     }
     if (error) {
-      alert.error(error);
+      toast.error(error);
       dispatch(clearErrors());
     }
     if (updateError) {
-      alert.error(updateError);
+      toast.error(updateError);
       dispatch(clearErrors());
     }
 
     if (isUpdated) {
-      alert.success("User Updated Successfully");
+      toast.success("User Updated Successfully");
       history("/admin/users");
       dispatch({ type: "UpdateUserReset" });
     }
-  }, [dispatch, error, alert, history, isUpdated, updateError, id, user]);
+  }, [dispatch, error, toast, history, isUpdated, updateError, id, user]);
 
   return (
     <>
@@ -105,11 +100,7 @@ function UpdateUser() {
         />
         <CssBaseline />
         <DashboardAppBar open={open} handleDrawerOpen={handleDrawerOpen} />
-        <DashboardDrawer
-          open={open}
-          handleDrawerClose={handleDrawerClose}
-          theme={theme}
-        />
+        <DashboardDrawer open={open} handleDrawerClose={handleDrawerClose} theme={theme} />
         <Box
           component="main"
           sx={{
@@ -197,13 +188,7 @@ function UpdateUser() {
                         fullWidth
                         variant="contained"
                         sx={{ mt: 3, mb: 2, backgroundColor: "secondary.main" }}
-                        disabled={
-                          updateLoading
-                            ? true
-                            : false || role === ""
-                            ? true
-                            : false
-                        }
+                        disabled={updateLoading ? true : false || role === "" ? true : false}
                       >
                         Update
                       </Button>
@@ -215,7 +200,6 @@ function UpdateUser() {
           </Container>
         </Box>
       </Box>
-      <Copyright />
     </>
   );
 }

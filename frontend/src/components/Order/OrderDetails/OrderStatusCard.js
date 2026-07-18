@@ -1,52 +1,38 @@
 import React from "react";
 import {
   Card,
-  CardContent,
-  CardHeader,
+  CardBody,
+  BodyText,
   Divider,
-  Grid,
-  Typography,
-} from "@mui/material";
-import SeverityPill from "../SeverityPill";
+  Overline,
+  SeverityPill,
+} from "../../../design/primitives";
 import { format, parseISO } from "date-fns";
 
 function OrderStatusCard({ status, deliveredAt }) {
+  const display = `${status}${deliveredAt ? ` at ${format(parseISO(deliveredAt), "dd.MM.yyyy HH:mm")}` : ""}`;
+
   return (
     <Card>
-      <CardHeader
-        subheader="To check if the order has been dispatched"
-        title="Order Status"
-      />
-      <Divider />
-      <CardContent>
-        <Grid container spacing={6} wrap="wrap">
-          <Grid
-            item
-            md={4}
-            sm={6}
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-            }}
-            xs={12}
+      <CardBody>
+        <Overline style={{ marginBottom: 4 }}>Order Status</Overline>
+        <BodyText small style={{ color: "var(--t-neutral-400)", marginBottom: 16 }}>
+          To check if the order has been dispatched
+        </BodyText>
+        <Divider style={{ marginBottom: 16 }} />
+        <BodyText>
+          <SeverityPill
+            color={
+              (status === "Delivered" && "success") ||
+              (status === "Processing" && "warning") ||
+              (status === "Shipped" && "info") ||
+              "error"
+            }
           >
-            <Typography gutterBottom variant="body1">
-              <SeverityPill
-                color={
-                  (status === "Delivered" && "success") ||
-                  (status === "Processing" && "warning") ||
-                  (status === "Shipped" && "info") ||
-                  "error"
-                }
-              >
-                {status}{" "}
-              </SeverityPill>
-              {status === "Delivered" &&
-                ` at ${format(parseISO(deliveredAt), `dd.MM.yyyy HH:mm`)}`}
-            </Typography>
-          </Grid>
-        </Grid>
-      </CardContent>
+            {display}
+          </SeverityPill>
+        </BodyText>
+      </CardBody>
     </Card>
   );
 }

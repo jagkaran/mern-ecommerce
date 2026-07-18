@@ -7,6 +7,7 @@ import DashboardIcon from "@mui/icons-material/Dashboard";
 import CategoryIcon from "@mui/icons-material/Category";
 import ViewListIcon from "@mui/icons-material/ViewList";
 import PeopleIcon from "@mui/icons-material/People";
+import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 
 function ListItems({ open }) {
   const items = [
@@ -18,7 +19,8 @@ function ListItems({ open }) {
       link: "/admin/products",
     },
     { id: 3, name: "Orders", icon: <ViewListIcon />, link: "/admin/orders" },
-    { id: 4, name: "Customers", icon: <PeopleIcon />, link: "/admin/users" },
+    { id: 4, name: "Coupons", icon: <LocalOfferIcon />, link: "/admin/coupons" },
+    { id: 5, name: "Customers", icon: <PeopleIcon />, link: "/admin/users" },
   ];
   return (
     <React.Fragment>

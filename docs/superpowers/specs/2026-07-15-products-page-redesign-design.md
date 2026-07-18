@@ -30,10 +30,20 @@ Remove inline `gridTemplateColumns: 'repeat(4, 1fr)'`. Let the `.prod-grid` clas
 ### B. Breakpoints (`frontend/src/design/tokens-css.js`)
 
 ```css
-.prod-grid { grid-template-columns: repeat(4, 1fr); }   /* existing */
+.prod-grid {
+  grid-template-columns: repeat(4, 1fr);
+} /* existing */
 
-@media (max-width: 1280px) { .prod-grid { grid-template-columns: repeat(3, 1fr); } }
-@media (max-width: 768px)  { .prod-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 1280px) {
+  .prod-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+@media (max-width: 768px) {
+  .prod-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
 /* remove the @media (max-width: 480px) { grid-template-columns: 1fr; } rule */
 ```
 
@@ -43,13 +53,13 @@ Remove inline `gridTemplateColumns: 'repeat(4, 1fr)'`. Let the `.prod-grid` clas
 
 ```js
 const SORT_MAP = {
-  newest:        { createdAt: -1 },
-  'price-asc':   { price: 1 },
-  'price-desc':  { price: -1 },
-  'rating-desc': { ratings: -1 },
-  'name-asc':    { name: 1 },
+  newest: { createdAt: -1 },
+  "price-asc": { price: 1 },
+  "price-desc": { price: -1 },
+  "rating-desc": { ratings: -1 },
+  "name-asc": { name: 1 },
 };
-const sortKey = typeof req.query.sort === 'string' ? req.query.sort : 'newest';
+const sortKey = typeof req.query.sort === "string" ? req.query.sort : "newest";
 const sort = SORT_MAP[sortKey] || SORT_MAP.newest;
 // replace the hardcoded .sort({ createdAt: -1 }) with .sort(sort)
 ```
@@ -63,7 +73,10 @@ Whitelist prevents injection of arbitrary Mongo sort objects. Unknown values fal
   select
   size="small"
   value={sort}
-  onChange={(e) => { setSort(e.target.value); setCurrentPage(1); }}
+  onChange={(e) => {
+    setSort(e.target.value);
+    setCurrentPage(1);
+  }}
   sx={{ minWidth: 180 }}
 >
   <MenuItem value="newest">Newest</MenuItem>
@@ -110,26 +123,29 @@ Desktop behavior unchanged — filter sidebar always visible.
   disabled={oos}
   aria-label={oos ? `${name} out of stock` : `Add ${name} to cart`}
   style={{
-    position: 'absolute',
-    left: 12, right: 12, bottom: 12,
+    position: "absolute",
+    left: 12,
+    right: 12,
+    bottom: 12,
     height: 44,
-    border: 'none',
-    borderRadius: 'var(--t-border-radius-sm)',
-    background: added ? 'var(--t-semantic-success)' : 'var(--t-primary-600)',
-    color: '#FFF',
-    fontSize: 'var(--t-fontSize-sm)',
+    border: "none",
+    borderRadius: "var(--t-border-radius-sm)",
+    background: added ? "var(--t-semantic-success)" : "var(--t-primary-600)",
+    color: "#FFF",
+    fontSize: "var(--t-fontSize-sm)",
     fontWeight: 500,
-    letterSpacing: '0.04em',
-    cursor: oos ? 'not-allowed' : 'pointer',
+    letterSpacing: "0.04em",
+    cursor: oos ? "not-allowed" : "pointer",
     opacity: oos ? 0.55 : 1,
-    transition: 'background var(--t-motion-duration-fast) var(--t-motion-easing-out)',
+    transition: "background var(--t-motion-duration-fast) var(--t-motion-easing-out)",
   }}
 >
-  {oos ? 'Out of stock' : added ? '✓ Added' : 'Add to cart'}
+  {oos ? "Out of stock" : added ? "✓ Added" : "Add to cart"}
 </button>
 ```
 
 `handleAddToCart`:
+
 1. `e.preventDefault()` + `e.stopPropagation()` — must beat wrapping `<Link>`
 2. `dispatch(addItemsToCart(productId, 1))`
 3. `toast.success('Added to cart')`
@@ -147,15 +163,15 @@ Stock = 0 → button disabled, "Out of stock" label. `Badge` for "Out of Stock" 
 
 ## Files Touched
 
-| File | Change |
-|---|---|
-| `frontend/src/components/Product/ProductGrid.js` | Remove inline gridTemplateColumns |
-| `frontend/src/design/tokens-css.js` | New 1280px breakpoint; drop ≤480 rule |
-| `frontend/src/components/Product/Products.js` | Sort dropdown, filter chips, mobile Disclosure wrapper |
-| `frontend/src/components/Product/ProductCard.jsx` | Replace QuickView with Add-to-Cart button |
-| `backend/controllers/productController.js` | `?sort=` via SORT_MAP whitelist |
-| `backend/__tests__/productController.test.js` (or equivalent) | Sort param coverage |
-| `e2e/products.spec.js` | Sort changes order; chip removes filter; mobile disclosure |
+| File                                                          | Change                                                     |
+| ------------------------------------------------------------- | ---------------------------------------------------------- |
+| `frontend/src/components/Product/ProductGrid.js`              | Remove inline gridTemplateColumns                          |
+| `frontend/src/design/tokens-css.js`                           | New 1280px breakpoint; drop ≤480 rule                      |
+| `frontend/src/components/Product/Products.js`                 | Sort dropdown, filter chips, mobile Disclosure wrapper     |
+| `frontend/src/components/Product/ProductCard.jsx`             | Replace QuickView with Add-to-Cart button                  |
+| `backend/controllers/productController.js`                    | `?sort=` via SORT_MAP whitelist                            |
+| `backend/__tests__/productController.test.js` (or equivalent) | Sort param coverage                                        |
+| `e2e/products.spec.js`                                        | Sort changes order; chip removes filter; mobile disclosure |
 
 ## Testing
 

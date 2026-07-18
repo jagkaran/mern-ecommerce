@@ -59,7 +59,13 @@ const AppBar = styled(MuiAppBar, {
 function DashboardAppBar({ open, handleDrawerOpen, props }) {
   return (
     <HideOnScroll {...props}>
-      <AppBar position="fixed" open={open} color="appBar" elevation={0}>
+      <AppBar
+        position="fixed"
+        open={open}
+        color="default"
+        elevation={0}
+        sx={{ display: { xs: "none", md: "block" } }}
+      >
         <Toolbar>
           <IconButton
             color="inherit"

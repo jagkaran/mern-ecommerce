@@ -26,7 +26,7 @@ const mongoose = require("mongoose");
 const { mintClaimToken, claimGuestOrder } = require("../services/claimService");
 const orderService = require("../services/orderService");
 const Order = require("../models/orderModel");
-const User  = require("../models/userModel");
+const User = require("../models/userModel");
 const Product = require("../models/productModel");
 const paymentService = require("../services/paymentService");
 const { computeOrderPricing } = require("../utils/pricing");
@@ -34,7 +34,11 @@ const { computeOrderPricing } = require("../utils/pricing");
 let productId;
 beforeAll(async () => {
   const p = await Product.create({
-    name: "Claim Prod", description: "d", price: 50, category: "Test", stock: 10,
+    name: "Claim Prod",
+    description: "d",
+    price: 50,
+    category: "Test",
+    stock: 10,
     images: [{ public_id: "cp", url: "http://e.com/c.jpg" }],
     createdBy: new mongoose.Types.ObjectId(),
   });
@@ -49,18 +53,30 @@ describe("claimService — HMAC + lifecycle", () => {
 
   it("claimGuestOrder rejects token that does not match an order", async () => {
     const fake = mintClaimToken(new mongoose.Types.ObjectId().toString(), "no@order.io");
-    await expect(claimGuestOrder({ claimToken: fake, password: "passw0rd!" }))
-      .rejects.toThrow(/Invalid claim token/i);
+    await expect(claimGuestOrder({ claimToken: fake, password: "passw0rd!" })).rejects.toThrow(
+      /Invalid claim token/i
+    );
   });
 
   it("claimGuestOrder rejects replayed token", async () => {
     // Create a guest order with an orderId/email pair, then claim twice
     const order = await Order.create({
-      shippingInfo: { address: "1 St", city: "C", state: "S", country: "X", zip: 12345, phone: 1234567890 },
+      shippingInfo: {
+        address: "1 St",
+        city: "C",
+        state: "S",
+        country: "X",
+        zip: 12345,
+        phone: 1234567890,
+      },
       orderItems: [{ name: "x", price: 1, quantity: 1, image: "i", product: productId }],
       paymentInfo: { id: "pi_x", status: "succeeded" },
-      itemPrice: 1, taxPrice: 0, shippingPrice: 0, totalPrice: 1,
-      paidAt: Date.now(), guestEmail: "r1@y.io",
+      itemPrice: 1,
+      taxPrice: 0,
+      shippingPrice: 0,
+      totalPrice: 1,
+      paidAt: Date.now(),
+      guestEmail: "r1@y.io",
     });
     // Mint valid token for that orderId + email, then store its hash
     const token = mintClaimToken(order._id.toString(), "r1@y.io");
@@ -68,8 +84,9 @@ describe("claimService — HMAC + lifecycle", () => {
     await order.save();
     const first = await claimGuestOrder({ claimToken: token, password: "passw0rd!" });
     expect(first.user.email).toBe("r1@y.io");
-    await expect(claimGuestOrder({ claimToken: token, password: "passw0rd!" }))
-      .rejects.toThrow(/already claimed/i);
+    await expect(claimGuestOrder({ claimToken: token, password: "passw0rd!" })).rejects.toThrow(
+      /already claimed/i
+    );
   });
 
   it("finds an old token via the sha256 index even when > 50 unclaimed guest orders exist (I8 fix)", async () => {
@@ -78,10 +95,20 @@ describe("claimService — HMAC + lifecycle", () => {
     // "Invalid claim token". The new primary lookup uses Order.findOne by
     // claimTokenHash, which is indexed.
     const targetOrder = await Order.create({
-      shippingInfo: { address: "1 St", city: "C", state: "S", country: "X", zip: 12345, phone: 1234567890 },
+      shippingInfo: {
+        address: "1 St",
+        city: "C",
+        state: "S",
+        country: "X",
+        zip: 12345,
+        phone: 1234567890,
+      },
       orderItems: [{ name: "x", price: 1, quantity: 1, image: "i", product: productId }],
       paymentInfo: { id: "pi_old", status: "succeeded" },
-      itemPrice: 1, taxPrice: 0, shippingPrice: 0, totalPrice: 1,
+      itemPrice: 1,
+      taxPrice: 0,
+      shippingPrice: 0,
+      totalPrice: 1,
       paidAt: Date.now(),
       guestEmail: "oldtoken@y.io",
     });
@@ -100,7 +127,10 @@ describe("claimService — HMAC + lifecycle", () => {
         shippingInfo: { address: "1", city: "C", state: "S", country: "X", zip: 1, phone: 1 },
         orderItems: [{ name: "x", price: 1, quantity: 1, image: "i", product: productId }],
         paymentInfo: { id: `pi_f${i}`, status: "succeeded" },
-        itemPrice: 1, taxPrice: 0, shippingPrice: 0, totalPrice: 1,
+        itemPrice: 1,
+        taxPrice: 0,
+        shippingPrice: 0,
+        totalPrice: 1,
         paidAt: Date.now(),
         guestEmail: `filler_${i}_${Date.now()}@y.io`,
         claimTokenHash: "0".repeat(64),
@@ -109,12 +139,18 @@ describe("claimService — HMAC + lifecycle", () => {
     await Order.insertMany(filler);
 
     // The token for the old order is still findable via the indexed lookup.
-    await expect(claimGuestOrder({ claimToken: token, password: "passw0rd!" }))
-      .resolves.toMatchObject({ user: expect.objectContaining({ email: "oldtoken@y.io" }) });
+    await expect(
+      claimGuestOrder({ claimToken: token, password: "passw0rd!" })
+    ).resolves.toMatchObject({ user: expect.objectContaining({ email: "oldtoken@y.io" }) });
   });
 
   it("claimGuestOrder signals ACCOUNT_EXISTS when email has User", async () => {
-    await User.create({ name: "Dup User", email: "dup@y.io", password: "Existing1!", profilePic: { public_id:"d", url:"http://e.com/d.jpg" } });
+    await User.create({
+      name: "Dup User",
+      email: "dup@y.io",
+      password: "Existing1!",
+      profilePic: { public_id: "d", url: "http://e.com/d.jpg" },
+    });
     // Create a guest order w/ that email. Pin _id so the HMAC computed
     // from oid.toString() matches the HMAC the service recomputes from
     // the persisted order's _id at lookup time.
@@ -122,15 +158,27 @@ describe("claimService — HMAC + lifecycle", () => {
     const token = mintClaimToken(oid.toString(), "dup@y.io");
     await Order.create({
       _id: oid,
-      shippingInfo: { address: "1 St", city: "C", state: "S", country: "X", zip: 12345, phone: 1234567890 },
+      shippingInfo: {
+        address: "1 St",
+        city: "C",
+        state: "S",
+        country: "X",
+        zip: 12345,
+        phone: 1234567890,
+      },
       orderItems: [{ name: "x", price: 1, quantity: 1, image: "i", product: productId }],
       paymentInfo: { id: "pi_dup", status: "succeeded" },
-      itemPrice: 1, taxPrice: 0, shippingPrice: 0, totalPrice: 1,
-      paidAt: Date.now(), guestEmail: "dup@y.io",
+      itemPrice: 1,
+      taxPrice: 0,
+      shippingPrice: 0,
+      totalPrice: 1,
+      paidAt: Date.now(),
+      guestEmail: "dup@y.io",
       claimTokenHash: crypto.createHash("sha256").update(token).digest("hex"),
     });
-    await expect(claimGuestOrder({ claimToken: token, password: "passw0rd!" }))
-      .rejects.toMatchObject({ statusCode: 409, message: expect.stringMatching(/account exists/i) });
+    await expect(
+      claimGuestOrder({ claimToken: token, password: "passw0rd!" })
+    ).rejects.toMatchObject({ statusCode: 409, message: expect.stringMatching(/account exists/i) });
   });
 });
 
@@ -148,7 +196,10 @@ describe("orderService.createOrder — guest path", () => {
     const pricing = await computeOrderPricing(orderItems, null);
     const amount = Math.round(pricing.totalPrice * 100);
     paymentService.retrievePaymentIntent.mockImplementationOnce(async (pid) => ({
-      id: pid, status: "succeeded", amount, currency: "usd",
+      id: pid,
+      status: "succeeded",
+      amount,
+      currency: "usd",
     }));
     return fn(id);
   }
@@ -156,21 +207,38 @@ describe("orderService.createOrder — guest path", () => {
   it("returns claimToken on guest order creation", async () => {
     const orderItems = [{ name: "Item", price: 10, quantity: 1, image: "i", product: productId }];
     const result = await withMatchingPaymentIntent(orderItems, `pi_${Date.now()}`, (id) =>
-      orderService.createOrder({
-        shippingInfo: { address: "1 St", city: "C", state: "S", country: "X", zip: 12345, phone: 1234567890 },
-        orderItems,
-        paymentInfo: { id, status: "succeeded" },
-      }, null, { guestEmail: "guest1@y.io" })
+      orderService.createOrder(
+        {
+          shippingInfo: {
+            address: "1 St",
+            city: "C",
+            state: "S",
+            country: "X",
+            zip: 12345,
+            phone: 1234567890,
+          },
+          orderItems,
+          paymentInfo: { id, status: "succeeded" },
+        },
+        null,
+        { guestEmail: "guest1@y.io" }
+      )
     );
     expect(result.claimToken).toMatch(/^[0-9a-f]{64}$/);
     expect(result.order.guestEmail).toBe("guest1@y.io");
     expect(result.order.user).toBeUndefined();
   });
   it("rejects without user or guestEmail", async () => {
-    await expect(orderService.createOrder({
-      shippingInfo: { address: "1", city: "C", state: "S", country: "X", zip: 1, phone: 1 },
-      orderItems: [{ name: "i", price: 1, quantity: 1, image: "i", product: productId }],
-      paymentInfo: { id: "pi_no", status: "succeeded" },
-    }, null, {})).rejects.toThrow(/email/i);
+    await expect(
+      orderService.createOrder(
+        {
+          shippingInfo: { address: "1", city: "C", state: "S", country: "X", zip: 1, phone: 1 },
+          orderItems: [{ name: "i", price: 1, quantity: 1, image: "i", product: productId }],
+          paymentInfo: { id: "pi_no", status: "succeeded" },
+        },
+        null,
+        {}
+      )
+    ).rejects.toThrow(/email/i);
   });
 });

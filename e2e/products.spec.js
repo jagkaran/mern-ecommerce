@@ -18,9 +18,7 @@
 const { test, expect } = require("@playwright/test");
 
 test.describe("Products redesign", () => {
-  test("products grid: 4 cols @ 1440, 3 cols @ 1100, 2 cols @ 600", async ({
-    page,
-  }) => {
+  test("products grid: 4 cols @ 1440, 3 cols @ 1100, 2 cols @ 600", async ({ page }) => {
     // CSS breakpoint map (tokens-css.js):
     //   base  (>1280): repeat(4, 1fr)
     //   ≤1280 / ≤1024: repeat(3, 1fr)
@@ -32,22 +30,13 @@ test.describe("Products redesign", () => {
     await page.locator(".prod-grid").first().waitFor({ timeout: 30_000 });
 
     await page.setViewportSize({ width: 1440, height: 900 });
-    await expect(page.locator(".prod-grid")).toHaveCSS(
-      "grid-template-columns",
-      /(^|\s)repeat\(4/
-    );
+    await expect(page.locator(".prod-grid")).toHaveCSS("grid-template-columns", /(^|\s)repeat\(4/);
 
     await page.setViewportSize({ width: 1100, height: 900 });
-    await expect(page.locator(".prod-grid")).toHaveCSS(
-      "grid-template-columns",
-      /(^|\s)repeat\(3/
-    );
+    await expect(page.locator(".prod-grid")).toHaveCSS("grid-template-columns", /(^|\s)repeat\(3/);
 
     await page.setViewportSize({ width: 600, height: 900 });
-    await expect(page.locator(".prod-grid")).toHaveCSS(
-      "grid-template-columns",
-      /(^|\s)repeat\(2/
-    );
+    await expect(page.locator(".prod-grid")).toHaveCSS("grid-template-columns", /(^|\s)repeat\(2/);
   });
 
   test("sort Price ascending reorders results", async ({ page }) => {
@@ -57,9 +46,7 @@ test.describe("Products redesign", () => {
     await page.locator(".prod-grid").first().waitFor({ timeout: 30_000 });
     // The MUI Select (TextField select) renders as role="combobox".
     await page.getByRole("combobox").click();
-    await page
-      .getByRole("option", { name: /Price .* low to high/i })
-      .click();
+    await page.getByRole("option", { name: /Price .* low to high/i }).click();
     await page.waitForURL(/sort=price-asc/);
 
     // The card body has the price as its last numeric token after the
@@ -76,9 +63,7 @@ test.describe("Products redesign", () => {
     expect(prices).toEqual(sorted);
   });
 
-  test("category filter chip appears and one-click removes", async ({
-    page,
-  }) => {
+  test("category filter chip appears and one-click removes", async ({ page }) => {
     await page.goto("/products?category=Mugs");
 
     // Active-filters region is a Box with role="region" aria-label="Active
@@ -88,13 +73,14 @@ test.describe("Products redesign", () => {
     await expect(filtersRegion).toContainText(/Mugs/);
 
     // MUI Chip's delete icon button defaults to aria-label="Delete".
-    await filtersRegion.getByRole("button", { name: /delete/i }).first().click();
+    await filtersRegion
+      .getByRole("button", { name: /delete/i })
+      .first()
+      .click();
     await page.waitForURL((url) => !url.searchParams.has("category"));
 
     // Region is unmounted once no filters are active.
-    await expect(
-      page.getByRole("region", { name: /active filters/i })
-    ).toHaveCount(0);
+    await expect(page.getByRole("region", { name: /active filters/i })).toHaveCount(0);
   });
 
   test("mobile filter trigger expands panel", async ({ page }) => {
@@ -109,17 +95,13 @@ test.describe("Products redesign", () => {
 
     // Before expanding, no category "All" option is rendered yet (Disclosure
     // panel starts closed).
-    await expect(
-      page.getByRole("button", { name: /^All$/ })
-    ).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /^All$/ })).toHaveCount(0);
 
     await trigger.click();
 
     // After expanding the disclosure, the category options appear. FilterOption
     // renders as a `<button>` (not radio), so query by role/name.
-    await expect(
-      page.getByRole("button", { name: /^All$/ }).first()
-    ).toBeVisible();
+    await expect(page.getByRole("button", { name: /^All$/ }).first()).toBeVisible();
   });
 
   test("card Add-to-Cart dispatches and toasts", async ({ page }) => {

@@ -24,15 +24,15 @@
 
 ## File Structure
 
-| File | Purpose |
-|---|---|
-| `backend/controllers/productController.js` | Whitelisted `?sort=` param, replaces hardcoded `sort({ createdAt: -1 })` |
-| `backend/__tests__/productController.test.js` | New test cases for sort param behavior |
-| `frontend/src/design/tokens-css.js` | Add 1280px breakpoint for `.prod-grid`; drop ≤480 → 1fr rule |
-| `frontend/src/components/Product/ProductGrid.js` | Remove inline `gridTemplateColumns` so CSS class drives |
-| `frontend/src/components/Product/Products.js` | Sort dropdown + URL sync, active filter chips, mobile disclosure wrapper |
-| `frontend/src/components/Product/ProductCard.jsx` | Replace QuickView with permanent Add-to-Cart button |
-| `e2e/products.spec.js` | New: grid breakpoints, sort order, chip removal, mobile disclosure, add-to-cart |
+| File                                              | Purpose                                                                         |
+| ------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `backend/controllers/productController.js`        | Whitelisted `?sort=` param, replaces hardcoded `sort({ createdAt: -1 })`        |
+| `backend/__tests__/productController.test.js`     | New test cases for sort param behavior                                          |
+| `frontend/src/design/tokens-css.js`               | Add 1280px breakpoint for `.prod-grid`; drop ≤480 → 1fr rule                    |
+| `frontend/src/components/Product/ProductGrid.js`  | Remove inline `gridTemplateColumns` so CSS class drives                         |
+| `frontend/src/components/Product/Products.js`     | Sort dropdown + URL sync, active filter chips, mobile disclosure wrapper        |
+| `frontend/src/components/Product/ProductCard.jsx` | Replace QuickView with permanent Add-to-Cart button                             |
+| `e2e/products.spec.js`                            | New: grid breakpoints, sort order, chip removal, mobile disclosure, add-to-cart |
 
 No new files outside the table. No new components — `Disclosure`, `QuietFilter`, `FilterGroup`, `FilterOption`, `GhostBtn`, `PrimaryBtn`, `Badge` primitives reused.
 
@@ -41,10 +41,12 @@ No new files outside the table. No new components — `Disclosure`, `QuietFilter
 ### Task 1: Backend sort param
 
 **Files:**
+
 - Modify: `backend/controllers/productController.js` (inside `getAllProducts` handler)
 - Modify or create: `backend/__tests__/<existing-product-test>.js`
 
 **Interfaces:**
+
 - Consumes: `req.query.sort` (string)
 - Produces: products ordered by `SORT_MAP[sortKey]`, or `SORT_MAP.newest` on unknown / missing
 
@@ -69,11 +71,11 @@ Insert directly above `exports.getAllProducts = catchAsyncErrors(...)`:
 
 ```js
 const SORT_MAP = {
-  newest:        { createdAt: -1 },
-  'price-asc':   { price: 1 },
-  'price-desc':  { price: -1 },
-  'rating-desc': { ratings: -1 },
-  'name-asc':    { name: 1 },
+  newest: { createdAt: -1 },
+  "price-asc": { price: 1 },
+  "price-desc": { price: -1 },
+  "rating-desc": { ratings: -1 },
+  "name-asc": { name: 1 },
 };
 ```
 
@@ -95,29 +97,28 @@ The `.sort(...)` line now uses the variable. `typeof === 'string'` guards agains
 If the test file from Step 1 exists, append these cases inside its `describe('getAllProducts')` block. If it does not exist, create `backend/__tests__/productController.test.js` with a `describe('getAllProducts')` block that seeds three products with distinct price/rating/createdAt/name values and exercises the cases below.
 
 ```js
-it('sorts by ?sort=price-asc (cheapest first)', async () => {
-  const res = await request(app).get('/api/v1/products?sort=price-asc&limit=10');
+it("sorts by ?sort=price-asc (cheapest first)", async () => {
+  const res = await request(app).get("/api/v1/products?sort=price-asc&limit=10");
   expect(res.status).toBe(200);
   const prices = res.body.products.map((p) => p.price);
   expect(prices).toEqual([...prices].sort((a, b) => a - b));
 });
 
-it('sorts by ?sort=rating-desc (highest rated first)', async () => {
-  const res = await request(app).get('/api/v1/products?sort=rating-desc&limit=10');
+it("sorts by ?sort=rating-desc (highest rated first)", async () => {
+  const res = await request(app).get("/api/v1/products?sort=rating-desc&limit=10");
   expect(res.status).toBe(200);
   const ratings = res.body.products.map((p) => p.ratings);
   expect(ratings[0]).toBeGreaterThanOrEqual(ratings[ratings.length - 1]);
 });
 
-it('falls back to newest for unknown sort value', async () => {
-  const unknown = await request(app).get('/api/v1/products?sort=banana&limit=10');
-  const newest  = await request(app).get('/api/v1/products?sort=newest&limit=10');
-  expect(unknown.body.products.map((p) => p._id))
-    .toEqual(newest.body.products.map((p) => p._id));
+it("falls back to newest for unknown sort value", async () => {
+  const unknown = await request(app).get("/api/v1/products?sort=banana&limit=10");
+  const newest = await request(app).get("/api/v1/products?sort=newest&limit=10");
+  expect(unknown.body.products.map((p) => p._id)).toEqual(newest.body.products.map((p) => p._id));
 });
 
-it('rejects non-string sort with 200 newest (no crash)', async () => {
-  const res = await request(app).get('/api/v1/products?sort[]=price&limit=10');
+it("rejects non-string sort with 200 newest (no crash)", async () => {
+  const res = await request(app).get("/api/v1/products?sort[]=price&limit=10");
   expect(res.status).toBe(200); // falls back, no 500
 });
 ```
@@ -147,6 +148,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ### Task 2: Grid breakpoints
 
 **Files:**
+
 - Modify: `frontend/src/components/Product/ProductGrid.js`
 - Modify: `frontend/src/design/tokens-css.js`
 
@@ -185,11 +187,19 @@ In `frontend/src/design/tokens-css.js`, find the existing media query block:
 
 ```css
 @media (max-width: 1024px) {
-  .prod-grid, .cat-grid { grid-template-columns: repeat(3, 1fr); }
-  .cart-layout, .checkout-grid, .account-grid, .filter-grid {
+  .prod-grid,
+  .cat-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .cart-layout,
+  .checkout-grid,
+  .account-grid,
+  .filter-grid {
     grid-template-columns: 1fr;
   }
-  .account-grid > :first-child { max-width: 360px; }
+  .account-grid > :first-child {
+    max-width: 360px;
+  }
 }
 ```
 
@@ -197,7 +207,9 @@ Insert a new block directly above it:
 
 ```css
 @media (max-width: 1280px) {
-  .prod-grid { grid-template-columns: repeat(3, 1fr); }
+  .prod-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 ```
 
@@ -207,10 +219,20 @@ Find:
 
 ```css
 @media (max-width: 768px) {
-  .prod-grid, .cat-grid { grid-template-columns: repeat(2, 1fr); }
-  .pdp-grid, .order-details-grid { grid-template-columns: 1fr !important; }
-  .filter-grid { grid-template-columns: 1fr; }
-  .account-grid > :first-child { max-width: 100%; }
+  .prod-grid,
+  .cat-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .pdp-grid,
+  .order-details-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .filter-grid {
+    grid-template-columns: 1fr;
+  }
+  .account-grid > :first-child {
+    max-width: 100%;
+  }
 }
 ```
 
@@ -222,7 +244,10 @@ Find and DELETE:
 
 ```css
 @media (max-width: 480px) {
-  .prod-grid, .cat-grid { grid-template-columns: 1fr; }
+  .prod-grid,
+  .cat-grid {
+    grid-template-columns: 1fr;
+  }
 }
 ```
 
@@ -257,10 +282,12 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ### Task 3: Sort dropdown + URL sync
 
 **Files:**
+
 - Modify: `frontend/src/actions/productAction.js`
 - Modify: `frontend/src/components/Product/Products.js`
 
 **Interfaces:**
+
 - Consumes: existing `getProduct` action signature
 - Produces: `getProduct(keyword, currentPage, priceRange, category, ratingValue, sort)` — `sort` appended as 6th arg
 
@@ -388,6 +415,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ### Task 4: Active filter chips + Clear all
 
 **Files:**
+
 - Modify: `frontend/src/components/Product/Products.js`
 
 - [ ] **Step 1: Add chip state + helpers**
@@ -415,71 +443,77 @@ Find:
 Insert directly above it:
 
 ```jsx
-{hasActiveFilters && (
-  <Box
-    role="region"
-    aria-label="Active filters"
-    sx={{
-      display: "flex",
-      flexWrap: "wrap",
-      gap: 1,
-      alignItems: "center",
-      mb: 2,
-    }}
-  >
-    {category && (
-      <Chip
-        size="small"
-        label={category}
-        onDelete={() => {
-          setSearchParams((prev) => {
-            const next = new URLSearchParams(prev);
-            next.delete("category");
-            return next;
-          });
-          setCurrentPage(1);
-        }}
-        sx={{ bgcolor: "var(--t-neutral-100)", color: "var(--t-neutral-700)" }}
-      />
-    )}
-    {ratingValue > 0 && (
-      <Chip
-        size="small"
-        label={`${ratingValue}+ stars`}
-        onDelete={() => { setRatingValue(0); setCurrentPage(1); }}
-        sx={{ bgcolor: "var(--t-neutral-100)", color: "var(--t-neutral-700)" }}
-      />
-    )}
-    {(priceRange[0] > (dbPriceRange?.min ?? 0) || priceRange[1] < (dbPriceRange?.max ?? 5000)) && (
-      <Chip
-        size="small"
-        label={`${fmt(priceRange[0])} – ${fmt(priceRange[1])}`}
-        onDelete={() => {
+{
+  hasActiveFilters && (
+    <Box
+      role="region"
+      aria-label="Active filters"
+      sx={{
+        display: "flex",
+        flexWrap: "wrap",
+        gap: 1,
+        alignItems: "center",
+        mb: 2,
+      }}
+    >
+      {category && (
+        <Chip
+          size="small"
+          label={category}
+          onDelete={() => {
+            setSearchParams((prev) => {
+              const next = new URLSearchParams(prev);
+              next.delete("category");
+              return next;
+            });
+            setCurrentPage(1);
+          }}
+          sx={{ bgcolor: "var(--t-neutral-100)", color: "var(--t-neutral-700)" }}
+        />
+      )}
+      {ratingValue > 0 && (
+        <Chip
+          size="small"
+          label={`${ratingValue}+ stars`}
+          onDelete={() => {
+            setRatingValue(0);
+            setCurrentPage(1);
+          }}
+          sx={{ bgcolor: "var(--t-neutral-100)", color: "var(--t-neutral-700)" }}
+        />
+      )}
+      {(priceRange[0] > (dbPriceRange?.min ?? 0) ||
+        priceRange[1] < (dbPriceRange?.max ?? 5000)) && (
+        <Chip
+          size="small"
+          label={`${fmt(priceRange[0])} – ${fmt(priceRange[1])}`}
+          onDelete={() => {
+            const min = dbPriceRange?.min ?? 0;
+            const max = dbPriceRange?.max ?? 5000;
+            setPrice([min, max]);
+            setPriceRange([min, max]);
+            setCurrentPage(1);
+          }}
+          sx={{ bgcolor: "var(--t-neutral-100)", color: "var(--t-neutral-700)" }}
+        />
+      )}
+      <GhostBtn
+        onClick={() => {
+          setSearchParams({});
           const min = dbPriceRange?.min ?? 0;
           const max = dbPriceRange?.max ?? 5000;
           setPrice([min, max]);
           setPriceRange([min, max]);
+          setRatingValue(0);
           setCurrentPage(1);
         }}
-        sx={{ bgcolor: "var(--t-neutral-100)", color: "var(--t-neutral-700)" }}
-      />
-    )}
-    <GhostBtn
-      onClick={() => {
-        setSearchParams({});
-        const min = dbPriceRange?.min ?? 0;
-        const max = dbPriceRange?.max ?? 5000;
-        setPrice([min, max]);
-        setPriceRange([min, max]);
-        setRatingValue(0);
-        setCurrentPage(1);
-      }}
-      sx={{ ml: "auto" }}
-    >
-      Clear all
-    </GhostBtn>
-  </Box>
-)}
+        sx={{ ml: "auto" }}
+      >
+        Clear all
+      </GhostBtn>
+    </Box>
+  );
+}
 ```
 
 - [ ] **Step 3: Add required imports**
@@ -487,14 +521,7 @@ Insert directly above it:
 At the top of `Products.js`, the MUI import block becomes:
 
 ```js
-import {
-  CircularProgress,
-  Pagination,
-  Slider,
-  Typography,
-  Box,
-  Chip,
-} from "@mui/material";
+import { CircularProgress, Pagination, Slider, Typography, Box, Chip } from "@mui/material";
 ```
 
 Add `Chip`. The `fmt` symbol is from `useCurrency()` — add a `const { fmt } = useCurrency();` at the top of the component body (just after `const toast = useToast();`).
@@ -502,6 +529,7 @@ Add `Chip`. The `fmt` symbol is from `useCurrency()` — add a `const { fmt } = 
 - [ ] **Step 4: Verify chip behaviour**
 
 In browser:
+
 1. Pick a category from the sidebar → chip appears with `×`. Click × → category cleared from URL and chip row disappears.
 2. Set rating to 4 → "4+ stars" chip. Click × → rating cleared.
 3. Drag price slider → price chip shows range. Click × → slider resets.
@@ -525,10 +553,12 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ### Task 5: Mobile filter disclosure
 
 **Files:**
+
 - Modify: `frontend/src/components/Product/Products.js`
 - Modify: `frontend/src/design/primitives/index.js` (only if `Disclosure` is not already exported — verify first)
 
 **Interfaces:**
+
 - Consumes: `Disclosure` primitive from `design/primitives`
 - Produces: filter panel hidden behind a `[▾ Filters (N)]` trigger on viewports ≤1024px
 
@@ -673,6 +703,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ### Task 6: Replace QuickView with Add-to-Cart on ProductCard
 
 **Files:**
+
 - Modify: `frontend/src/components/Product/ProductCard.jsx`
 
 - [ ] **Step 1: Drop QuickView-related imports and state**
@@ -681,7 +712,7 @@ In `frontend/src/components/Product/ProductCard.jsx`:
 
 1. Delete the import of `QuickViewDialog`:
    ```js
-   import QuickViewDialog from './QuickViewDialog';
+   import QuickViewDialog from "./QuickViewDialog";
    ```
 2. Delete the state line:
    ```js
@@ -690,13 +721,15 @@ In `frontend/src/components/Product/ProductCard.jsx`:
 3. Delete the `openQuickView` function (4 lines).
 4. Delete the render block at the bottom:
    ```jsx
-   {quickOpen && (
-     <QuickViewDialog
-       open={quickOpen}
-       productId={productId}
-       onClose={() => setQuickOpen(false)}
-     />
-   )}
+   {
+     quickOpen && (
+       <QuickViewDialog
+         open={quickOpen}
+         productId={productId}
+         onClose={() => setQuickOpen(false)}
+       />
+     );
+   }
    ```
 
 - [ ] **Step 2: Add the add-to-cart wiring**
@@ -711,7 +744,7 @@ const [added, setAdded] = useState(false);
 Add `useDispatch` to the existing react-redux import line:
 
 ```js
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector } from "react-redux";
 ```
 
 (If `useSelector` is not already imported there, just add `useDispatch`.)
@@ -719,7 +752,7 @@ import { useDispatch, useSelector } from 'react-redux';
 Add the cart action import at the top:
 
 ```js
-import { addItemsToCart } from '../../actions/cartAction';
+import { addItemsToCart } from "../../actions/cartAction";
 ```
 
 Add the `handleAddToCart` function just below `handleWish`:
@@ -730,7 +763,7 @@ const handleAddToCart = (e) => {
   e.stopPropagation();
   if (oos) return;
   dispatch(addItemsToCart(productId, 1));
-  toast.success('Added to cart');
+  toast.success("Added to cart");
   setAdded(true);
   setTimeout(() => setAdded(false), 1200);
 };
@@ -739,7 +772,7 @@ const handleAddToCart = (e) => {
 Add a `useToast` import at the top (next to the other hook imports):
 
 ```js
-import { useToast } from '../../hooks/useToast';
+import { useToast } from "../../hooks/useToast";
 ```
 
 - [ ] **Step 3: Replace the hover quick-view bar with a permanent button**
@@ -753,25 +786,29 @@ Find the entire `{hover && (` ... `)}` block (the gradient bar with the "Quick v
   disabled={oos}
   aria-label={oos ? `${name} out of stock` : `Add ${name} to cart`}
   style={{
-    position: 'absolute',
+    position: "absolute",
     left: 12,
     right: 12,
     bottom: 12,
     height: 44,
-    border: 'none',
-    borderRadius: 'var(--t-border-radius-sm)',
-    background: oos ? 'var(--t-neutral-300)' : added ? 'var(--t-semantic-success)' : 'var(--t-primary-600)',
-    color: '#FFF',
-    fontSize: 'var(--t-fontSize-sm)',
+    border: "none",
+    borderRadius: "var(--t-border-radius-sm)",
+    background: oos
+      ? "var(--t-neutral-300)"
+      : added
+        ? "var(--t-semantic-success)"
+        : "var(--t-primary-600)",
+    color: "#FFF",
+    fontSize: "var(--t-fontSize-sm)",
     fontWeight: 500,
-    letterSpacing: '0.04em',
-    cursor: oos ? 'not-allowed' : 'pointer',
+    letterSpacing: "0.04em",
+    cursor: oos ? "not-allowed" : "pointer",
     opacity: oos ? 0.55 : 1,
-    transition: 'background var(--t-motion-duration-fast) var(--t-motion-easing-out)',
+    transition: "background var(--t-motion-duration-fast) var(--t-motion-easing-out)",
     zIndex: 2,
   }}
 >
-  {oos ? 'Out of stock' : added ? '✓ Added' : 'Add to cart'}
+  {oos ? "Out of stock" : added ? "✓ Added" : "Add to cart"}
 </button>
 ```
 
@@ -780,6 +817,7 @@ The button is permanent — visible at all times, not gated on `hover`.
 - [ ] **Step 4: Verify**
 
 In browser, on `/products`:
+
 1. Hover any card → button stays visible (no hover-only behaviour).
 2. Click "Add to cart" → toast appears, button label flips to "✓ Added" for ~1.2s.
 3. Click an "Out of stock" card → button disabled, label "Out of stock", no toast.
@@ -805,6 +843,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ### Task 7: E2E test
 
 **Files:**
+
 - Create: `e2e/products.spec.js` (or append to existing products spec — check first)
 
 - [ ] **Step 1: Find or create the products E2E file**
@@ -815,31 +854,31 @@ Expected: a filename. Append to it if it exists, otherwise create `e2e/products.
 - [ ] **Step 2: Add grid breakpoint test**
 
 ```js
-test('products grid: 4 cols @ 1440, 3 cols @ 1100, 2 cols @ 600', async ({ page }) => {
-  await page.goto('/products');
+test("products grid: 4 cols @ 1440, 3 cols @ 1100, 2 cols @ 600", async ({ page }) => {
+  await page.goto("/products");
 
   await page.setViewportSize({ width: 1440, height: 900 });
-  await expect(page.locator('.prod-grid')).toHaveCSS('grid-template-columns', /(^|\s)repeat\(4/);
+  await expect(page.locator(".prod-grid")).toHaveCSS("grid-template-columns", /(^|\s)repeat\(4/);
 
   await page.setViewportSize({ width: 1100, height: 900 });
-  await expect(page.locator('.prod-grid')).toHaveCSS('grid-template-columns', /(^|\s)repeat\(3/);
+  await expect(page.locator(".prod-grid")).toHaveCSS("grid-template-columns", /(^|\s)repeat\(3/);
 
   await page.setViewportSize({ width: 600, height: 900 });
-  await expect(page.locator('.prod-grid')).toHaveCSS('grid-template-columns', /(^|\s)repeat\(2/);
+  await expect(page.locator(".prod-grid")).toHaveCSS("grid-template-columns", /(^|\s)repeat\(2/);
 });
 ```
 
 - [ ] **Step 3: Add sort order test**
 
 ```js
-test('sort Price ascending reorders results', async ({ page }) => {
-  await page.goto('/products?limit=12');
+test("sort Price ascending reorders results", async ({ page }) => {
+  await page.goto("/products?limit=12");
   // Open the MUI Select
-  await page.getByRole('combobox').click();
-  await page.getByRole('option', { name: /Price .* low to high/i }).click();
+  await page.getByRole("combobox").click();
+  await page.getByRole("option", { name: /Price .* low to high/i }).click();
   await page.waitForURL(/sort=price-asc/);
 
-  const prices = await page.$$eval('.prod-grid article', (cards) =>
+  const prices = await page.$$eval(".prod-grid article", (cards) =>
     cards.map((c) => {
       const m = c.textContent.match(/[\d.]+/g);
       return m ? Number(m[m.length - 1]) : 0;
@@ -853,34 +892,35 @@ test('sort Price ascending reorders results', async ({ page }) => {
 - [ ] **Step 4: Add filter chip removal test**
 
 ```js
-test('category filter chip appears and one-click removes', async ({ page }) => {
-  await page.goto('/products?category=Mugs');
+test("category filter chip appears and one-click removes", async ({ page }) => {
+  await page.goto("/products?category=Mugs");
   // Chip with category name visible
-  await expect(page.getByRole('region', { name: /active filters/i }))
-    .toContainText(/Mugs/);
+  await expect(page.getByRole("region", { name: /active filters/i })).toContainText(/Mugs/);
   // Click the × on that chip (MUI Chip renders a delete icon button)
-  await page.getByRole('region', { name: /active filters/i })
-    .getByRole('button', { name: /delete/i }).first().click();
-  await page.waitForURL((url) => !url.searchParams.has('category'));
-  await expect(page.getByRole('region', { name: /active filters/i }))
-    .toHaveCount(0);
+  await page
+    .getByRole("region", { name: /active filters/i })
+    .getByRole("button", { name: /delete/i })
+    .first()
+    .click();
+  await page.waitForURL((url) => !url.searchParams.has("category"));
+  await expect(page.getByRole("region", { name: /active filters/i })).toHaveCount(0);
 });
 ```
 
 - [ ] **Step 5: Add mobile filter disclosure test**
 
 ```js
-test('mobile filter trigger expands panel', async ({ page }) => {
+test("mobile filter trigger expands panel", async ({ page }) => {
   await page.setViewportSize({ width: 600, height: 900 });
-  await page.goto('/products');
+  await page.goto("/products");
   // Filter trigger button visible
-  const trigger = page.getByRole('button', { name: /Filters/i }).first();
+  const trigger = page.getByRole("button", { name: /Filters/i }).first();
   await expect(trigger).toBeVisible();
   // Panel default closed (no category list visible yet)
-  await expect(page.getByRole('combobox', { name: /category/i })).toHaveCount(0);
+  await expect(page.getByRole("combobox", { name: /category/i })).toHaveCount(0);
   await trigger.click();
   // Now category radio/list visible inside the panel
-  await expect(page.getByRole('radio', { name: /All/i }).first()).toBeVisible();
+  await expect(page.getByRole("radio", { name: /All/i }).first()).toBeVisible();
 });
 ```
 
@@ -889,10 +929,10 @@ Adjust selectors based on what `QuietFilter` / `FilterGroup` / `FilterOption` ac
 - [ ] **Step 6: Add add-to-cart test**
 
 ```js
-test('card Add-to-Cart dispatches and toasts', async ({ page }) => {
-  await page.goto('/products');
-  const card = page.locator('.prod-grid article').first();
-  const addBtn = card.getByRole('button', { name: /Add .* to cart/i });
+test("card Add-to-Cart dispatches and toasts", async ({ page }) => {
+  await page.goto("/products");
+  const card = page.locator(".prod-grid article").first();
+  const addBtn = card.getByRole("button", { name: /Add .* to cart/i });
   await addBtn.click();
   // Toast confirmation
   await expect(page.getByText(/added to cart/i)).toBeVisible();

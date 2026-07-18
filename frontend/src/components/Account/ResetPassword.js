@@ -7,11 +7,10 @@ import Box from "@mui/material/Box";
 import KeyIcon from "@mui/icons-material/Key";
 import Typography from "@mui/material/Typography";
 import Container from "@mui/material/Container";
-import Copyright from "../Copyright";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
-import { useAlert } from "react-alert";
+import { useToast } from "../../hooks/useToast";
 import { clearErrors, resetUserPassword } from "../../actions/userAction";
 import { InputAdornment, IconButton, CircularProgress } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -23,19 +22,15 @@ function ResetPassword() {
   const handleClickShowNewPassword = () => setShowNewPassword(!showNewPassword);
   const handleMouseDownNewPassword = () => setShowNewPassword(!showNewPassword);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const handleClickShowConfirmPassword = () =>
-    setShowConfirmPassword(!showConfirmPassword);
-  const handleMouseDownConfirmPassword = () =>
-    setShowConfirmPassword(!showConfirmPassword);
+  const handleClickShowConfirmPassword = () => setShowConfirmPassword(!showConfirmPassword);
+  const handleMouseDownConfirmPassword = () => setShowConfirmPassword(!showConfirmPassword);
   const history = useNavigate();
   const dispatch = useDispatch();
-  const alert = useAlert();
+  const toast = useToast();
   const { token } = useParams();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const { error, success, loading } = useSelector(
-    (state) => state.forgotPassword
-  );
+  const { error, success, loading } = useSelector((state) => state.forgotPassword);
   const isEnabled = password.length > 0 && confirmPassword.length > 0;
 
   const resetPassword = (event) => {
@@ -49,14 +44,14 @@ function ResetPassword() {
 
   useEffect(() => {
     if (error) {
-      alert.error(error);
+      toast.error(error);
       dispatch(clearErrors());
     }
     if (success) {
-      alert.success("Password Reset Successfully");
+      toast.success("Password Reset Successfully");
       history("/signin", { replace: true });
     }
-  }, [dispatch, error, alert, history, success]);
+  }, [dispatch, error, toast, history, success]);
 
   return (
     <>
@@ -87,12 +82,7 @@ function ResetPassword() {
               <Typography component="h1" variant="h5">
                 Reset Password
               </Typography>
-              <Box
-                component="form"
-                noValidate
-                onSubmit={resetPassword}
-                sx={{ mt: 3 }}
-              >
+              <Box component="form" noValidate onSubmit={resetPassword} sx={{ mt: 3 }}>
                 <Grid container spacing={2}>
                   <Grid item xs={12}>
                     <TextField
@@ -114,11 +104,7 @@ function ResetPassword() {
                               onClick={handleClickShowNewPassword}
                               onMouseDown={handleMouseDownNewPassword}
                             >
-                              {showNewPassword ? (
-                                <VisibilityIcon />
-                              ) : (
-                                <VisibilityOffIcon />
-                              )}
+                              {showNewPassword ? <VisibilityIcon /> : <VisibilityOffIcon />}
                             </IconButton>
                           </InputAdornment>
                         ),
@@ -145,11 +131,7 @@ function ResetPassword() {
                               onClick={handleClickShowConfirmPassword}
                               onMouseDown={handleMouseDownConfirmPassword}
                             >
-                              {showConfirmPassword ? (
-                                <VisibilityIcon />
-                              ) : (
-                                <VisibilityOffIcon />
-                              )}
+                              {showConfirmPassword ? <VisibilityIcon /> : <VisibilityOffIcon />}
                             </IconButton>
                           </InputAdornment>
                         ),
@@ -169,7 +151,6 @@ function ResetPassword() {
               </Box>
             </Box>
           </Container>
-          <Copyright />
         </div>
       )}
     </>

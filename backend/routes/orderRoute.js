@@ -30,9 +30,7 @@ router.route("/order/:id").get(isAuthenticatedUser, validateOrderId, getOrderDet
 
 router.route("/orders/me").get(isAuthenticatedUser, validatePagination, getMyOrders);
 
-router
-  .route("/admin/orders")
-  .get(isAuthenticatedUser, authorizeRoles("admin"), getAllOrders);
+router.route("/admin/orders").get(isAuthenticatedUser, authorizeRoles("admin"), getAllOrders);
 
 router
   .route("/admin/order/:id")

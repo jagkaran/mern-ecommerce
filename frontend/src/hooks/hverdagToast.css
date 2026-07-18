@@ -1,0 +1,115 @@
+/* hverdagToast.css — Hverdag-themed toast host. Mirrors the styling of the
+ * legacy react-alert theme so visual continuity holds across the migration.
+ */
+
+.hverdag-toasts {
+  position: fixed;
+  top: 88px;
+  right: 24px;
+  z-index: 1500;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 420px;
+  width: auto;
+}
+
+.hverdag-toast {
+  position: relative;
+  padding: 12px 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background-color: var(--t-neutral-50, #fafaf9);
+  border: 1px solid var(--t-neutral-300, #d6d3d1);
+  border-left: 3px solid var(--t-primary-600, #92593f);
+  border-radius: var(--t-border-radius-base, 10px);
+  box-shadow: var(--t-shadow-md, 0 8px 24px -6px rgba(28, 25, 23, 0.08));
+  color: var(--t-neutral-800, #292524);
+  font-family: var(--t-fontFamily-sans, "Inter", system-ui, sans-serif);
+  font-size: var(--t-fontSize-sm, 0.875rem);
+  line-height: 1.5;
+  animation: hverdagToastIn 320ms cubic-bezier(0.22, 1, 0.36, 1);
+  min-width: 280px;
+  max-width: 420px;
+}
+
+.hverdag-toast--success {
+  background-color: var(--t-accent-sage-50, #f1f4ee);
+  border-color: var(--t-accent-sage-400, #8a9a7b);
+  border-left-color: var(--t-accent-sage-400, #8a9a7b);
+  color: var(--t-accent-sage-600, #586a4c);
+}
+
+.hverdag-toast--error {
+  background-color: rgba(180, 69, 47, 0.06);
+  border-color: var(--t-semantic-error, #b4452f);
+  border-left-color: var(--t-semantic-error, #b4452f);
+  color: var(--t-semantic-error, #b4452f);
+}
+
+.hverdag-toast--info {
+  background-color: var(--t-neutral-50, #fafaf9);
+  border-color: var(--t-neutral-300, #d6d3d1);
+  border-left-color: var(--t-primary-600, #92593f);
+  color: var(--t-neutral-800, #292524);
+}
+
+.hverdag-toast--warning {
+  background-color: rgba(201, 162, 39, 0.08);
+  border-color: var(--t-accent-mustard-400, #c9a227);
+  border-left-color: var(--t-accent-mustard-400, #c9a227);
+  color: var(--t-accent-mustard-700, #7a6215);
+}
+
+.hverdag-toast__message {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: block;
+}
+
+.hverdag-toast__close {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  opacity: 0.6;
+  padding: 2px 4px;
+  margin-left: auto;
+  flex: 0 0 auto;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+.hverdag-toast__close:hover {
+  opacity: 1;
+}
+
+@media (max-width: 600px) {
+  .hverdag-toasts {
+    left: 12px;
+    right: 12px;
+    top: 72px;
+    max-width: none;
+  }
+  .hverdag-toast {
+    min-width: 0;
+    width: 100%;
+  }
+}
+
+@keyframes hverdagToastIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hverdag-toast {
+    animation: none;
+  }
+}

@@ -2,201 +2,199 @@ import { createReducer } from "@reduxjs/toolkit";
 
 const initialState = { products: [] };
 
-export const productReducer = createReducer(initialState, {
-  ProductRequest: (state) => {
-    state.loading = true;
-    state.products = [];
-  },
-  AdminProductRequest: (state) => {
-    state.loading = true;
-    state.products = [];
-  },
-  ProductSuccess: (state, action) => {
-    state.loading = false;
-    state.products = action.payload.products;
-    state.productsCount = action.payload.productCount;
-    state.resultPerPage = action.payload.resultPerPage;
-    state.filteredProductsCount = action.payload.filteredProductsCount;
-  },
-  AdminProductSuccess: (state, action) => {
-    state.loading = false;
-    state.products = action.payload;
-  },
-  ProductFailure: (state, action) => {
-    state.loading = false;
-    state.error = action.payload;
-  },
-  AdminProductFailure: (state, action) => {
-    state.loading = false;
-    state.error = action.payload;
-  },
-  ClearErrors: (state) => {
-    state.error = null;
-  },
+export const productReducer = createReducer(initialState, (builder) => {
+  builder
+    .addCase("ProductRequest", (state) => {
+      state.loading = true;
+      state.products = [];
+    })
+    .addCase("AdminProductRequest", (state) => {
+      state.loading = true;
+      state.products = [];
+    })
+    .addCase("ProductSuccess", (state, action) => {
+      state.loading = false;
+      state.products = action.payload.products;
+      state.productsCount = action.payload.productCount;
+      state.resultPerPage = action.payload.resultPerPage;
+      state.filteredProductsCount = action.payload.filteredProductsCount;
+    })
+    .addCase("AdminProductSuccess", (state, action) => {
+      state.loading = false;
+      state.products = action.payload;
+    })
+    .addCase("ProductFailure", (state, action) => {
+      state.loading = false;
+      state.error = action.payload;
+    })
+    .addCase("AdminProductFailure", (state, action) => {
+      state.loading = false;
+      state.error = action.payload;
+    })
+    .addCase("ClearErrors", (state) => {
+      state.error = null;
+    });
 });
 
 // Reducer for the dynamic active-categories list
 export const categoriesReducer = createReducer(
-  { categories: [], loading: false, error: null },
   {
-    CategoriesRequest: (state) => {
-      state.loading = true;
-      state.error   = null;
-    },
-    CategoriesSuccess: (state, action) => {
-      state.loading    = false;
-      state.categories = action.payload;
-    },
-    CategoriesFailure: (state, action) => {
-      state.loading = false;
-      state.error   = action.payload;
-    },
+    categories: [],
+    categoryCounts: {},
+    priceRange: { min: 0, max: 5000 },
+    loading: false,
+    error: null,
+  },
+  (builder) => {
+    builder
+      .addCase("CategoriesRequest", (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase("CategoriesSuccess", (state, action) => {
+        state.loading = false;
+        state.categories = action.payload.categories;
+        state.categoryCounts = action.payload.categoryCounts;
+        state.priceRange = action.payload.priceRange;
+      })
+      .addCase("CategoriesFailure", (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
   }
 );
 
-export const productModifyReducer = createReducer(
-  {},
-  {
-    DeleteProductRequest: (state) => {
+export const productModifyReducer = createReducer({}, (builder) => {
+  builder
+    .addCase("DeleteProductRequest", (state) => {
       state.loading = true;
-    },
-    DeleteProductSuccess: (state, action) => {
+    })
+    .addCase("DeleteProductSuccess", (state, action) => {
       state.loading = false;
       state.isDeleted = action.payload;
-    },
-    DeleteProductFailure: (state, action) => {
+    })
+    .addCase("DeleteProductFailure", (state, action) => {
       state.loading = false;
       state.error = action.payload;
-    },
-    DeleteProductReset: (state) => {
+    })
+    .addCase("DeleteProductReset", (state) => {
       state.isDeleted = false;
-    },
-    UpdateProductRequest: (state) => {
+    })
+    .addCase("UpdateProductRequest", (state) => {
       state.loading = true;
-    },
-    UpdateProductSuccess: (state, action) => {
+    })
+    .addCase("UpdateProductSuccess", (state, action) => {
       state.loading = false;
       state.isUpdated = action.payload;
-    },
-    UpdateProductFailure: (state, action) => {
+    })
+    .addCase("UpdateProductFailure", (state, action) => {
       state.loading = false;
       state.error = action.payload;
-    },
-    UpdateProductReset: (state) => {
+    })
+    .addCase("UpdateProductReset", (state) => {
       state.isUpdated = false;
-    },
-    ClearErrors: (state) => {
+    })
+    .addCase("ClearErrors", (state) => {
       state.error = null;
-    },
-  }
-);
+    });
+});
 
-export const newProductReducer = createReducer(
-  { product: {} },
-  {
-    NewProductRequest: (state) => {
+export const newProductReducer = createReducer({ product: {} }, (builder) => {
+  builder
+    .addCase("NewProductRequest", (state) => {
       state.loading = true;
-    },
-    NewProductSuccess: (state, action) => {
+    })
+    .addCase("NewProductSuccess", (state, action) => {
       state.loading = false;
       state.success = action.payload.success;
       state.product = action.payload.product;
-    },
-    NewProductFailure: (state, action) => {
+    })
+    .addCase("NewProductFailure", (state, action) => {
       state.loading = false;
       state.error = action.payload;
-    },
-    NewProductReset: (state) => {
+    })
+    .addCase("NewProductReset", (state) => {
       state.success = false;
-    },
-    ClearErrors: (state) => {
+    })
+    .addCase("ClearErrors", (state) => {
       state.error = null;
-    },
-  }
-);
+    });
+});
 
-export const productDetailsReducer = createReducer(
-  { product: {} },
-  {
-    ProductDetailsRequest: (state) => {
+export const productDetailsReducer = createReducer({ product: {} }, (builder) => {
+  builder
+    .addCase("ProductDetailsRequest", (state) => {
       state.loading = true;
-    },
-    ProductDetailsSuccess: (state, action) => {
+    })
+    .addCase("ProductDetailsSuccess", (state, action) => {
       state.loading = false;
       state.product = action.payload.product;
-    },
-    ProductDetailsFailure: (state, action) => {
+    })
+    .addCase("ProductDetailsFailure", (state, action) => {
       state.loading = false;
       state.error = action.payload;
-    },
-    ClearErrors: (state) => {
+    })
+    .addCase("ClearErrors", (state) => {
       state.error = null;
-    },
-  }
-);
+    });
+});
 
-export const createReviewReducer = createReducer(
-  {},
-  {
-    NewReviewRequest: (state) => {
+export const createReviewReducer = createReducer({}, (builder) => {
+  builder
+    .addCase("NewReviewRequest", (state) => {
       state.loading = true;
-    },
-    NewReviewSuccess: (state, action) => {
+    })
+    .addCase("NewReviewSuccess", (state, action) => {
       state.loading = false;
       state.success = action.payload;
-    },
-    NewReviewFailure: (state, action) => {
+    })
+    .addCase("NewReviewFailure", (state, action) => {
       state.loading = false;
       state.error = action.payload;
-    },
-    NewReviewReset: (state) => {
+    })
+    .addCase("NewReviewReset", (state) => {
       state.success = false;
-    },
-    ClearErrors: (state) => {
+    })
+    .addCase("ClearErrors", (state) => {
       state.error = null;
-    },
-  }
-);
+    });
+});
 
-export const allProductReviewsReducer = createReducer(
-  { reviews: [] },
-  {
-    AllReviewRequest: (state) => {
+export const allProductReviewsReducer = createReducer({ reviews: [] }, (builder) => {
+  builder
+    .addCase("AllReviewRequest", (state) => {
       state.loading = true;
-    },
-    AllReviewSuccess: (state, action) => {
+    })
+    .addCase("AllReviewSuccess", (state, action) => {
       state.loading = false;
       state.reviews = action.payload;
-    },
-    AllReviewFailure: (state, action) => {
+    })
+    .addCase("AllReviewFailure", (state, action) => {
       state.loading = false;
       state.error = action.payload;
-    },
-    ClearErrors: (state) => {
+    })
+    .addCase("ClearErrors", (state) => {
       state.error = null;
-    },
-  }
-);
+    });
+});
 
-export const reviewReducer = createReducer(
-  {},
-  {
-    DeleteReviewRequest: (state) => {
+export const reviewReducer = createReducer({}, (builder) => {
+  builder
+    .addCase("DeleteReviewRequest", (state) => {
       state.loading = true;
-    },
-    DeleteReviewSuccess: (state, action) => {
+    })
+    .addCase("DeleteReviewSuccess", (state, action) => {
       state.loading = false;
       state.isDeleted = action.payload;
-    },
-    DeleteReviewFailure: (state, action) => {
+    })
+    .addCase("DeleteReviewFailure", (state, action) => {
       state.loading = false;
       state.error = action.payload;
-    },
-    DeleteReviewReset: (state) => {
+    })
+    .addCase("DeleteReviewReset", (state) => {
       state.isDeleted = false;
-    },
-    ClearErrors: (state) => {
+    })
+    .addCase("ClearErrors", (state) => {
       state.error = null;
-    },
-  }
-);
+    });
+});

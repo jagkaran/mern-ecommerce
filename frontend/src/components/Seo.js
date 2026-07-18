@@ -1,5 +1,5 @@
 import React from "react";
-import { Helmet } from "react-helmet";
+import { Helmet } from "react-helmet-async";
 
 function Seo({ title, description, path }) {
   const url = `${process.env.REACT_APP_SITE_URL || "http://localhost:3000"}/${path}`;

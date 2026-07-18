@@ -2,204 +2,195 @@ import { createReducer } from "@reduxjs/toolkit";
 
 const initialState = { user: {} };
 
-export const userReducer = createReducer(initialState, {
-  LoginUserRequest: (state) => {
-    state.loading = true;
-    state.isAuthenticated = false;
-  },
-  LoginUserSuccess: (state, action) => {
-    state.loading = false;
-    state.isAuthenticated = true;
-    state.user = action.payload;
-  },
-  LoginUserFailure: (state, action) => {
-    state.loading = false;
-    state.isAuthenticated = false;
-    state.user = null;
-    state.error = action.payload;
-  },
-  RegisterUserRequest: (state) => {
-    state.loading = true;
-    state.isAuthenticated = false;
-  },
-  RegisterUserSuccess: (state, action) => {
-    state.loading = false;
-    state.isAuthenticated = true;
-    state.user = action.payload;
-  },
-  RegisterUserFailure: (state, action) => {
-    state.loading = false;
-    state.isAuthenticated = false;
-    state.user = null;
-    state.error = action.payload;
-  },
-  LoadUserRequest: (state) => {
-    state.loading = true;
-    state.isAuthenticated = false;
-  },
-  LoadUserSuccess: (state, action) => {
-    state.loading = false;
-    state.isAuthenticated = true;
-    state.user = action.payload;
-  },
-  LoadUserFailure: (state, action) => {
-    state.loading = false;
-    state.isAuthenticated = false;
-    state.user = null;
-    state.error = action.payload;
-  },
-  LogoutUserSuccess: (state, action) => {
-    state.loading = false;
-    state.isAuthenticated = false;
-    state.user = null;
-  },
-  LogoutUserFailure: (state, action) => {
-    state.loading = false;
-    state.error = action.payload;
-  },
-  ClearErrors: (state) => {
-    state.error = null;
-  },
+export const userReducer = createReducer(initialState, (builder) => {
+  builder
+    .addCase("LoginUserRequest", (state) => {
+      state.loading = true;
+      state.isAuthenticated = false;
+    })
+    .addCase("LoginUserSuccess", (state, action) => {
+      state.loading = false;
+      state.isAuthenticated = true;
+      state.user = action.payload;
+    })
+    .addCase("LoginUserFailure", (state, action) => {
+      state.loading = false;
+      state.isAuthenticated = false;
+      state.user = null;
+      state.error = action.payload;
+    })
+    .addCase("RegisterUserRequest", (state) => {
+      state.loading = true;
+      state.isAuthenticated = false;
+    })
+    .addCase("RegisterUserSuccess", (state, action) => {
+      state.loading = false;
+      state.isAuthenticated = true;
+      state.user = action.payload;
+    })
+    .addCase("RegisterUserFailure", (state, action) => {
+      state.loading = false;
+      state.isAuthenticated = false;
+      state.user = null;
+      state.error = action.payload;
+    })
+    .addCase("LoadUserRequest", (state) => {
+      state.loading = true;
+      state.isAuthenticated = false;
+    })
+    .addCase("LoadUserSuccess", (state, action) => {
+      state.loading = false;
+      state.isAuthenticated = true;
+      state.user = action.payload;
+    })
+    .addCase("LoadUserFailure", (state, action) => {
+      state.loading = false;
+      state.isAuthenticated = false;
+      state.user = null;
+      state.error = action.payload;
+    })
+    .addCase("LogoutUserSuccess", (state) => {
+      state.loading = false;
+      state.isAuthenticated = false;
+      state.user = null;
+    })
+    .addCase("LogoutUserFailure", (state, action) => {
+      state.loading = false;
+      state.error = action.payload;
+    })
+    .addCase("ClearErrors", (state) => {
+      state.error = null;
+    });
 });
 
-export const profileReducer = createReducer(
-  {},
-  {
-    UpdateProfileRequest: (state) => {
+export const profileReducer = createReducer({}, (builder) => {
+  builder
+    .addCase("UpdateProfileRequest", (state) => {
       state.loading = true;
-    },
-    UpdateProfileSuccess: (state, action) => {
+    })
+    .addCase("UpdateProfileSuccess", (state, action) => {
       state.loading = false;
       state.isUpdated = action.payload;
-    },
-    UpdateProfileFailure: (state, action) => {
+    })
+    .addCase("UpdateProfileFailure", (state, action) => {
       state.loading = false;
       state.error = action.payload;
-    },
-    UpdateProfileReset: (state) => {
+    })
+    .addCase("UpdateProfileReset", (state) => {
       state.isUpdated = false;
-    },
-    UpdatePasswordRequest: (state) => {
+    })
+    .addCase("UpdatePasswordRequest", (state) => {
       state.loading = true;
-    },
-    UpdatePasswordSuccess: (state, action) => {
+    })
+    .addCase("UpdatePasswordSuccess", (state, action) => {
       state.loading = false;
       state.isUpdated = action.payload;
-    },
-    UpdatePasswordFailure: (state, action) => {
+    })
+    .addCase("UpdatePasswordFailure", (state, action) => {
       state.loading = false;
       state.error = action.payload;
-    },
-    UpdatePasswordReset: (state) => {
+    })
+    .addCase("UpdatePasswordReset", (state) => {
       state.isUpdated = false;
-    },
-    UpdateUserRequest: (state) => {
+    })
+    .addCase("UpdateUserRequest", (state) => {
       state.loading = true;
-    },
-    UpdateUserSuccess: (state, action) => {
+    })
+    .addCase("UpdateUserSuccess", (state, action) => {
       state.loading = false;
       state.isUpdated = action.payload;
-    },
-    UpdateUserFailure: (state, action) => {
+    })
+    .addCase("UpdateUserFailure", (state, action) => {
       state.loading = false;
       state.error = action.payload;
-    },
-    UpdateUserReset: (state) => {
+    })
+    .addCase("UpdateUserReset", (state) => {
       state.isUpdated = false;
-    },
-    DeleteUserRequest: (state) => {
+    })
+    .addCase("DeleteUserRequest", (state) => {
       state.loading = true;
-    },
-    DeleteUserSuccess: (state, action) => {
+    })
+    .addCase("DeleteUserSuccess", (state, action) => {
       state.loading = false;
       state.isDeleted = action.payload.success;
       state.message = action.payload.message;
-    },
-    DeleteUserFailure: (state, action) => {
+    })
+    .addCase("DeleteUserFailure", (state, action) => {
       state.loading = false;
       state.error = action.payload;
-    },
-    DeleteUserReset: (state) => {
+    })
+    .addCase("DeleteUserReset", (state) => {
       state.isDeleted = false;
-    },
-    ClearErrors: (state) => {
+    })
+    .addCase("ClearErrors", (state) => {
       state.error = null;
-    },
-  }
-);
+    });
+});
 
-export const forgotPasswordReducer = createReducer(
-  {},
-  {
-    ForgotPasswordRequest: (state) => {
+export const forgotPasswordReducer = createReducer({}, (builder) => {
+  builder
+    .addCase("ForgotPasswordRequest", (state) => {
       state.loading = true;
       state.error = null;
-    },
-    ForgotPasswordSuccess: (state, action) => {
+    })
+    .addCase("ForgotPasswordSuccess", (state, action) => {
       state.loading = false;
       state.message = action.payload;
-    },
-    ForgotPasswordFailure: (state, action) => {
+    })
+    .addCase("ForgotPasswordFailure", (state, action) => {
       state.loading = false;
       state.error = action.payload;
-    },
-    ResetPasswordRequest: (state) => {
+    })
+    .addCase("ResetPasswordRequest", (state) => {
       state.loading = true;
       state.error = null;
-    },
-    ResetPasswordSuccess: (state, action) => {
+    })
+    .addCase("ResetPasswordSuccess", (state, action) => {
       state.loading = false;
       state.success = action.payload;
-    },
-    ResetPasswordFailure: (state, action) => {
+    })
+    .addCase("ResetPasswordFailure", (state, action) => {
       state.loading = false;
       state.error = action.payload;
-    },
-    ClearErrors: (state) => {
+    })
+    .addCase("ClearErrors", (state) => {
       state.error = null;
-    },
-  }
-);
+    });
+});
 
-export const allUsersReducer = createReducer(
-  { users: [] },
-  {
-    AllUsersRequest: (state) => {
+export const allUsersReducer = createReducer({ users: [] }, (builder) => {
+  builder
+    .addCase("AllUsersRequest", (state) => {
       state.loading = true;
-    },
-    AllUsersSuccess: (state, action) => {
+    })
+    .addCase("AllUsersSuccess", (state, action) => {
       state.loading = false;
       state.users = action.payload.users;
       state.usersCount = action.payload.usersCount;
-    },
-    AllUsersFailure: (state, action) => {
+    })
+    .addCase("AllUsersFailure", (state, action) => {
       state.loading = false;
       state.error = action.payload;
-    },
-
-    ClearErrors: (state) => {
+    })
+    .addCase("ClearErrors", (state) => {
       state.error = null;
-    },
-  }
-);
+    });
+});
 
-export const userDetailsReducer = createReducer(
-  { user: {} },
-  {
-    UserDetailRequest: (state) => {
+export const userDetailsReducer = createReducer({ user: {} }, (builder) => {
+  builder
+    .addCase("UserDetailRequest", (state) => {
       state.loading = true;
-    },
-    UserDetailSuccess: (state, action) => {
+    })
+    .addCase("UserDetailSuccess", (state, action) => {
       state.loading = false;
       state.user = action.payload;
-    },
-    UserDetailFailure: (state, action) => {
+    })
+    .addCase("UserDetailFailure", (state, action) => {
       state.loading = false;
       state.error = action.payload;
-    },
-
-    ClearErrors: (state) => {
+    })
+    .addCase("ClearErrors", (state) => {
       state.error = null;
-    },
-  }
-);
+    });
+});

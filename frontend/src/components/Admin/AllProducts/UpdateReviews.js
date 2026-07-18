@@ -5,16 +5,7 @@ import Avatar from "@mui/material/Avatar";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import ReviewsIcon from "@mui/icons-material/Reviews";
-import PerfectScrollbar from "react-perfect-scrollbar";
-import {
-  Card,
-  CardHeader,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-} from "@mui/material";
+import { Card, CardHeader, Table, TableBody, TableCell, TableHead, TableRow } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SeverityPill from "../../Order/SeverityPill";
 
@@ -37,40 +28,36 @@ function UpdateReviews({ reviews, deleteReviewHandler }) {
           <Typography component="h1" variant="h5">
             Update Reviews
           </Typography>
-          <Card sx={{ mt: 3 }}>
+          <Card sx={{ mt: 3, width: "100%" }}>
             <CardHeader title={`All Reviews (${reviews.length})`} />
-            <PerfectScrollbar>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell sx={CELL_SX}>User</TableCell>
-                    <TableCell sx={CELL_SX}>Comment</TableCell>
-                    <TableCell sx={CELL_SX}>Rating</TableCell>
-                    <TableCell sx={CELL_SX}>Delete</TableCell>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={CELL_SX}>User</TableCell>
+                  <TableCell sx={CELL_SX}>Comment</TableCell>
+                  <TableCell sx={CELL_SX}>Rating</TableCell>
+                  <TableCell sx={CELL_SX}>Delete</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {reviews.map((review) => (
+                  <TableRow hover key={review._id}>
+                    <TableCell sx={CELL_SX}>{review.name}</TableCell>
+                    <TableCell sx={CELL_SX}>{review.comment}</TableCell>
+                    <TableCell sx={CELL_SX}>
+                      <SeverityPill color={(review.rating >= 3 && "success") || "warning"}>
+                        {review.rating}
+                      </SeverityPill>
+                    </TableCell>
+                    <TableCell sx={CELL_SX}>
+                      <Button onClick={() => deleteReviewHandler(review._id)}>
+                        <DeleteIcon />
+                      </Button>
+                    </TableCell>
                   </TableRow>
-                </TableHead>
-                <TableBody>
-                  {reviews.map((review) => (
-                    <TableRow hover key={review._id}>
-                      <TableCell sx={CELL_SX}>{review.name}</TableCell>
-                      <TableCell sx={CELL_SX}>{review.comment}</TableCell>
-                      <TableCell sx={CELL_SX}>
-                        <SeverityPill
-                          color={(review.rating >= 3 && "success") || "warning"}
-                        >
-                          {review.rating}
-                        </SeverityPill>
-                      </TableCell>
-                      <TableCell sx={CELL_SX}>
-                        <Button onClick={() => deleteReviewHandler(review._id)}>
-                          <DeleteIcon />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </PerfectScrollbar>
+                ))}
+              </TableBody>
+            </Table>
           </Card>
         </Box>
       ) : (

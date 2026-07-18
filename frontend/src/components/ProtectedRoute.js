@@ -7,9 +7,11 @@ function ProtectedRoute({ children, isAuthenticated, loading }) {
 
   if (loading !== false) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
+      <Box
+        sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}
+      >
         <CircularProgress color="inherit" />
-     </Box>
+      </Box>
     );
   }
 

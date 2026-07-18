@@ -1,8 +1,17 @@
 import React from "react";
 import { useSelector } from "react-redux";
 import { Link, useSearchParams } from "react-router-dom";
-import { ThanksBlock, SpoonIllustration, Surface, Price, PrimaryBtn, GhostBtn, Divider } from "../../design/primitives";
+import {
+  ThanksBlock,
+  SpoonIllustration,
+  Surface,
+  Price,
+  PrimaryBtn,
+  GhostBtn,
+  Divider,
+} from "../../design/primitives";
 import { fmtInCurrency } from "../../utils/fmtInCurrency";
+import { createOrderNumber } from "../Order/MyOrders";
 import ClaimForm from "./ClaimForm";
 
 export default function Success() {
@@ -26,7 +35,13 @@ export default function Success() {
             textAlign: "center",
           }}
         >
-          <p style={{ color: "var(--t-neutral-500)", fontFamily: "var(--t-fontFamily-display)", fontStyle: "italic" }}>
+          <p
+            style={{
+              color: "var(--t-neutral-500)",
+              fontFamily: "var(--t-fontFamily-display)",
+              fontStyle: "italic",
+            }}
+          >
             gathering the details…
           </p>
         </div>
@@ -37,9 +52,8 @@ export default function Success() {
   return (
     <section
       style={{
-        paddingBlock: "var(--t-space-4xl)",
+        paddingBlock: "var(--t-space-md) var(--t-space-3xl)",
         backgroundColor: "var(--t-neutral-50)",
-        minHeight: "70vh",
       }}
     >
       <div
@@ -52,8 +66,13 @@ export default function Success() {
         <ThanksBlock
           title="thank you — we've got this"
           subtitle="Your order is being looked after. We'll send a quiet note when it leaves the workshop, and another when it's safely with you."
-          orderRef={orderId.slice(-8)}
+          orderRef={
+            order.shippingInfo?.country
+              ? createOrderNumber(orderId, order.shippingInfo.country)
+              : null
+          }
           illustration={<SpoonIllustration size={120} />}
+          sx={{ py: { xs: 1, sm: 2 } }}
         />
 
         {orderTotal && (
@@ -63,6 +82,12 @@ export default function Success() {
               mx: "auto",
               mt: 2,
               p: { xs: 3, sm: 4 },
+              animation: "hverdagSettle 500ms var(--t-motion-easing-unfurl) 140ms backwards",
+              "@media (prefers-reduced-motion: reduce)": {
+                animation: "none",
+                opacity: 1,
+                transform: "none",
+              },
             }}
           >
             <div
@@ -106,6 +131,12 @@ export default function Success() {
               mx: "auto",
               mt: 3,
               p: { xs: 3, sm: 4 },
+              animation: "hverdagSettle 500ms var(--t-motion-easing-unfurl) 240ms backwards",
+              "@media (prefers-reduced-motion: reduce)": {
+                animation: "none",
+                opacity: 1,
+                transform: "none",
+              },
             }}
           >
             <ClaimForm claimToken={token} />
@@ -119,6 +150,7 @@ export default function Success() {
             justifyContent: "center",
             flexWrap: "wrap",
             marginTop: "2.5rem",
+            animation: "hverdagSettle 500ms var(--t-motion-easing-unfurl) 340ms backwards",
           }}
         >
           <Link to={`/order/${orderId}`} style={{ textDecoration: "none" }}>

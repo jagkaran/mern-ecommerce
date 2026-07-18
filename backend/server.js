@@ -6,11 +6,18 @@ if (process.env.NODE_ENV?.toLowerCase() !== "production") {
   require("dotenv").config({ path: path.join(__dirname, "config", "config.env") });
 }
 
-const app        = require("./app");
-const connectDB  = require("./config/database");
+const app = require("./app");
+const connectDB = require("./config/database");
 const cloudinary = require("cloudinary").v2;
-const logger     = require("./utils/logger");
-const mongoose   = require("mongoose");
+const logger = require("./utils/logger");
+const mongoose = require("mongoose");
+const couponService = require("./services/couponService");
+
+// ponytail: hoisted so SIGTERM/SIGINT/unhandledRejection handlers below can
+// reach the http.Server. Assigned inside the boot IIFE once app.listen resolves.
+// Without this, graceful shutdown crashes with ReferenceError on the first
+// SIGTERM (every Render deploy).
+let server;
 
 // Handle uncaught exceptions BEFORE anything else
 process.on("uncaughtException", (err) => {
@@ -25,21 +32,39 @@ process.on("uncaughtException", (err) => {
 (async () => {
   await connectDB();
 
+  // Seed default coupons (idempotent) + hydrate the in-memory cache the
+  // /validate endpoint reads from. Failure here is non-fatal — the rest of
+  // the app still boots.
+  try {
+    await couponService.seedDefaults();
+  } catch (err) {
+    logger.warn(`Coupon seed skipped: ${err.message}`);
+  }
+
   cloudinary.config({
-    cloud_name:  process.env.CLOUDINARY_NAME,
-    api_key:     process.env.CLOUDINARY_API_KEY,
-    api_secret:  process.env.CLOUDINARY_API_SECRET,
+    cloud_name: process.env.CLOUDINARY_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
   });
 
-  const server = app.listen(process.env.PORT || 5000, () => {
-    logger.info(`Server running on http://localhost:${process.env.PORT || 5000} [${process.env.NODE_ENV || "development"}]`);
+  const port = process.env.PORT || 5000;
+  server = app.listen(port, () => {
+    logger.info(
+      `Server running on http://localhost:${port} [${process.env.NODE_ENV || "development"}]`
+    );
   });
 })();
 
 // Handle unhandled promise rejections (e.g. bad DB URI)
 process.on("unhandledRejection", (err) => {
   logger.error(`Unhandled Rejection: ${err.message}`, { stack: err.stack });
-  server.close(() => process.exit(1));
+  // ponytail: guard for the boot race — if unhandledRejection fires before
+  // app.listen resolves, `server` is undefined. Log + exit without crash.
+  if (server && server.close) {
+    server.close(() => process.exit(1));
+  } else {
+    process.exit(1);
+  }
 });
 
 // ─── Task 2.4: Graceful Shutdown ──────────────────────────────────────────────
@@ -64,6 +89,12 @@ const gracefulShutdown = (signal) => {
   forceExit.unref();
 
   // Step 1: stop accepting new HTTP connections.
+  // ponytail: same boot-race guard as unhandledRejection — if SIGTERM lands
+  // before app.listen resolves, `server` is undefined. Exit cleanly.
+  if (!server) {
+    logger.warn("SIGTERM before server ready — exiting");
+    process.exit(0);
+  }
   server.close(async () => {
     logger.info("HTTP server closed");
 
@@ -82,4 +113,4 @@ const gracefulShutdown = (signal) => {
 };
 
 process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
-process.on("SIGINT",  () => gracefulShutdown("SIGINT"));
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));

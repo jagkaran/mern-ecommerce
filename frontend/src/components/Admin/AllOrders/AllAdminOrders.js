@@ -4,18 +4,14 @@ import Box from "@mui/material/Box";
 import CssBaseline from "@mui/material/CssBaseline";
 import DashboardAppBar from "../Sidebar/DashboardAppBar";
 import DashboardDrawer from "../Sidebar/DashboardDrawer";
+import AdminMobileNav from "../AdminMobileNav";
 import { CircularProgress, Container, Grid } from "@mui/material";
 import { useSelector, useDispatch } from "react-redux";
-import { useAlert } from "react-alert";
+import { useToast } from "../../../hooks/useToast";
 import AllOrdersList from "./AllOrdersList";
-import {
-  clearErrors,
-  getAllOrders,
-  deleteOrder,
-} from "../../../actions/orderAction";
+import { clearErrors, getAllOrders, deleteOrder } from "../../../actions/orderAction";
 import { useNavigate } from "react-router-dom";
 import Seo from "../../Seo";
-import Copyright from "../../Copyright";
 
 function AllAdminOrders() {
   const theme = useTheme();
@@ -30,14 +26,12 @@ function AllAdminOrders() {
   };
 
   const dispatch = useDispatch();
-  const alert = useAlert();
+  const toast = useToast();
   const history = useNavigate();
 
   const { loading, error, orders } = useSelector((state) => state.allOrders);
 
-  const { error: deleteError, isDeleted } = useSelector(
-    (state) => state.modifiedOrder
-  );
+  const { error: deleteError, isDeleted } = useSelector((state) => state.modifiedOrder);
 
   function sortByDate(a, b) {
     if (a.createdAt < b.createdAt) {
@@ -57,20 +51,20 @@ function AllAdminOrders() {
 
   React.useEffect(() => {
     if (error) {
-      alert.error(error);
+      toast.error(error);
       dispatch(clearErrors());
     }
     if (deleteError) {
-      alert.error(deleteError);
+      toast.error(deleteError);
       dispatch(clearErrors());
     }
     if (isDeleted) {
-      alert.success("Order Deleted Successfully");
+      toast.success("Order Deleted Successfully");
       history("/dashboard");
       dispatch({ type: "DeleteOrderReset" });
     }
     dispatch(getAllOrders());
-  }, [dispatch, error, alert, deleteError, history, isDeleted]);
+  }, [dispatch, error, toast, deleteError, history, isDeleted]);
 
   return (
     <>
@@ -82,11 +76,7 @@ function AllAdminOrders() {
         />
         <CssBaseline />
         <DashboardAppBar open={open} handleDrawerOpen={handleDrawerOpen} />
-        <DashboardDrawer
-          open={open}
-          handleDrawerClose={handleDrawerClose}
-          theme={theme}
-        />
+        <DashboardDrawer open={open} handleDrawerClose={handleDrawerClose} theme={theme} />
         <Box
           component="main"
           sx={{
@@ -94,6 +84,7 @@ function AllAdminOrders() {
             py: 8,
           }}
         >
+          <AdminMobileNav />
           <Container maxWidth="lg" sx={{ mt: 2, mb: 2 }}>
             <Grid container spacing={3}>
               <Grid item xs={12}>
@@ -112,7 +103,6 @@ function AllAdminOrders() {
           </Container>
         </Box>
       </Box>
-      <Copyright />
     </>
   );
 }

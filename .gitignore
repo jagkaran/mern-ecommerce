@@ -61,3 +61,4 @@ logs/
 lighthouse-report*.json
 # SDD scratch ledger (task briefs, reports, review diffs)
 .superpowers/sdd/
+graphify-out/

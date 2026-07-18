@@ -1,12 +1,14 @@
-import { Box, Button, Divider, Grid, Rating, Typography } from "@mui/material";
+import { Box, Button, Divider, Rating } from "@mui/material";
+import { useCurrency } from "../../../utils/currencyContext";
 import React from "react";
-import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
-import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
-import SeverityPill from "../../Order/SeverityPill";
 import RateReviewIcon from "@mui/icons-material/RateReview";
 import AddShoppingCartIcon from "@mui/icons-material/AddShoppingCart";
 import SubmitReviewDialog from "./SubmitReviewDialog";
+import { Headline, BodyText, Overline, QtyStepper, Badge } from "../../../design/primitives";
 
+// PDP right rail — info, price, qty, add-to-cart, review entry.
+// Aligned with Hverdag primitive palette; surfaces MUI Button only where
+// the action needs a contained/primary fill (Add to Cart).
 function ProductInfo({
   category,
   description,
@@ -17,8 +19,6 @@ function ProductInfo({
   numOfReviews,
   quantity,
   setQuantity,
-  decreaseQty,
-  increaseQty,
   stock,
   addToCartHandler,
   open,
@@ -30,92 +30,155 @@ function ProductInfo({
   reviewSubmitHandler,
   handleClickOpen,
 }) {
-  return (
-    <Grid container direction="column" sx={{ height: "100%" }}>
-      <Typography
-        mb={1}
-        variant="subtitle1"
-        sx={{ textTransform: "capitalize" }}
-      >
-        {category}
-      </Typography>
-      <Divider />
-      <Box mt={2}>
-        <Typography variant="h4">{name}</Typography>
-        <Typography variant="subtitle1">Product ID : {_id}</Typography>
-        <Box sx={{ display: "flex" }}>
-          <Rating
-            name="half-rating-read"
-            value={ratings}
-            precision={0.5}
-            readOnly
-          />
+  const { fmt } = useCurrency();
 
-          <Typography variant="subtitle1" ml={2}>
-            {numOfReviews} {numOfReviews > 1 ? "Reviews" : "Review"}
-          </Typography>
-        </Box>
-        <Typography mt={2} variant="subtitle1">
-          {description}
-        </Typography>
-        <Box sx={{ display: "flex", mt: 3, mb: 2 }}>
-          <button onClick={decreaseQty}>
-            <RemoveCircleOutlineIcon />
-          </button>
-          <input
-            className="border-none ml-4 w-6 outline-none appearance-none text-gray-800"
-            value={quantity}
-            type="number"
-            onChange={(e) => setQuantity(e.target.value)}
-          ></input>
-          <button onClick={increaseQty}>
-            <AddCircleOutlineIcon />
-          </button>
-        </Box>
-        <Divider />
-        <Box
+  const lowStock = stock > 0 && stock <= 3;
+
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        gap: { xs: 2.5, md: 3 },
+      }}
+    >
+      {/* Category eyebrow — Overline primitive keeps cadence consistent */}
+      {category && (
+        <Overline sx={{ textTransform: "capitalize", color: "var(--t-neutral-500)" }}>
+          {category}
+        </Overline>
+      )}
+
+      <Headline level="3xl" sx={{ fontFamily: "var(--t-fontFamily-display)" }}>
+        {name}
+      </Headline>
+
+      {/* Rating row */}
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+        <Rating
+          name="product-rating"
+          value={ratings}
+          precision={0.5}
+          readOnly
+          size="small"
+          sx={{ color: "var(--t-primary-600)" }}
+        />
+        <BodyText small sx={{ color: "var(--t-neutral-600)" }}>
+          {numOfReviews} {numOfReviews === 1 ? "Review" : "Reviews"}
+        </BodyText>
+      </Box>
+
+      {/* Description */}
+      <BodyText sx={{ color: "var(--t-neutral-700)", lineHeight: 1.7 }}>{description}</BodyText>
+
+      <Divider />
+
+      {/* Qty + price + Add — single horizontal row on desktop, stacks on mobile */}
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: { xs: "column", md: "row" },
+          alignItems: { xs: "flex-start", md: "center" },
+          gap: { xs: 2.5, md: 3 },
+          py: 1,
+        }}
+      >
+        <QtyStepper
+          value={quantity}
+          min={1}
+          max={stock || 99}
+          onChange={setQuantity}
+          ariaLabel="Quantity"
+        />
+
+        <Headline
+          level="2xl"
           sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            mt: 3,
-            mb: 2,
+            fontFamily: "var(--t-fontFamily-display)",
+            color: "var(--t-neutral-900)",
+            ml: { md: "auto" },
           }}
         >
-          <Typography variant="h5">${price}</Typography>
-          <Button
-            variant="contained"
-            sx={{ m: "auto" }}
-            size="large"
-            disabled={stock === 0 ? true : false}
-            startIcon={<AddShoppingCartIcon />}
-            onClick={() => stock !== 0 && addToCartHandler(quantity)}
-          >
-            Add to Cart
-          </Button>
-        </Box>
-        Status :{" "}
-        <SeverityPill
-          color={
-            (stock === 0 && "error") ||
-            (stock <= 3 && "warning") ||
-            (stock >= 3 && "success") ||
-            "error"
-          }
-        >
-          {stock < 1 ? "Out of Stock" : "Available"}
-        </SeverityPill>
+          {fmt(price)}
+        </Headline>
       </Box>
-      <Box maxWidth="100" mt={3}>
+
+      <Button
+        variant="contained"
+        size="large"
+        fullWidth
+        disabled={stock === 0}
+        startIcon={<AddShoppingCartIcon />}
+        onClick={() => stock !== 0 && addToCartHandler(quantity)}
+        sx={{
+          backgroundColor: "var(--t-primary-700)",
+          color: "var(--t-neutral-50)",
+          borderRadius: "var(--t-border-radius-base)",
+          py: 1.5,
+          fontFamily: "var(--t-fontFamily-body)",
+          fontWeight: 500,
+          letterSpacing: "0.02em",
+          textTransform: "none",
+          boxShadow: "var(--t-shadow-sm)",
+          transition:
+            "background-color var(--t-motion-duration-fast) var(--t-motion-easing-out), transform var(--t-motion-duration-fast) var(--t-motion-easing-out)",
+          "&:hover": {
+            backgroundColor: "var(--t-primary-800)",
+            boxShadow: "var(--t-shadow-md)",
+            transform: "translateY(-1px)",
+          },
+          "&:active": { transform: "translateY(0)" },
+          "&.Mui-disabled": {
+            backgroundColor: "var(--t-neutral-200)",
+            color: "var(--t-neutral-500)",
+          },
+        }}
+      >
+        {stock === 0 ? "Out of Stock" : "Add to Cart"}
+      </Button>
+
+      {/* Status badge */}
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+        <BodyText small sx={{ color: "var(--t-neutral-600)" }}>
+          Status:
+        </BodyText>
+        <Badge variant={stock === 0 ? "error" : lowStock ? "warning" : "success"}>
+          {stock < 1 ? "Out of Stock" : lowStock ? `Only ${stock} left` : "Available"}
+        </Badge>
+      </Box>
+
+      <Divider />
+
+      {/* Review entry — pulled to bottom of column */}
+      <Box sx={{ mt: "auto", pt: 1 }}>
         <Button
           variant="outlined"
-          sx={{ mt: "auto" }}
+          fullWidth
           size="large"
           endIcon={<RateReviewIcon />}
           onClick={handleClickOpen}
+          sx={{
+            borderColor: "var(--t-neutral-300)",
+            color: "var(--t-neutral-900)",
+            borderRadius: "var(--t-border-radius-base)",
+            py: 1.25,
+            fontFamily: "var(--t-fontFamily-body)",
+            fontWeight: 500,
+            textTransform: "none",
+            letterSpacing: "0.02em",
+            transition: "all var(--t-motion-duration-fast) var(--t-motion-easing-out)",
+            "&:hover": {
+              borderColor: "var(--t-primary-700)",
+              backgroundColor: "var(--t-primary-50)",
+              color: "var(--t-primary-800)",
+            },
+          }}
         >
           Submit a Review
         </Button>
       </Box>
+
       <SubmitReviewDialog
         open={open}
         handleClose={handleClose}
@@ -125,7 +188,7 @@ function ProductInfo({
         setComment={setComment}
         reviewSubmitHandler={reviewSubmitHandler}
       />
-    </Grid>
+    </Box>
   );
 }
 

@@ -7,16 +7,14 @@ import Box from "@mui/material/Box";
 import KeyIcon from "@mui/icons-material/Key";
 import Typography from "@mui/material/Typography";
 import Container from "@mui/material/Container";
-import Copyright from "../Copyright";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { useAlert } from "react-alert";
+import { useToast } from "../../hooks/useToast";
 import { clearErrors, updateUserPassword } from "../../actions/userAction";
 import { InputAdornment, IconButton, CircularProgress } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
-import EmptyCart from "../EmptyCart";
 import Seo from "../Seo";
 import { usePassUpdateFormControls } from "../Admin/Hooks/usePassUpdateForm";
 
@@ -28,24 +26,18 @@ function UpdatePassword() {
   const handleClickShowNewPassword = () => setShowNewPassword(!showNewPassword);
   const handleMouseDownNewPassword = () => setShowNewPassword(!showNewPassword);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const handleClickShowConfirmPassword = () =>
-    setShowConfirmPassword(!showConfirmPassword);
-  const handleMouseDownConfirmPassword = () =>
-    setShowConfirmPassword(!showConfirmPassword);
+  const handleClickShowConfirmPassword = () => setShowConfirmPassword(!showConfirmPassword);
+  const handleMouseDownConfirmPassword = () => setShowConfirmPassword(!showConfirmPassword);
   const history = useNavigate();
   const dispatch = useDispatch();
-  const alert = useAlert();
+  const toast = useToast();
   const [oldPass, setOldPass] = useState("");
 
   const { error, isUpdated, loading } = useSelector((state) => state.profile);
   const { isAuthenticated } = useSelector((state) => state.user);
 
-  const {
-    handleUpdatePassInputValue,
-    updatePassFormIsValid,
-    errors,
-    updatePassFormValues,
-  } = usePassUpdateFormControls();
+  const { handleUpdatePassInputValue, updatePassFormIsValid, errors, updatePassFormValues } =
+    usePassUpdateFormControls();
 
   const updatePassword = (event) => {
     event.preventDefault();
@@ -60,17 +52,17 @@ function UpdatePassword() {
 
   useEffect(() => {
     if (error) {
-      alert.error(error);
+      toast.error(error);
       dispatch(clearErrors());
     }
     if (isUpdated) {
-      alert.success("Password Updated Successfully");
+      toast.success("Password Updated Successfully");
       history("/account", { replace: true });
       dispatch({
         type: "UpdatePasswordReset",
       });
     }
-  }, [dispatch, error, alert, history, isUpdated]);
+  }, [dispatch, error, toast, history, isUpdated]);
 
   return (
     <>
@@ -103,12 +95,7 @@ function UpdatePassword() {
                   <Typography component="h1" variant="h5">
                     Change Password
                   </Typography>
-                  <Box
-                    component="form"
-                    noValidate
-                    onSubmit={updatePassword}
-                    sx={{ mt: 3 }}
-                  >
+                  <Box component="form" noValidate onSubmit={updatePassword} sx={{ mt: 3 }}>
                     <Grid container spacing={2}>
                       <Grid item xs={12}>
                         <TextField
@@ -130,11 +117,7 @@ function UpdatePassword() {
                                   onClick={handleClickShowOldPassword}
                                   onMouseDown={handleMouseDownOldPassword}
                                 >
-                                  {showOldPassword ? (
-                                    <VisibilityIcon />
-                                  ) : (
-                                    <VisibilityOffIcon />
-                                  )}
+                                  {showOldPassword ? <VisibilityIcon /> : <VisibilityOffIcon />}
                                 </IconButton>
                               </InputAdornment>
                             ),
@@ -165,11 +148,7 @@ function UpdatePassword() {
                                   onClick={handleClickShowNewPassword}
                                   onMouseDown={handleMouseDownNewPassword}
                                 >
-                                  {showNewPassword ? (
-                                    <VisibilityIcon />
-                                  ) : (
-                                    <VisibilityOffIcon />
-                                  )}
+                                  {showNewPassword ? <VisibilityIcon /> : <VisibilityOffIcon />}
                                 </IconButton>
                               </InputAdornment>
                             ),
@@ -200,11 +179,7 @@ function UpdatePassword() {
                                   onClick={handleClickShowConfirmPassword}
                                   onMouseDown={handleMouseDownConfirmPassword}
                                 >
-                                  {showConfirmPassword ? (
-                                    <VisibilityIcon />
-                                  ) : (
-                                    <VisibilityOffIcon />
-                                  )}
+                                  {showConfirmPassword ? <VisibilityIcon /> : <VisibilityOffIcon />}
                                 </IconButton>
                               </InputAdornment>
                             ),
@@ -224,10 +199,28 @@ function UpdatePassword() {
                   </Box>
                 </Box>
               </Container>
-              <Copyright />
             </div>
           ) : (
-            <EmptyCart />
+            <div
+              style={{
+                minHeight: "60vh",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: "var(--t-space-4xl) var(--t-grid-containerPad)",
+              }}
+            >
+              <p
+                style={{
+                  color: "var(--t-neutral-500)",
+                  fontStyle: "italic",
+                  fontFamily: "var(--t-fontFamily-display)",
+                  fontSize: "1.125rem",
+                }}
+              >
+                No changes to make right now.
+              </p>
+            </div>
           )}
         </>
       )}

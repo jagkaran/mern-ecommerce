@@ -11,7 +11,7 @@
 
 | Layer    | Technology                                                                    |
 | -------- | ----------------------------------------------------------------------------- |
-| Frontend | React 17, Redux Toolkit, Material UI, Tailwind CSS                            |
+| Frontend | React 17, Redux Toolkit + RTK Query, Material UI, Tailwind CSS                |
 | Backend  | Node.js v20+, Express 4, Mongoose 8                                           |
 | Database | MongoDB Atlas                                                                 |
 | Auth     | JWT (httpOnly + secure + sameSite=strict cookie)                              |
@@ -60,17 +60,18 @@ mern-ecommerce/
 │   └── dev-agent.js
 ├── backend/             # Express.js backend
 │   ├── controllers/     # Business logic
+│   ├── services/        # Service layer (storage, payment, order, coupon, email, …)
 │   ├── models/          # Mongoose schemas
 │   ├── routes/          # API endpoints
 │   ├── middleware/      # Auth, error handling, validation, cache
-│   ├── utils/           # Helpers (JWT, email, logger, transaction)
+│   ├── utils/           # Helpers (JWT, email, logger, transaction, pricing)
 │   ├── config/          # Database configuration
 │   └── __tests__/       # Jest tests
 ├── frontend/            # React frontend
 │   ├── src/
 │   │   ├── components/  # React components
 │   │   ├── pages/       # Page components
-│   │   ├── store/       # Redux store
+│   │   ├── store/       # Redux store + RTK Query apiSlice
 │   │   └── utils/       # Frontend utilities
 │   └── public/
 ├── docs/                # Documentation
@@ -167,10 +168,13 @@ node agents/orchestrator.js --agents=security,test  # selective
 - Rate limiting on auth routes (20 req / 15 min)
 - Rate limiting on product routes (100 req / 15 min)
 - express-mongo-sanitize (NoSQL injection prevention)
-- xss-clean (XSS protection)
+- express-xss-sanitizer (XSS protection)
 - JWT in httpOnly + secure + sameSite=strict cookie
 - bcryptjs password hashing (salt rounds 10)
 - SHA-256 hashed password reset tokens in DB
+- CSRF token (axios `X-CSRF-Token` header, `csrf-csrf` double-submit cookie) — required in production
+- Stripe webhook signature verification (raw body + `STRIPE_WEBHOOK_SECRET`)
+- Payment amount computed server-side from authoritative DB prices (legacy `{ amount }` bodies rejected)
 - Comprehensive input validation on all endpoints
 - Secret scanning in CI
 
@@ -274,6 +278,13 @@ CLOUDINARY_API_SECRET=...
 # Stripe
 STRIPE_API_KEY=pk_test_...
 STRIPE_SECRET_KEY=sk_test_...
+# REQUIRED in production. Stripe webhook signature verification (raw body).
+# Generate via Stripe Dashboard → Developers → Webhooks → Add endpoint.
+STRIPE_WEBHOOK_SECRET=whsec_...
+
+# CSRF — REQUIRED in production. Backend crashes at boot if missing in prod.
+# Generate with: openssl rand -hex 32
+CSRF_SECRET=
 
 # SMTP (for password reset)
 SMTP_HOST=smtp.gmail.com

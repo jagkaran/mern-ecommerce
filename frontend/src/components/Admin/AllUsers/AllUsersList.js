@@ -1,22 +1,22 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Card, CardBody, Overline, Headline, BodyText, GhostBtn } from "../../../design/primitives";
 import { SeverityPill } from "../../../design/primitives";
 import { Link } from "react-router-dom";
 import { format, parseISO } from "date-fns";
 import { avatarUrl } from "../../../utils/avatar";
 import useAdminPagination, { PER_PAGE_OPTIONS } from "../Hooks/useAdminPagination";
-import { useDispatch, useSelector } from "react-redux";
-import { clearErrors, deleteUser } from "../../../actions/userAction";
-import { useAlert } from "react-alert";
+import { useDispatch } from "react-redux";
+import { deleteUser } from "../../../actions/userAction";
 
 function AllUsersList({ users, usersCount, deleteUserHandler }) {
   const [open, setOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState({});
   const dispatch = useDispatch();
-  const alert = useAlert();
 
-  const { page, perPage, totalPages, paginated, setPage, setPerPage } =
-    useAdminPagination(users, 10);
+  const { page, perPage, totalPages, paginated, setPage, setPerPage } = useAdminPagination(
+    users,
+    10
+  );
 
   const handleClickOpen = (user) => {
     setOpen(true);
@@ -33,9 +33,7 @@ function AllUsersList({ users, usersCount, deleteUserHandler }) {
     return (
       <Card>
         <CardBody>
-          <BodyText style={{ color: "var(--t-neutral-400)" }}>
-            No users found.
-          </BodyText>
+          <BodyText style={{ color: "var(--t-neutral-400)" }}>No users found.</BodyText>
         </CardBody>
       </Card>
     );
@@ -75,23 +73,21 @@ function AllUsersList({ users, usersCount, deleteUserHandler }) {
                   letterSpacing: "0.05em",
                 }}
               >
-                {["Name", "Email", "Role", "Registered", "Actions"].map(
-                  (h) => (
-                    <th
-                      key={h}
-                      style={{
-                        padding: "12px 16px",
-                        textAlign: "left",
-                        fontWeight: 600,
-                        color: "var(--t-neutral-500)",
-                        fontSize: "var(--t-fontSize-xs)",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {h}
-                    </th>
-                  )
-                )}
+                {["Name", "Email", "Role", "Registered", "Actions"].map((h) => (
+                  <th
+                    key={h}
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "left",
+                      fontWeight: 600,
+                      color: "var(--t-neutral-500)",
+                      fontSize: "var(--t-fontSize-xs)",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {h}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
@@ -100,14 +96,11 @@ function AllUsersList({ users, usersCount, deleteUserHandler }) {
                   key={user._id}
                   style={{
                     borderBottom: "1px solid var(--t-neutral-100)",
-                    transition: "background var(--t-motion-duration-fast) var(--t-motion-easing-out)",
+                    transition:
+                      "background var(--t-motion-duration-fast) var(--t-motion-easing-out)",
                   }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.background = "var(--t-neutral-50)")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.background = "transparent")
-                  }
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "var(--t-neutral-50)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                 >
                   <td style={{ padding: "12px 16px" }}>
                     <div
@@ -128,11 +121,7 @@ function AllUsersList({ users, usersCount, deleteUserHandler }) {
                           objectFit: "cover",
                         }}
                       />
-                      <BodyText
-                        style={{ textTransform: "capitalize" }}
-                      >
-                        {user.name}
-                      </BodyText>
+                      <BodyText style={{ textTransform: "capitalize" }}>{user.name}</BodyText>
                     </div>
                   </td>
                   <td
@@ -144,9 +133,7 @@ function AllUsersList({ users, usersCount, deleteUserHandler }) {
                     {user.email}
                   </td>
                   <td style={{ padding: "12px 16px" }}>
-                    <SeverityPill
-                      color={user.role === "admin" ? "success" : "warning"}
-                    >
+                    <SeverityPill color={user.role === "admin" ? "success" : "warning"}>
                       {user.role}
                     </SeverityPill>
                   </td>
@@ -173,12 +160,8 @@ function AllUsersList({ users, usersCount, deleteUserHandler }) {
                           textDecoration: "none",
                           transition: "color 150ms",
                         }}
-                        onMouseEnter={(e) =>
-                          (e.currentTarget.style.color = "var(--t-primary-600)")
-                        }
-                        onMouseLeave={(e) =>
-                          (e.currentTarget.style.color = "var(--t-neutral-500)")
-                        }
+                        onMouseEnter={(e) => (e.currentTarget.style.color = "var(--t-primary-600)")}
+                        onMouseLeave={(e) => (e.currentTarget.style.color = "var(--t-neutral-500)")}
                       >
                         ✎
                       </Link>
@@ -214,10 +197,7 @@ function AllUsersList({ users, usersCount, deleteUserHandler }) {
                             }}
                             onClick={(e) => e.stopPropagation()}
                           >
-                            <Headline
-                              level="lg"
-                              style={{ marginBottom: 12 }}
-                            >
+                            <Headline level="lg" style={{ marginBottom: 12 }}>
                               Delete Confirmation
                             </Headline>
                             <BodyText
@@ -241,9 +221,7 @@ function AllUsersList({ users, usersCount, deleteUserHandler }) {
                               </GhostBtn>
                               <GhostBtn
                                 size="small"
-                                onClick={() =>
-                                  deleteUserFn(selectedUser._id)
-                                }
+                                onClick={() => deleteUserFn(selectedUser._id)}
                                 style={{
                                   color: "var(--t-semantic-error)",
                                   borderColor: "var(--t-semantic-error)",
@@ -323,33 +301,23 @@ function AllUsersList({ users, usersCount, deleteUserHandler }) {
               >
                 ‹
               </GhostBtn>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                (p) => (
-                  <GhostBtn
-                    key={p}
-                    size="small"
-                    onClick={() => setPage(p)}
-                    style={{
-                      background:
-                        p === page
-                          ? "var(--t-primary-600)"
-                          : "transparent",
-                      color: p === page ? "#fff" : "var(--t-neutral-700)",
-                      borderColor:
-                        p === page
-                          ? "var(--t-primary-600)"
-                          : "var(--t-neutral-300)",
-                    }}
-                  >
-                    {p}
-                  </GhostBtn>
-                )
-              )}
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                <GhostBtn
+                  key={p}
+                  size="small"
+                  onClick={() => setPage(p)}
+                  style={{
+                    background: p === page ? "var(--t-primary-600)" : "transparent",
+                    color: p === page ? "#fff" : "var(--t-neutral-700)",
+                    borderColor: p === page ? "var(--t-primary-600)" : "var(--t-neutral-300)",
+                  }}
+                >
+                  {p}
+                </GhostBtn>
+              ))}
               <GhostBtn
                 size="small"
-                onClick={() =>
-                  setPage(Math.min(totalPages, page + 1))
-                }
+                onClick={() => setPage(Math.min(totalPages, page + 1))}
                 disabled={page >= totalPages}
               >
                 ›

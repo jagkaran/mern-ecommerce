@@ -7,8 +7,21 @@ import { useCurrency } from "../../utils/currencyContext";
 import { addItemsToCart, removeItemsFromCart } from "../../actions/cartAction";
 import axios from "axios";
 import { Link } from "react-router-dom";
-import { Headline, BodyText, Price, PrimaryBtn, Overline, Surface, QtyStepper, Badge, Reveal, Divider, GhostBtn } from "../../design/primitives";
+import {
+  Headline,
+  BodyText,
+  Price,
+  PrimaryBtn,
+  Overline,
+  Surface,
+  QtyStepper,
+  Badge,
+  Reveal,
+  Divider,
+  GhostBtn,
+} from "../../design/primitives";
 import Seo from "../Seo";
+import CouponOffersPanel from "../CouponOffersPanel";
 
 function Basket() {
   const { fmt } = useCurrency();
@@ -43,10 +56,6 @@ function Basket() {
   }, [cartItems]);
 
   const setQty = (id, currentQty, nextQty) => {
-    if (nextQty < 1) {
-      handleRemove(id);
-      return;
-    }
     const maxStock = productStocks[id] ?? Infinity;
     if (nextQty > maxStock) {
       toast.info(`Only ${maxStock} in stock`);
@@ -58,12 +67,7 @@ function Basket() {
 
   const handleRemove = (productId, name) => {
     dispatch(removeItemsFromCart(productId));
-    toast.success(
-      (() => {
-        // react-toast supports custom JSX in success; for plain text we use info
-        return `Removed ${name}`;
-      })()
-    );
+    toast.success(`Removed ${name}`);
   };
 
   const totalItemsCount = cartItems.reduce((a, i) => a + i.quantity, 0);
@@ -79,16 +83,24 @@ function Basket() {
     if (!code) return;
     setCouponBusy(true);
     try {
+      // Send cart context so /validate runs full engine eligibility —
+      // prevents applying a coupon that the order service would reject
+      // (e.g. minSubtotal not met).
+      const categories = [...new Set((cartItems || []).map((i) => i.category).filter(Boolean))];
+      const productIds = (cartItems || []).map((i) => i.product).filter(Boolean);
       const { data } = await axios.post("/api/v1/coupon/validate", {
         code,
         itemSubtotal: totalPrice,
+        itemCount: totalItemsCount,
+        categories,
+        productIds,
       });
       if (data.valid) {
         dispatch({ type: "ApplyCoupon", payload: data.coupon });
         toast.success(`Coupon ${data.coupon.code} applied`);
         setCouponInput("");
       } else {
-        toast.error("Coupon not found");
+        toast.error(data.message || "Coupon not eligible for this cart");
       }
     } catch (err) {
       toast.error(err.response?.data?.message || "Could not validate coupon");
@@ -102,13 +114,44 @@ function Basket() {
     toast.info("Coupon removed");
   };
 
+  // Re-validate the applied coupon whenever the cart changes. A coupon that
+  // met its minSubtotal at apply-time may no longer qualify after the user
+  // adjusts quantities — without this check the stale discount would
+  // survive in Redux and slip into checkout, where /order/new would then
+  // reject it with a confusing 400. Auto-remove and notify.
+  useEffect(() => {
+    if (!coupon) return;
+    let cancelled = false;
+    (async () => {
+      const categories = [...new Set((cartItems || []).map((i) => i.category).filter(Boolean))];
+      const productIds = (cartItems || []).map((i) => i.product).filter(Boolean);
+      try {
+        const { data } = await axios.post("/api/v1/coupon/validate", {
+          code: coupon.code,
+          itemSubtotal: totalPrice,
+          itemCount: totalItemsCount,
+          categories,
+          productIds,
+        });
+        if (cancelled) return;
+        if (!data.valid) {
+          dispatch({ type: "RemoveCoupon" });
+          toast.error(data.message || `${coupon.code} no longer applies`);
+        }
+      } catch {
+        /* network blip — leave the coupon alone, order path will catch it */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [totalPrice, totalItemsCount, coupon, cartItems, dispatch, toast]);
+
   // Compute the discount amount for the cart summary. For freeShipping we
   // show "Free shipping" qualitatively — the actual shipping cost will be
   // visible on the shipping step (the server doesn't disclose shipping here).
   const couponDiscount =
-    coupon?.discountType === "freeShipping"
-      ? null
-      : coupon?.discountAmount ?? 0;
+    coupon?.discountType === "freeShipping" ? null : (coupon?.discountAmount ?? 0);
   const grandTotal = Math.max(0, totalPrice - (couponDiscount ?? 0));
 
   // -------- Empty state --------
@@ -170,9 +213,7 @@ function Basket() {
             paddingInline: "var(--t-grid-containerPad)",
           }}
         >
-          <Overline sx={{ display: "block", mb: 1, color: "var(--t-neutral-500)" }}>
-            Cart
-          </Overline>
+          <Overline sx={{ display: "block", mb: 1, color: "var(--t-neutral-500)" }}>Cart</Overline>
           <Headline level="2xl" style={{ marginBottom: 48 }}>
             Your bag{" "}
             <Box
@@ -215,8 +256,7 @@ function Basket() {
                         gap: { xs: 2, sm: 3 },
                         alignItems: "center",
                         py: 2.5,
-                        borderTop:
-                          i === 0 ? "1px solid var(--t-neutral-200)" : "none",
+                        borderTop: i === 0 ? "1px solid var(--t-neutral-200)" : "none",
                         borderBottom: "1px solid var(--t-neutral-200)",
                       }}
                     >
@@ -318,10 +358,10 @@ function Basket() {
                               {item.category}
                             </Box>
                           )}
-                          {item.category && (
-                            <Box sx={{ color: "var(--t-neutral-300)" }}>·</Box>
-                          )}
-                          <Box sx={{ fontSize: "var(--t-fontSize-sm)", color: "var(--t-neutral-500)" }}>
+                          {item.category && <Box sx={{ color: "var(--t-neutral-300)" }}>·</Box>}
+                          <Box
+                            sx={{ fontSize: "var(--t-fontSize-sm)", color: "var(--t-neutral-500)" }}
+                          >
                             {fmt(item.price)} each
                           </Box>
                         </Box>
@@ -350,9 +390,10 @@ function Basket() {
                             value={item.quantity}
                             min={0}
                             max={Number.isFinite(maxStock) ? maxStock : 99}
-                            onChange={(next) =>
-                              setQty(item.product, item.quantity, next)
-                            }
+                            onChange={(next) => {
+                              if (next < 1) handleRemove(item.product, item.name);
+                              else setQty(item.product, item.quantity, next);
+                            }}
                           />
                         </Box>
                         <Box
@@ -376,9 +417,7 @@ function Basket() {
                             {fmt(item.price * item.quantity)}
                           </Price>
                           <IconButton
-                            onClick={() =>
-                              handleRemove(item.product, item.name)
-                            }
+                            onClick={() => handleRemove(item.product, item.name)}
                             aria-label={`Remove ${item.name} from bag`}
                             size="small"
                             sx={{
@@ -429,7 +468,13 @@ function Basket() {
                 }}
               >
                 <span>Subtotal</span>
-                <span style={{ fontVariantNumeric: "tabular-nums", fontWeight: 500, color: "var(--t-neutral-900)" }}>
+                <span
+                  style={{
+                    fontVariantNumeric: "tabular-nums",
+                    fontWeight: 500,
+                    color: "var(--t-neutral-900)",
+                  }}
+                >
                   {fmt(totalPrice)}
                 </span>
               </Box>
@@ -485,51 +530,50 @@ function Basket() {
                   </button>
                 </Box>
               ) : (
-                <Box sx={{ display: "flex", gap: 1, mb: 3 }}>
-                  <input
-                    type="text"
-                    name="coupon"
-                    placeholder="Coupon code"
-                    aria-label="Coupon code"
-                    autoComplete="off"
-                    value={couponInput}
-                    onChange={(e) => setCouponInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        applyCoupon();
-                      }
-                    }}
-                    style={{
-                      flex: 1,
-                      minWidth: 0,
-                      height: 40,
-                      padding: "0 12px",
-                      border: "1px solid var(--t-neutral-200)",
-                      borderRadius: "var(--t-border-radius-base)",
-                      fontSize: "var(--t-fontSize-sm)",
-                      backgroundColor: "#FFF",
-                      color: "var(--t-neutral-900)",
-                      fontFamily: "inherit",
-                      outline: "none",
-                      transition:
-                        "border-color var(--t-motion-duration-fast) var(--t-motion-easing-out)",
-                    }}
-                    onFocus={(e) =>
-                      (e.currentTarget.style.borderColor = "var(--t-primary-600)")
-                    }
-                    onBlur={(e) =>
-                      (e.currentTarget.style.borderColor = "var(--t-neutral-200)")
-                    }
-                  />
-                  <GhostBtn
-                    type="button"
-                    onClick={applyCoupon}
-                    disabled={couponBusy || !couponInput.trim()}
-                  >
-                    {couponBusy ? "…" : "Apply"}
-                  </GhostBtn>
-                </Box>
+                <>
+                  <CouponOffersPanel subtotal={totalPrice} itemCount={totalItemsCount} dense />
+                  <Box sx={{ display: "flex", gap: 1, mb: 3 }}>
+                    <input
+                      type="text"
+                      name="coupon"
+                      placeholder="Coupon code"
+                      aria-label="Coupon code"
+                      autoComplete="off"
+                      value={couponInput}
+                      onChange={(e) => setCouponInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          applyCoupon();
+                        }
+                      }}
+                      style={{
+                        flex: 1,
+                        minWidth: 0,
+                        height: 40,
+                        padding: "0 12px",
+                        border: "1px solid var(--t-neutral-200)",
+                        borderRadius: "var(--t-border-radius-base)",
+                        fontSize: "var(--t-fontSize-sm)",
+                        backgroundColor: "#FFF",
+                        color: "var(--t-neutral-900)",
+                        fontFamily: "inherit",
+                        outline: "none",
+                        transition:
+                          "border-color var(--t-motion-duration-fast) var(--t-motion-easing-out)",
+                      }}
+                      onFocus={(e) => (e.currentTarget.style.borderColor = "var(--t-primary-600)")}
+                      onBlur={(e) => (e.currentTarget.style.borderColor = "var(--t-neutral-200)")}
+                    />
+                    <GhostBtn
+                      type="button"
+                      onClick={applyCoupon}
+                      disabled={couponBusy || !couponInput.trim()}
+                    >
+                      {couponBusy ? "…" : "Apply"}
+                    </GhostBtn>
+                  </Box>
+                </>
               )}
 
               <Divider />
@@ -553,11 +597,7 @@ function Basket() {
                 </Box>
                 <Price large>{fmt(grandTotal)}</Price>
               </Box>
-              <PrimaryBtn
-                component={Link}
-                to="/checkout"
-                sx={{ width: "100%" }}
-              >
+              <PrimaryBtn component={Link} to="/checkout" sx={{ width: "100%" }}>
                 Continue to checkout
               </PrimaryBtn>
               <p

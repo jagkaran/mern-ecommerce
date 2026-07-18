@@ -44,19 +44,16 @@ function Products() {
   const urlSort = searchParams.get("sort") || "newest";
   const [sort, setSort] = useState(urlSort);
 
-  const {
-    loading,
-    error,
-    products,
-    productsCount,
-    resultPerPage,
-    filteredProductsCount,
-  } = useSelector((state) => state.product);
+  const { loading, error, products, productsCount, resultPerPage, filteredProductsCount } =
+    useSelector((state) => state.product);
 
   const { keyword } = useParams();
 
-  const { categories, categoryCounts, priceRange: dbPriceRange } =
-    useSelector((state) => state.categories);
+  const {
+    categories,
+    categoryCounts,
+    priceRange: dbPriceRange,
+  } = useSelector((state) => state.categories);
 
   const hasActiveFilters =
     !!category ||
@@ -64,9 +61,7 @@ function Products() {
     priceRange[0] > (dbPriceRange?.min ?? 0) ||
     priceRange[1] < (dbPriceRange?.max ?? 5000);
 
-  const numberOfPages = Math.floor(
-    (filteredProductsCount + resultPerPage - 1) / resultPerPage
-  );
+  const numberOfPages = Math.floor((filteredProductsCount + resultPerPage - 1) / resultPerPage);
 
   const setCurrentPageNo = (e, value) => setCurrentPage(value);
 
@@ -126,21 +121,21 @@ function Products() {
               ...(category
                 ? [{ label: "Shop", to: "/products" }, { label: category }]
                 : keyword
-                ? [{ label: "Shop", to: "/products" }, { label: `Search · ${keyword}` }]
-                : [{ label: "Shop" }]),
+                  ? [{ label: "Shop", to: "/products" }, { label: `Search · ${keyword}` }]
+                  : [{ label: "Shop" }]),
             ]}
           />
           <Overline sx={{ display: "block", mb: 1, color: "var(--t-neutral-500)" }}>
             {keyword ? `Search · ${keyword}` : "The collection"}
           </Overline>
           <Headline level="3xl" style={{ maxWidth: "32ch" }}>
-            {keyword
-              ? `Pieces the room around "${keyword}"`
-              : "Pieces made to live with you"}
+            {keyword ? `Pieces the room around "${keyword}"` : "Pieces made to live with you"}
           </Headline>
-          <BodyText sx={{ mt: 2, color: "var(--t-neutral-500)", maxWidth: "var(--t-measure-base)" }}>
-            {productsCount} {productsCount === 1 ? "piece" : "pieces"} in the collection.
-            Filter quietly on the left.
+          <BodyText
+            sx={{ mt: 2, color: "var(--t-neutral-500)", maxWidth: "var(--t-measure-base)" }}
+          >
+            {productsCount} {productsCount === 1 ? "piece" : "pieces"} in the collection. Filter
+            quietly on the left.
           </BodyText>
         </Box>
       </Box>
@@ -167,8 +162,8 @@ function Products() {
                     ? `Filters · ${
                         (category ? 1 : 0) +
                         (ratingValue > 0 ? 1 : 0) +
-                        ((priceRange[0] > (dbPriceRange?.min ?? 0) ||
-                          priceRange[1] < (dbPriceRange?.max ?? 5000))
+                        (priceRange[0] > (dbPriceRange?.min ?? 0) ||
+                        priceRange[1] < (dbPriceRange?.max ?? 5000)
                           ? 1
                           : 0)
                       } active`
@@ -209,12 +204,16 @@ function Products() {
                       valueLabelDisplay="auto"
                       min={dbPriceRange?.min ?? 0}
                       max={dbPriceRange?.max ?? 5000}
-                      step={Math.max(1, Math.round(((dbPriceRange?.max ?? 5000) - (dbPriceRange?.min ?? 0)) / 100))}
+                      step={Math.max(
+                        1,
+                        Math.round(((dbPriceRange?.max ?? 5000) - (dbPriceRange?.min ?? 0)) / 100)
+                      )}
                       sx={{
                         color: "var(--t-primary-600)",
                         mt: 1,
                         "& .MuiSlider-thumb": {
-                          transition: "all var(--t-motion-duration-fast) var(--t-motion-easing-out)",
+                          transition:
+                            "all var(--t-motion-duration-fast) var(--t-motion-easing-out)",
                         },
                       }}
                     />
@@ -301,7 +300,10 @@ function Products() {
                     valueLabelDisplay="auto"
                     min={dbPriceRange?.min ?? 0}
                     max={dbPriceRange?.max ?? 5000}
-                    step={Math.max(1, Math.round(((dbPriceRange?.max ?? 5000) - (dbPriceRange?.min ?? 0)) / 100))}
+                    step={Math.max(
+                      1,
+                      Math.round(((dbPriceRange?.max ?? 5000) - (dbPriceRange?.min ?? 0)) / 100)
+                    )}
                     sx={{
                       color: "var(--t-primary-600)",
                       mt: 1,
@@ -432,11 +434,15 @@ function Products() {
                     <Chip
                       size="small"
                       label={`${ratingValue}+ stars`}
-                      onDelete={() => { setRatingValue(0); setCurrentPage(1); }}
+                      onDelete={() => {
+                        setRatingValue(0);
+                        setCurrentPage(1);
+                      }}
                       sx={{ bgcolor: "var(--t-neutral-100)", color: "var(--t-neutral-700)" }}
                     />
                   )}
-                  {(priceRange[0] > (dbPriceRange?.min ?? 0) || priceRange[1] < (dbPriceRange?.max ?? 5000)) && (
+                  {(priceRange[0] > (dbPriceRange?.min ?? 0) ||
+                    priceRange[1] < (dbPriceRange?.max ?? 5000)) && (
                     <Chip
                       size="small"
                       label={`${fmt(priceRange[0])} – ${fmt(priceRange[1])}`}

@@ -24,6 +24,18 @@ exports.cache = (duration = 600) => {
       return next();
     }
 
+    // Dev cache-bust: presence of ?v=<anything> flushes every cached entry
+    // whose URL path matches this request, then re-runs the handler. Lets
+    // us pick up schema edits without restarting the dev server. No-op in
+    // production traffic — only triggers when the caller adds the param.
+    if (req.query.v) {
+      const pathKey = req.originalUrl.split("?")[0];
+      cache.keys().forEach((key) => {
+        if (key.includes(pathKey)) cache.del(key);
+      });
+      return next();
+    }
+
     // Generate cache key from URL and query params
     const key = `cache:${req.originalUrl}`;
 

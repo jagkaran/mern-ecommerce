@@ -22,18 +22,18 @@ import {
   getProductDetails,
   updateProduct,
 } from "../../../actions/productAction";
-import { useAlert } from "react-alert";
+import { useToast } from "../../../hooks/useToast";
 import { useNavigate, useParams } from "react-router-dom";
 import Avatar from "@mui/material/Avatar";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+import Toolbar from "@mui/material/Toolbar";
 import PhotoCamera from "@mui/icons-material/PhotoCamera";
 import CategoryIcon from "@mui/icons-material/Category";
 import { useFormControls } from "../Hooks/useFormControl";
 import UpdateReviews from "./UpdateReviews";
 import Seo from "../../Seo";
-import Copyright from "../../Copyright";
 
 function UpdateProduct() {
   const theme = useTheme();
@@ -44,28 +44,19 @@ function UpdateProduct() {
   const handleDrawerClose = () => setOpen(false);
 
   const dispatch = useDispatch();
-  const alert = useAlert();
+  const toast = useToast();
 
-  const {
-    loading,
-    error: updateError,
-    isUpdated,
-  } = useSelector((state) => state.modifiedProduct);
+  const { loading, error: updateError, isUpdated } = useSelector((state) => state.modifiedProduct);
   const { error, product } = useSelector((state) => state.productDetails);
-  const { error: deleteReviewError, isDeleted } = useSelector(
-    (state) => state.review
-  );
-  const { error: allReviewsError, reviews } = useSelector(
-    (state) => state.allReviews
-  );
+  const { error: deleteReviewError, isDeleted } = useSelector((state) => state.review);
+  const { error: allReviewsError, reviews } = useSelector((state) => state.allReviews);
 
   const [images, setImages] = useState([]);
   const [oldImages, setOldImages] = useState([]);
   const [imagesPreview, setImagesPreview] = useState([]);
   const history = useNavigate();
 
-  const { handleInputValue, formIsValid, errors, values, setValues } =
-    useFormControls();
+  const { handleInputValue, formIsValid, errors, values, setValues } = useFormControls();
 
   const categories = [
     { id: 1, name: "laptop" },
@@ -131,28 +122,28 @@ function UpdateProduct() {
       setOldImages(product.images);
     }
     if (error) {
-      alert.error(error);
+      toast.error(error);
       dispatch(clearErrors());
     }
     if (updateError) {
-      alert.error(updateError);
+      toast.error(updateError);
       dispatch(clearErrors());
     }
     if (allReviewsError) {
-      alert.error(allReviewsError);
+      toast.error(allReviewsError);
       dispatch(clearErrors());
     }
     if (deleteReviewError) {
-      alert.error(deleteReviewError);
+      toast.error(deleteReviewError);
       dispatch(clearErrors());
     }
     if (isDeleted) {
-      alert.success("Review Deleted Successfully");
+      toast.success("Review Deleted Successfully");
       history("/admin/products");
       dispatch({ type: "DeleteReviewReset" });
     }
     if (isUpdated) {
-      alert.success("Product Updated Successfully");
+      toast.success("Product Updated Successfully");
       history("/admin/products");
       dispatch({ type: "UpdateProductReset" });
     }
@@ -160,7 +151,7 @@ function UpdateProduct() {
   }, [
     dispatch,
     error,
-    alert,
+    toast,
     history,
     isUpdated,
     updateError,
@@ -182,13 +173,10 @@ function UpdateProduct() {
         />
         <CssBaseline />
         <DashboardAppBar open={open} handleDrawerOpen={handleDrawerOpen} />
-        <DashboardDrawer
-          open={open}
-          handleDrawerClose={handleDrawerClose}
-          theme={theme}
-        />
-        <Box component="main" sx={{ flexGrow: 1, py: 8 }}>
-          <Container maxWidth="md" sx={{ mt: 2, mb: 2 }}>
+        <DashboardDrawer open={open} handleDrawerClose={handleDrawerClose} theme={theme} />
+        <Box component="main" sx={{ flexGrow: 1, p: { xs: 2, sm: 3 } }}>
+          <Toolbar />
+          <Container maxWidth="lg" sx={{ mt: 2, mb: 4 }}>
             <Grid container spacing={3}>
               <Grid item xs={12} md={12} lg={6}>
                 {loading ? (
@@ -265,13 +253,8 @@ function UpdateProduct() {
                           />
                         </Grid>
                         <Grid item xs={12}>
-                          <FormControl
-                            fullWidth
-                            {...(errors.category && { error: true })}
-                          >
-                            <InputLabel id="category-select-label">
-                              Category
-                            </InputLabel>
+                          <FormControl fullWidth {...(errors.category && { error: true })}>
+                            <InputLabel id="category-select-label">Category</InputLabel>
                             <Select
                               labelId="category-select-label"
                               id="category"
@@ -284,19 +267,12 @@ function UpdateProduct() {
                                 <em>None</em>
                               </MenuItem>
                               {categories.map((category) => (
-                                <MenuItem
-                                  key={category.id}
-                                  value={category.name}
-                                >
-                                  <span className="capitalize">
-                                    {category.name}
-                                  </span>
+                                <MenuItem key={category.id} value={category.name}>
+                                  <span className="capitalize">{category.name}</span>
                                 </MenuItem>
                               ))}
                             </Select>
-                            {errors.category && (
-                              <FormHelperText>{errors.category}</FormHelperText>
-                            )}
+                            {errors.category && <FormHelperText>{errors.category}</FormHelperText>}
                           </FormControl>
                         </Grid>
                         <Grid item xs={12}>
@@ -315,11 +291,7 @@ function UpdateProduct() {
                             })}
                           />
                         </Grid>
-                        <Grid
-                          item
-                          xs={12}
-                          sx={{ display: "flex", alignItems: "center" }}
-                        >
+                        <Grid item xs={12} sx={{ display: "flex", alignItems: "center" }}>
                           <Typography variant="caption" display="block" gutterBottom>
                             Old Images:
                           </Typography>
@@ -333,12 +305,7 @@ function UpdateProduct() {
                             />
                           ))}
                         </Grid>
-                        <Grid
-                          item
-                          xs={12}
-                          mt={2}
-                          sx={{ display: "flex", alignItems: "center" }}
-                        >
+                        <Grid item xs={12} mt={2} sx={{ display: "flex", alignItems: "center" }}>
                           <Typography variant="caption" display="block" gutterBottom>
                             New Images:
                           </Typography>
@@ -352,11 +319,7 @@ function UpdateProduct() {
                             />
                           ))}
                         </Grid>
-                        <Grid
-                          item
-                          xs={12}
-                          sx={{ display: "flex", justifyContent: "flex-end" }}
-                        >
+                        <Grid item xs={12} sx={{ display: "flex", justifyContent: "flex-end" }}>
                           <Button
                             sx={{ m: 1, backgroundColor: "secondary.main" }}
                             variant="contained"
@@ -396,7 +359,6 @@ function UpdateProduct() {
           </Container>
         </Box>
       </Box>
-      <Copyright />
     </>
   );
 }

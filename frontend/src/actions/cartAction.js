@@ -29,3 +29,7 @@ export const saveShippingInfo = (data) => async (dispatch) => {
     payload: data,
   });
 };
+
+export const clearCart = () => async (dispatch) => {
+  dispatch({ type: "ClearCart" });
+};

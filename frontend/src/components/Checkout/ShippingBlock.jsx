@@ -1,7 +1,18 @@
 import React from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { MenuItem, Stack } from "@mui/material";
 import { setField, setError, setTouched } from "../../slices/checkoutSlice";
 import { validatePostal, validatePhone } from "../../utils/checkoutValidators";
+import { Surface, SurfaceHeader, Field, FieldRow } from "../../design/primitives";
+
+const COUNTRIES = [
+  { code: "US", label: "United States" },
+  { code: "CA", label: "Canada" },
+  { code: "GB", label: "United Kingdom" },
+  { code: "IN", label: "India" },
+  { code: "DE", label: "Germany" },
+  { code: "FR", label: "France" },
+];
 
 export default function ShippingBlock() {
   const dispatch = useDispatch();
@@ -10,11 +21,6 @@ export default function ShippingBlock() {
     checkout;
 
   const onText = (key) => (e) => dispatch(setField({ name: key, value: e.target.value }));
-  const blurText = (key, validator) => () => {
-    dispatch(setTouched(key));
-    const value = checkout[key];
-    dispatch(setError({ name: key, message: validator ? validator(value) : null }));
-  };
   const blurPostal = () => {
     dispatch(setTouched("postal"));
     dispatch(setError({ name: "postal", message: validatePostal(postal, country) }));
@@ -29,98 +35,110 @@ export default function ShippingBlock() {
   };
 
   return (
-    <section aria-label="Shipping">
-      <h2>1 · Shipping</h2>
+    <Surface aria-label="Shipping" sx={{ p: { xs: 2.5, sm: 4 } }}>
+      <SurfaceHeader title="Shipping" subtitle="Where should we send your order?" />
 
-      <label htmlFor="co-name">Full name</label>
-      <input
-        id="co-name"
-        name="fullName"
-        autoComplete="name"
-        value={name}
-        onChange={onText("name")}
-        aria-invalid={!!(touched.name && errors.name)}
-      />
+      <Stack spacing={2.5}>
+        <Field
+          id="co-name"
+          name="fullName"
+          label="Full name"
+          autoComplete="name"
+          value={name}
+          onChange={onText("name")}
+          error={touched.name ? errors.name : undefined}
+          fullWidth
+        />
 
-      <label htmlFor="co-country">Country</label>
-      <select
-        id="co-country"
-        name="country"
-        autoComplete="country"
-        value={country}
-        onChange={onText("country")}
-        onBlur={blurCountry}
-      >
-        <option value="US">United States</option>
-        <option value="CA">Canada</option>
-        <option value="GB">United Kingdom</option>
-        <option value="IN">India</option>
-        <option value="DE">Germany</option>
-        <option value="FR">France</option>
-      </select>
+        <FieldRow columns={{ xs: 1, sm: 1 }}>
+          <Field
+            id="co-country"
+            name="country"
+            label="Country"
+            select
+            autoComplete="country"
+            value={country}
+            onChange={onText("country")}
+            onBlur={blurCountry}
+            fullWidth
+          >
+            {COUNTRIES.map((c) => (
+              <MenuItem key={c.code} value={c.code}>
+                {c.label}
+              </MenuItem>
+            ))}
+          </Field>
+        </FieldRow>
 
-      <label htmlFor="co-addr1">Address line 1</label>
-      <input
-        id="co-addr1"
-        name="address1"
-        autoComplete="address-line1"
-        value={address1}
-        onChange={onText("address1")}
-        aria-invalid={!!(touched.address1 && errors.address1)}
-      />
+        <Field
+          id="co-addr1"
+          name="address1"
+          label="Address line 1"
+          autoComplete="address-line1"
+          value={address1}
+          onChange={onText("address1")}
+          error={touched.address1 ? errors.address1 : undefined}
+          fullWidth
+        />
 
-      <label htmlFor="co-addr2">Address line 2 (optional)</label>
-      <input
-        id="co-addr2"
-        name="address2"
-        autoComplete="address-line2"
-        value={address2}
-        onChange={onText("address2")}
-      />
+        <Field
+          id="co-addr2"
+          name="address2"
+          label="Address line 2 (optional)"
+          autoComplete="address-line2"
+          value={address2}
+          onChange={onText("address2")}
+          fullWidth
+        />
 
-      <label htmlFor="co-city">City</label>
-      <input
-        id="co-city"
-        name="city"
-        autoComplete="address-level2"
-        value={city}
-        onChange={onText("city")}
-        aria-invalid={!!(touched.city && errors.city)}
-      />
+        <FieldRow columns={{ xs: 1, sm: 2 }}>
+          <Field
+            id="co-city"
+            name="city"
+            label="City"
+            autoComplete="address-level2"
+            value={city}
+            onChange={onText("city")}
+            error={touched.city ? errors.city : undefined}
+            fullWidth
+          />
+          <Field
+            id="co-state"
+            name="state"
+            label="State / Region"
+            autoComplete="address-level1"
+            value={state}
+            onChange={onText("state")}
+            fullWidth
+          />
+        </FieldRow>
 
-      <label htmlFor="co-state">State / Region</label>
-      <input
-        id="co-state"
-        name="state"
-        autoComplete="address-level1"
-        value={state}
-        onChange={onText("state")}
-      />
-
-      <label htmlFor="co-postal">Postal / Zip code</label>
-      <input
-        id="co-postal"
-        name="postal"
-        autoComplete="postal-code"
-        value={postal}
-        onChange={onText("postal")}
-        onBlur={blurPostal}
-        aria-invalid={!!(touched.postal && errors.postal)}
-      />
-      {touched.postal && errors.postal && <p role="alert">{errors.postal}</p>}
-
-      <label htmlFor="co-phone">Phone</label>
-      <input
-        id="co-phone"
-        name="phone"
-        type="tel"
-        autoComplete="tel"
-        value={phone}
-        onChange={onText("phone")}
-        onBlur={blurPhone}
-        aria-invalid={!!(touched.phone && errors.phone)}
-      />
-      {touched.phone && errors.phone && <p role="alert">{errors.phone}</p>}
-    </section>
+        <FieldRow columns={{ xs: 1, sm: 2 }}>
+          <Field
+            id="co-postal"
+            name="postal"
+            label="Postal / Zip code"
+            autoComplete="postal-code"
+            value={postal}
+            onChange={onText("postal")}
+            onBlur={blurPostal}
+            error={touched.postal ? errors.postal : undefined}
+            fullWidth
+          />
+          <Field
+            id="co-phone"
+            name="phone"
+            label="Phone"
+            type="tel"
+            autoComplete="tel"
+            value={phone}
+            onChange={onText("phone")}
+            onBlur={blurPhone}
+            error={touched.phone ? errors.phone : undefined}
+            fullWidth
+          />
+        </FieldRow>
+      </Stack>
+    </Surface>
   );
 }

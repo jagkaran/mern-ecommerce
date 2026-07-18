@@ -1,10 +1,10 @@
-import React from 'react';
-import tokens from './tokens';
+import React from "react";
+import tokens from "./tokens";
 
-const flat = (obj, prefix = '--t') => {
+const flat = (obj, prefix = "--t") => {
   const out = {};
   Object.entries(obj).forEach(([k, v]) => {
-    if (typeof v === 'object' && !Array.isArray(v) && !/^[a-z]+-[0-9]+$/.test(k)) {
+    if (typeof v === "object" && !Array.isArray(v) && !/^[a-z]+-[0-9]+$/.test(k)) {
       Object.assign(out, flat(v, `${prefix}-${k}`));
     } else {
       out[`${prefix}-${k}`] = v;
@@ -15,7 +15,9 @@ const flat = (obj, prefix = '--t') => {
 
 export const TokenCSS = () => (
   <style>{`
-    :root { ${Object.entries(flat(tokens)).map(([k,v]) => `${k}: ${v};`).join('\n      ')}
+    :root { ${Object.entries(flat(tokens))
+      .map(([k, v]) => `${k}: ${v};`)
+      .join("\n      ")}
       /* PR3 a11y: AA-compliant body text on #FAFAF9 (>=4.5:1) */
       --t-neutral-700: #3D3D3D;
     }

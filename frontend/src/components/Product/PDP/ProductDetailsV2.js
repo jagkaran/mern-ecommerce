@@ -7,11 +7,7 @@ import JsonLd from "../../JsonLd";
 import { productJsonLd } from "../../../utils/jsonLd";
 import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import {
-  clearErrors,
-  getProductDetails,
-  newReview,
-} from "../../../actions/productAction";
+import { clearErrors, getProductDetails, newReview } from "../../../actions/productAction";
 import { useParams } from "react-router-dom";
 import { CircularProgress } from "@mui/material";
 import Reviewcard from "../../Reviewcard";
@@ -31,18 +27,14 @@ function ProductDetailsV2() {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
 
-  const { loading, error, product } = useSelector(
-    (state) => state.productDetails
-  );
+  const { loading, error, product } = useSelector((state) => state.productDetails);
 
   const { products: allProducts } = useSelector((state) => state.product);
   const related = (allProducts || [])
     .filter((p) => p._id !== id && p.category === product?.category)
     .slice(0, 4);
 
-  const { success, error: reviewError } = useSelector(
-    (state) => state.newReview
-  );
+  const { success, error: reviewError } = useSelector((state) => state.newReview);
 
   const increaseQty = () => {
     if (product.stock <= quantity) return;
@@ -122,27 +114,36 @@ function ProductDetailsV2() {
         path={`/product/${id}`}
       />
 
-      <Container maxWidth={false} sx={{ maxWidth: "var(--t-grid-containerMax)", pt: { xs: 2, md: 3 }, pb: { xs: 4, md: 6 } }}>
+      <Container
+        maxWidth={false}
+        sx={{ maxWidth: "var(--t-grid-containerMax)", pt: { xs: 2, md: 3 }, pb: { xs: 4, md: 6 } }}
+      >
         <Breadcrumb
           items={[
             { label: "Home", to: "/" },
             { label: "Shop", to: "/products" },
-            product?.category && { label: product.category, to: `/products?category=${encodeURIComponent(product.category)}` },
+            product?.category && {
+              label: product.category,
+              to: `/products?category=${encodeURIComponent(product.category)}`,
+            },
             { label: product?.name || "Product" },
           ].filter(Boolean)}
         />
       </Container>
 
-      <Container maxWidth={false} sx={{ maxWidth: "var(--t-grid-containerMax)", px: "var(--t-grid-containerPad)" }}>
+      <Container
+        maxWidth={false}
+        sx={{ maxWidth: "var(--t-grid-containerMax)", px: "var(--t-grid-containerPad)" }}
+      >
         <Grid container spacing={{ xs: 2, md: 4 }}>
-          <Grid item xs={2} md={2} lg={1}>
+          <Grid item xs={3} md={2} lg={1}>
             <ImageGrid
               images={product?.images}
               onSelect={setSelectedImage}
               selectedImage={selectedImage}
             />
           </Grid>
-          <Grid item xs={10} md={10} lg={6}>
+          <Grid item xs={9} md={10} lg={6}>
             <MainImage src={product?.images?.[selectedImage]?.url} alt={product?.name} />
           </Grid>
           <Grid item xs={12} md={12} lg={5}>
@@ -171,24 +172,21 @@ function ProductDetailsV2() {
           </Overline>
           <Disclosure title="Materials" defaultOpen>
             <p>
-              Each piece is made from natural materials selected for the way
-              they age. Wood is seasoned, ceramic is fired, linen is woven —
-              never laminated, never plastic-coated.
+              Each piece is made from natural materials selected for the way they age. Wood is
+              seasoned, ceramic is fired, linen is woven — never laminated, never plastic-coated.
             </p>
           </Disclosure>
           <Disclosure title="Care & mending">
             <p>
-              We mend what we sell. Wood can be re-oiled, ceramic re-glazed,
-              linen re-stitched. When something shows wear, send it back and
-              we'll make it whole again — no questions, no charge, for as
-              long as the piece is in your keeping.
+              We mend what we sell. Wood can be re-oiled, ceramic re-glazed, linen re-stitched. When
+              something shows wear, send it back and we'll make it whole again — no questions, no
+              charge, for as long as the piece is in your keeping.
             </p>
           </Disclosure>
           <Disclosure title="Shipping">
             <p>
-              Sent in plastic-free packaging, with a handwritten note.
-              Domestic orders arrive in 3–5 days. International takes a
-              little longer — usually 7–14. Returns are quiet and easy.
+              Sent in plastic-free packaging, with a handwritten note. Domestic orders arrive in 3–5
+              days. International takes a little longer — usually 7–14. Returns are quiet and easy.
             </p>
           </Disclosure>
         </Box>
@@ -231,18 +229,16 @@ function ProductDetailsV2() {
           Reviews
         </Headline>
         {product?.reviews && product.reviews.length > 0 ? (
-          product.reviews.map(
-            ({ name, rating, comment, _id, profileImg, createdAt }) => (
-              <Reviewcard
-                key={_id}
-                rating={rating}
-                comment={comment}
-                name={name}
-                profileImg={profileImg}
-                createdAt={createdAt}
-              />
-            )
-          )
+          product.reviews.map(({ name, rating, comment, _id, profileImg, createdAt }) => (
+            <Reviewcard
+              key={_id}
+              rating={rating}
+              comment={comment}
+              name={name}
+              profileImg={profileImg}
+              createdAt={createdAt}
+            />
+          ))
         ) : (
           <Typography
             sx={{

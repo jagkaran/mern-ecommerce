@@ -2,20 +2,39 @@ import React from "react";
 import Grid from "@mui/material/Grid";
 import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
-import {
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
-  FormHelperText,
-} from "@mui/material";
+import { FormControl, InputLabel, MenuItem, Select, FormHelperText } from "@mui/material";
 import { Country, State } from "country-state-city";
 
 function AddressForm({ values, errors = {}, touched = {}, handleChange }) {
   const fieldProps = (name) => ({
     error: Boolean(touched[name] && errors[name]),
-    helperText: (touched[name] && errors[name]) ? errors[name] : " ",
+    helperText: touched[name] && errors[name] ? errors[name] : " ",
   });
+
+  // Best-effort city/state autofill via the backend Zippopotam proxy.
+  // Silent on failure — the user can still type city/state manually.
+  const handleZipBlur = async (e) => {
+    const zip = (e.target.value || "").trim();
+    const country = values?.country;
+    if (!zip || !country || !/^[A-Za-z0-9 -]{1,10}$/.test(zip)) return;
+    try {
+      const res = await fetch(
+        `/api/v1/geo/postal/${encodeURIComponent(country)}/${encodeURIComponent(zip)}`
+      );
+      if (!res.ok) return;
+      const body = await res.json();
+      if (body?.hit && body.city && !values?.city) {
+        handleChange("city", { target: { name: "city", value: body.city } });
+      }
+      if (body?.hit && body.country && !values?.state) {
+        // Zippopotam returns ISO country code in `body.country`; if state is
+        // empty we still prefer keeping the country (helps for stateless countries).
+        handleChange("state", { target: { name: "state", value: body.state || body.country } });
+      }
+    } catch {
+      /* autofill is a progressive enhancement */
+    }
+  };
 
   return (
     <div>
@@ -152,6 +171,7 @@ function AddressForm({ values, errors = {}, touched = {}, handleChange }) {
             variant="standard"
             value={values?.zip || ""}
             onChange={(e) => handleChange("zip", e)}
+            onBlur={handleZipBlur}
             {...fieldProps("zip")}
           />
         </Grid>

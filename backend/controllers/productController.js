@@ -1,5 +1,5 @@
 const Product = require("../models/productModel");
-const Order   = require("../models/orderModel");
+const Order = require("../models/orderModel");
 const ErrorHandler = require("../utils/errorHandler");
 const catchAsyncErrors = require("../middleware/catchAsyncErrors");
 const ApiFeatures = require("../utils/apiFeatures");
@@ -12,14 +12,7 @@ const { recalculateRatings } = require("../utils/aggregationHelpers");
 // createdAt, ...) is rejected silently to prevent mass-assignment of fields
 // the schema would otherwise happily accept. ratings/numOfReviews/reviews are
 // recomputed by the system and must never be writable from the wire.
-const WRITABLE_PRODUCT_FIELDS = [
-  "name",
-  "description",
-  "price",
-  "category",
-  "stock",
-  "images",
-];
+const WRITABLE_PRODUCT_FIELDS = ["name", "description", "price", "category", "stock", "images"];
 
 function pickProductFields(body) {
   return WRITABLE_PRODUCT_FIELDS.reduce((acc, key) => {
@@ -63,9 +56,7 @@ exports.getActiveCategories = catchAsyncErrors(async (req, res) => {
   const clean = categories
     .filter((c) => c && c.trim().length > 0)
     .sort((a, b) => a.localeCompare(b));
-  const categoryCounts = Object.fromEntries(
-    countsAgg.map((c) => [c._id, c.count])
-  );
+  const categoryCounts = Object.fromEntries(countsAgg.map((c) => [c._id, c.count]));
   const priceRange = priceAgg[0]
     ? { min: Math.floor(priceAgg[0].min), max: Math.ceil(priceAgg[0].max) }
     : { min: 0, max: 5000 };
@@ -78,26 +69,26 @@ exports.getActiveCategories = catchAsyncErrors(async (req, res) => {
 });
 
 const SORT_MAP = {
-  newest:        { createdAt: -1 },
-  "price-asc":   { price: 1 },
-  "price-desc":  { price: -1 },
+  newest: { createdAt: -1 },
+  "price-asc": { price: 1 },
+  "price-desc": { price: -1 },
   "rating-desc": { ratings: -1 },
-  "name-asc":    { name: 1 },
+  "name-asc": { name: 1 },
 };
 
+const DEFAULT_PAGE_LIMIT = 50;
+
 exports.getAllProducts = catchAsyncErrors(async (req, res) => {
-  const resultPerPage = Math.min(100, Math.max(1, Number(req.query.limit) || 8));
+  const resultPerPage = Math.min(100, Math.max(1, Number(req.query.limit) || DEFAULT_PAGE_LIMIT));
   const page = Number(req.query.page) || 1;
   const skip = (page - 1) * resultPerPage;
   const sortKey = typeof req.query.sort === "string" ? req.query.sort : "newest";
   const sort = SORT_MAP[sortKey] || SORT_MAP.newest;
-  const apiFeature = new ApiFeatures(Product.find(), req.query)
-    .search()
-    .filter();
+  const apiFeature = new ApiFeatures(Product.find(), req.query).search().filter();
   const filterQuery = apiFeature.query.getFilter();
   const [products, productCount, filteredCount] = await Promise.all([
     apiFeature.query
-      .select('name price ratings images category stock numOfReviews description')
+      .select("name price ratings images category stock numOfReviews description")
       .lean()
       .skip(skip)
       .limit(resultPerPage)
@@ -122,11 +113,11 @@ exports.getAllProducts = catchAsyncErrors(async (req, res) => {
 
 exports.getAdminProducts = catchAsyncErrors(async (req, res, _next) => {
   const page = Math.max(1, Number(req.query.page) || 1);
-  const limit = Math.min(100, Number(req.query.limit) || 20);
+  const limit = Math.min(100, Number(req.query.limit) || DEFAULT_PAGE_LIMIT);
   const skip = (page - 1) * limit;
   const [products, productCount] = await Promise.all([
     Product.find()
-      .select('name price ratings images category stock numOfReviews createdAt')
+      .select("name price ratings images category stock numOfReviews createdAt")
       .lean()
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -204,15 +195,12 @@ exports.createProductReview = catchAsyncErrors(async (req, res, next) => {
   // (status anywhere from Processing through Delivered) may review it.
   // Without this, anyone with a login could review anything.
   const hasPurchased = await Order.exists({
-    user:    req.user._id,
+    user: req.user._id,
     "orderItems.product": productId,
   });
   if (!hasPurchased) {
     return next(
-      new ErrorHandler(
-        "Only customers who purchased this product can leave a review.",
-        403
-      )
+      new ErrorHandler("Only customers who purchased this product can leave a review.", 403)
     );
   }
 
@@ -263,13 +251,9 @@ exports.deleteProductReview = catchAsyncErrors(async (req, res, next) => {
   const isOwner = targetReview.user.toString() === req.user._id.toString();
   const isAdmin = req.user.role === "admin";
   if (!isOwner && !isAdmin) {
-    return next(
-      new ErrorHandler("You are not authorized to delete this review", 403)
-    );
+    return next(new ErrorHandler("You are not authorized to delete this review", 403));
   }
-  const reviews = product.reviews.filter(
-    (rev) => rev._id.toString() !== req.query.id.toString()
-  );
+  const reviews = product.reviews.filter((rev) => rev._id.toString() !== req.query.id.toString());
   const { ratings, numOfReviews } = recalculateRatings(reviews);
   await Product.findByIdAndUpdate(
     req.query.productId,
