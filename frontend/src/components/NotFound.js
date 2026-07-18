@@ -1,7 +1,13 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import Seo from "./Seo";
-import { Headline, BodyText, Overline, PrimaryBtn } from "../design/primitives";
+import {
+  Headline,
+  BodyText,
+  Overline,
+  PrimaryBtn,
+  SecondaryBtn,
+} from "../design/primitives";
 
 function NotFound() {
   return (
@@ -57,23 +63,7 @@ function NotFound() {
               <PrimaryBtn>Back to home</PrimaryBtn>
             </Link>
             <Link to="/products" style={{ textDecoration: "none" }}>
-              <PrimaryBtn
-                component="span"
-                sx={{
-                  bgcolor: "transparent",
-                  color: "var(--t-neutral-900)",
-                  boxShadow: "none",
-                  border: "1px solid var(--t-neutral-300)",
-                  "&:hover": {
-                    bgcolor: "var(--t-neutral-100)",
-                    borderColor: "var(--t-neutral-500)",
-                    boxShadow: "none",
-                    transform: "translateY(-1px)",
-                  },
-                }}
-              >
-                Browse the collection
-              </PrimaryBtn>
+              <SecondaryBtn component="span">Browse the collection</SecondaryBtn>
             </Link>
           </div>
         </div>
