@@ -54,6 +54,77 @@ describe("couponService — createCoupon validation", () => {
   });
 });
 
+describe("couponService — evaluateForCart input validation", () => {
+  it("rejects an empty code with a 'required' reason (no DB call)", async () => {
+    const res = await couponService.evaluateForCart("", { subtotal: 50, itemCount: 1 });
+    expect(res.valid).toBe(false);
+    expect(res.reason).toMatch(/required/i);
+  });
+
+  it("rejects a malformed code with a 'format' reason (no DB call)", async () => {
+    const res = await couponService.evaluateForCart("ab", { subtotal: 50, itemCount: 1 });
+    expect(res.valid).toBe(false);
+    expect(res.reason).toMatch(/format/i);
+  });
+
+  it("returns 'not found' when no coupon row matches a well-formed code", async () => {
+    const res = await couponService.evaluateForCart("MISSING99", { subtotal: 50, itemCount: 1 });
+    expect(res.valid).toBe(false);
+    expect(res.reason).toMatch(/not found/i);
+  });
+});
+
+describe("couponService — redeemInTransaction", () => {
+  it("throws 400 when no code is supplied", async () => {
+    await expect(
+      couponService.redeemInTransaction({ code: "", orderId: new mongoose.Types.ObjectId() })
+    ).rejects.toMatchObject({ statusCode: 400 });
+  });
+
+  it("increments usedCount and appends a redemption on the happy path", async () => {
+    await Coupon.create(baseBody({ code: "VALRED1", discountValue: 10 }));
+    const session = await mongoose.startSession();
+    const orderId1 = new mongoose.Types.ObjectId();
+    const orderId2 = new mongoose.Types.ObjectId();
+    await couponService.redeemInTransaction({
+      code: "VALRED1",
+      orderId: orderId1,
+      discountAmount: 5,
+      session,
+    });
+    // Branch: Number(discountAmount) || 0 — pass 0 to hit the falsy-coalesce path
+    await couponService.redeemInTransaction({
+      code: "VALRED1",
+      orderId: orderId2,
+      discountAmount: 0,
+      session,
+    });
+    const after = await Coupon.findOne({ code: "VALRED1" }).select("+redemptions");
+    expect(after.usedCount).toBe(2);
+    expect(after.redemptions).toHaveLength(2);
+    expect(after.redemptions[0].orderId.toString()).toBe(orderId1.toString());
+    expect(after.redemptions[1].orderId.toString()).toBe(orderId2.toString());
+    expect(after.redemptions[1].discountAmount).toBe(0);
+    await session.endSession();
+  });
+
+  it("throws 409 when the coupon is sold out (usageLimit reached)", async () => {
+    await Coupon.create(
+      baseBody({ code: "VALSOLD", discountValue: 10, usageLimit: 1, usedCount: 1 })
+    );
+    const session = await mongoose.startSession();
+    await expect(
+      couponService.redeemInTransaction({
+        code: "VALSOLD",
+        orderId: new mongoose.Types.ObjectId(),
+        discountAmount: 1,
+        session,
+      })
+    ).rejects.toMatchObject({ statusCode: 409 });
+    await session.endSession();
+  });
+});
+
 describe("couponService — getAnalytics sort", () => {
   it("sorts redemptionsByDay ascending and slices to 30 days", async () => {
     // Seed two coupons with redemptions on different days so the comparator
