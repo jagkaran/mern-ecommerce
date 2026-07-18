@@ -80,4 +80,8 @@ jobs:
     needs: lint
     steps:
       - uses: actions/checkout@v4
+        with:
+          # gitleaks diffs against the parent commit; shallow clones (depth=1)
+          # don't have the parent, so the scan fails with "unknown revision".
+          fetch-depth: 0
       - uses: gitleaks/gitleaks-action@v2
