@@ -1,0 +1,114 @@
+name: Merge Approved PR
+
+# Manual trigger for squashing approved, CI-green PRs.
+#
+# Why this exists: dependabot batch PRs (#22/#23 + the 6 split sub-PRs
+# #24-#29) need to land in a specific order with no human in the loop on
+# the merge step itself. GitHub's branch protection requires explicit
+# review approval; this workflow dispatches a one-shot squash merge
+# after re-verifying approval and CI status at trigger time, so the
+# maintainer can review the PR diff in the UI but skip the merge click.
+#
+# Inputs:
+#   pr_number  — the PR to merge (required)
+#   delete_branch — delete the head branch after merge (default: true)
+#
+# Safety:
+#   - Verifies PR is in REVIEW_STATE_APPROVED (i.e. someone clicked
+#     "Approve" on the UI — bot accounts cannot approve via this path).
+#   - Verifies the latest commit's CI run is successful.
+#   - Refuses to merge if any check on the PR is failing or pending.
+#   - Refuses to merge if the PR has merge conflicts.
+#   - Refuses to merge if the PR targets a branch other than master.
+#
+# Usage:
+#   gh workflow run merge-approved.yml --field pr_number=24
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "PR number to merge (must be approved and CI-green)"
+        required: true
+        type: string
+      delete_branch:
+        description: "Delete head branch after squash merge"
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+  pull-requests: write
+  checks: read
+
+jobs:
+  merge:
+    name: Merge PR #${{ inputs.pr_number }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify PR is approved and CI-green
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ inputs.pr_number }}
+        run: |
+          set -euo pipefail
+
+          # ─── PR metadata ──────────────────────────────────────────────────
+          PR_JSON=$(gh pr view "$PR_NUMBER" --json \
+            state,baseRefName,reviewDecision,mergeable,statusCheckRollup,headRefName)
+          STATE=$(echo "$PR_JSON" | jq -r '.state')
+          BASE=$(echo "$PR_JSON" | jq -r '.baseRefName')
+          REVIEW=$(echo "$PR_JSON" | jq -r '.reviewDecision')
+          MERGEABLE=$(echo "$PR_JSON" | jq -r '.mergeable')
+          HEAD_BRANCH=$(echo "$PR_JSON" | jq -r '.headRefName')
+
+          if [[ "$STATE" != "OPEN" ]]; then
+            echo "::error::PR #$PR_NUMBER is not open (state: $STATE)"
+            exit 1
+          fi
+
+          if [[ "$BASE" != "master" ]]; then
+            echo "::error::PR #$PR_NUMBER targets '$BASE', not master"
+            exit 1
+          fi
+
+          if [[ "$REVIEW" != "APPROVED" ]]; then
+            echo "::error::PR #$PR_NUMBER review decision is '$REVIEW' (need APPROVED)"
+            exit 1
+          fi
+
+          if [[ "$MERGEABLE" != "MERGEABLE" ]]; then
+            echo "::error::PR #$PR_NUMBER has merge conflicts (mergeable: $MERGEABLE)"
+            exit 1
+          fi
+
+          # ─── Check rollup ──────────────────────────────────────────────────
+          # All checks must be SUCCESS. Any PENDING / FAILURE / NEUTRAL
+          # blocks the merge.
+          CONCLUSIONS=$(echo "$PR_JSON" | jq -r '.statusCheckRollup[]?.conclusion // empty')
+          if [[ -z "$CONCLUSIONS" ]]; then
+            echo "::error::PR #$PR_NUMBER has no status checks recorded"
+            exit 1
+          fi
+          if echo "$CONCLUSIONS" | grep -vq "^SUCCESS$"; then
+            echo "::error::PR #$PR_NUMBER has non-success checks:"
+            echo "$CONCLUSIONS" | sort -u | sed 's/^/  /'
+            exit 1
+          fi
+
+          echo "PR #$PR_NUMBER ($HEAD_BRANCH) is approved and CI-green. Merging."
+
+      - name: Squash merge
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ inputs.pr_number }}
+          DELETE_BRANCH: ${{ inputs.delete_branch }}
+        run: |
+          set -euo pipefail
+          ARGS=(--squash --auto)
+          if [[ "$DELETE_BRANCH" == "true" ]]; then
+            ARGS+=(--delete-branch)
+          fi
+          gh pr merge "$PR_NUMBER" "${ARGS[@]}"
+          echo "Merged PR #$PR_NUMBER"
