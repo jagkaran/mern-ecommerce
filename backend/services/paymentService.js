@@ -5,7 +5,13 @@ const logger = require("../utils/logger");
 let _stripe = null;
 function getStripe() {
   if (!_stripe) {
-    _stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+    // ponytail: pin apiVersion explicitly. Stripe-node 22 defaults to
+    // "2026-06-24.dahlia" which we haven't validated against. Locking to
+    // the API version we built against keeps behaviour reproducible across
+    // future SDK upgrades; bump only after a deliberate test pass.
+    _stripe = require("stripe")(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: "2024-12-18.acacia",
+    });
   }
   return _stripe;
 }
