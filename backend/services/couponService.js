@@ -196,7 +196,7 @@ async function redeemInTransaction({ code, userId, email, orderId, discountAmoun
         },
       },
     },
-    { new: true, session }
+    { returnDocument: "after", session }
   );
   if (!result) {
     throw new ErrorHandler("Coupon is no longer available (sold out or expired)", 409);
@@ -253,7 +253,7 @@ async function createCoupon(body, createdBy = null) {
 async function updateCoupon(id, body) {
   const fields = pickFields(body, WRITABLE_COUPON_FIELDS);
   const updated = await Coupon.findByIdAndUpdate(id, fields, {
-    new: true,
+    returnDocument: "after",
     runValidators: true,
   });
   if (!updated) throw new ErrorHandler("Coupon not found", 404);
@@ -362,7 +362,7 @@ async function seedDefaults() {
     const result = await Coupon.findOneAndUpdate(
       { code: seed.code },
       { $setOnInsert: { ...seed, active: true } },
-      { upsert: true, new: false, setDefaultsOnInsert: true }
+      { upsert: true, returnDocument: "before", setDefaultsOnInsert: true }
     );
     if (!result) upserted += 1;
   }

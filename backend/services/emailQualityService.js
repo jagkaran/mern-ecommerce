@@ -26,7 +26,7 @@ async function isDisposableEmail(email) {
 
   const url = `${DISIFY_URL}/${encodeURIComponent(email)}`;
   const data = await getJson(url); // Disify returns { disposable: bool, ... }
-  let disposable = false;
+  let disposable;
   if (data && typeof data.disposable === "boolean") {
     disposable = data.disposable;
   } else {

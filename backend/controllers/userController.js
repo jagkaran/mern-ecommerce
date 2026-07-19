@@ -170,7 +170,7 @@ exports.updateProfile = catchAsyncErrors(async (req, res, next) => {
     };
   }
   const user = await User.findByIdAndUpdate(req.user.id, newUserData, {
-    new: true,
+    returnDocument: "after",
     runValidators: true,
   });
   if (!user) {
@@ -205,7 +205,7 @@ exports.updateUserRole = catchAsyncErrors(async (req, res, next) => {
     role: req.body.role,
   };
   const user = await User.findByIdAndUpdate(req.params.id, newUserData, {
-    new: true,
+    returnDocument: "after",
     runValidators: true,
   });
   if (!user) {

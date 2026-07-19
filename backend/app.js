@@ -60,7 +60,7 @@ app.use(compression());
 // Tight limit on auth endpoints — bypassed in E2E for the same reason.
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: process.env.E2E_BYPASS_LIMITS ? 1_000_000 : 20,
+  limit: process.env.E2E_BYPASS_LIMITS ? 1_000_000 : 20,
   message: { success: false, message: "Too many requests, please try again later." },
   standardHeaders: true,
   legacyHeaders: false,
@@ -75,7 +75,7 @@ app.use("/api/v1/password/forgot", authLimiter);
 const productLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   // Allow a generous ceiling even in dev; tests get effectively unlimited.
-  max: process.env.E2E_BYPASS_LIMITS ? 1_000_000 : 100,
+  limit: process.env.E2E_BYPASS_LIMITS ? 1_000_000 : 100,
   message: { success: false, message: "Too many requests, please try again later." },
   standardHeaders: true,
   legacyHeaders: false,
