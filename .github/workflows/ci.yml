@@ -83,6 +83,31 @@ jobs:
       - run: npm audit --audit-level=high --prefix frontend
         continue-on-error: true
 
+  # FE build smoke — runs `react-scripts build` against the frontend lockfile.
+  # Catches major-version regressions that pass BE tests but break the FE
+  # bundle (peer-dep conflicts on React/MUI/react-redux, missing exports,
+  # CSS-in-JS runtime errors). Cheap (~2-3 min) and gated on lint.
+  fe-build:
+    name: Frontend Build
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci --legacy-peer-deps --prefix frontend
+      - run: npm run build --prefix frontend
+      - name: Upload build output
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fe-build
+          path: frontend/build/
+          retention-days: 7
+
   secret-scan:
     name: Secret Scan
     runs-on: ubuntu-latest
