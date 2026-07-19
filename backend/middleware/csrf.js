@@ -24,19 +24,23 @@ const { doubleCsrf } = require("csrf-csrf");
 // Fail fast in production if CSRF_SECRET is not set. Without a strong
 // secret the HMAC cookie is forgeable — running the app in prod without it
 // is a security failure, not a soft fallback.
-if (
-  process.env.NODE_ENV?.toLowerCase() === "production" &&
-  !process.env.CSRF_SECRET
-) {
+if (process.env.NODE_ENV?.toLowerCase() === "production" && !process.env.CSRF_SECRET) {
   throw new Error(
     "CSRF_SECRET is required in production. Set a long random value in the " +
       "environment (e.g. `openssl rand -hex 32`) before starting the server."
   );
 }
 
-const { doubleCsrfProtection, generateToken } = doubleCsrf({
-  getSecret: () =>
-    process.env.CSRF_SECRET || "csrf-fallback-dev-secret-change-in-prod",
+const { doubleCsrfProtection, generateCsrfToken: generateToken } = doubleCsrf({
+  getSecret: () => process.env.CSRF_SECRET || "csrf-fallback-dev-secret-change-in-prod",
+  // csrf-csrf v4 made `getSessionIdentifier` REQUIRED. The token format
+  // changed from raw HMAC payload to a session-scoped HMAC; without this
+  // the library throws on boot. We don't use express-session — derive the
+  // session identifier from the JWT cookie when present, falling back to
+  // the IP. Each browser still gets a distinct token because the JWT cookie
+  // is per-browser; IP fallback ties anonymous CSRF tokens to the requester
+  // until they authenticate.
+  getSessionIdentifier: (req) => req.cookies?.token || req.ip || "anon",
   cookieName: "x-csrf-token",
   cookieOptions: {
     httpOnly: true,
