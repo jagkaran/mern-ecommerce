@@ -21,9 +21,27 @@ export default function ShippingBlock() {
     checkout;
 
   const onText = (key) => (e) => dispatch(setField({ name: key, value: e.target.value }));
-  const blurPostal = () => {
+
+  // Best-effort city/state autofill via the backend Zippopotam proxy.
+  // Silent on failure — the user can still type city/state manually.
+  const blurPostal = async () => {
     dispatch(setTouched("postal"));
     dispatch(setError({ name: "postal", message: validatePostal(postal, country) }));
+    const code = (postal || "").trim();
+    const cc = (country || "").trim();
+    if (!code || !cc || !/^[A-Za-z0-9 -]{1,10}$/.test(code)) return;
+    try {
+      const res = await fetch(
+        `/api/v1/geo/postal/${encodeURIComponent(cc)}/${encodeURIComponent(code)}`
+      );
+      if (!res.ok) return;
+      const body = await res.json();
+      if (body?.hit && body.city && !city) dispatch(setField({ name: "city", value: body.city }));
+      if (body?.hit && body.state && !state)
+        dispatch(setField({ name: "state", value: body.state }));
+    } catch {
+      /* autofill is a progressive enhancement */
+    }
   };
   const blurPhone = () => {
     dispatch(setTouched("phone"));
