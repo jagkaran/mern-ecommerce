@@ -23,6 +23,16 @@ const { userRateLimiter, sensitiveUserLimiter } = require("./middleware/rateLimi
 // Trust the first proxy in front of the app (nginx, Render, Railway, etc.).
 app.set("trust proxy", 1);
 
+// Restore qs-based query parsing. Express 5 ships with the "simple" parser
+// (Node's querystring) which can't decode bracket notation, so
+// ?price[gte]=0 arrives as a flat key "price[gte]" and ApiFeatures can't
+// see the nested {price:{gte:"0"}} shape. The "simple" parser change was
+// part of Express 5's prototype-pollution hardening; qs is safe here
+// because the parsed object flows straight into a Mongo filter spread
+// ({...req.query}) and never into Object.assign or similar sinks.
+// ponytail: switch to a hand-rolled parser if qs CVE concerns resurface.
+app.set("query parser", "extended");
+
 // HTTP security headers
 app.use(
   helmet({
@@ -33,7 +43,9 @@ app.use(
         frameSrc: ["'self'", "https://js.stripe.com"],
         connectSrc: ["'self'", "https://api.stripe.com"],
         imgSrc: ["'self'", "data:", "https://res.cloudinary.com"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        styleSrcElem: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
       },
     },
     strictTransportSecurity: {
