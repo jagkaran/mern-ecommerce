@@ -12,7 +12,8 @@ version: 2
 # flow through as their own PR — they're the ones that need source edits
 # and a real test gate.
 #
-# `ignore` rules:
+# `ignore` rules (per-ecosystem, since Dependabot v2 requires ignore at
+# the updates[] level — not top-level):
 #   - `@mui/lab` is pinned to a 2024-05 dev prerelease in the npm registry;
 #     no upstream maintainer. Ignore until a stable v6+ exists or we
 #     delete the dependency.
@@ -23,6 +24,7 @@ version: 2
 #   - `react` / `react-dom` are locked to v18 until the `react-scripts`
 #     exit plan (Vite or Next.js) lands. react-scripts@5.0.1 is EOL and
 #     does not support React 19.
+#   - `react-scripts` is ignored entirely (EOL; roadmap removes it in F8).
 
 updates:
   # ─── Backend (root package.json) ──────────────────────────────────────────
@@ -55,6 +57,21 @@ updates:
     groups:
       frontend-patch-and-minor:
         update-types: ["minor", "patch"]
+    # Per-package ignore rules. `dependency-name` uses the npm name;
+    # `version` patterns use `*` for any. Matching updates are skipped.
+    ignore:
+      - dependency-name: "@mui/lab"
+        # Ignore entirely — stale prerelease, no upstream maintainer.
+      - dependency-name: "@mui/styles"
+        # Deprecated; the roadmap removes it. Block re-introduction.
+      - dependency-name: "react"
+        # Locked to v18 until react-scripts exit plan lands.
+        versions: ["19.x", "20.x", "21.x"]
+      - dependency-name: "react-dom"
+        # Same rationale as `react`.
+        versions: ["19.x", "20.x", "21.x"]
+      - dependency-name: "react-scripts"
+        # EOL; the roadmap removes it.
 
   # ─── GitHub Actions ──────────────────────────────────────────────────────
   - package-ecosystem: "github-actions"
@@ -65,23 +82,3 @@ updates:
     labels:
       - "dependencies"
       - "ci"
-
-# Per-package ignore rules. `dependency-name` uses the npm name; `version`
-# patterns use `*` for any. These are evaluated by dependabot on each
-# run; matching updates are skipped.
-#
-# `update-types` lets us ignore majors but still allow patches/minors for
-# the same package.
-ignore:
-  - dependency-name: "@mui/lab"
-    # Ignore entirely — stale prerelease, no upstream maintainer.
-  - dependency-name: "@mui/styles"
-    # Deprecated; the roadmap removes it. Block any re-introduction.
-  - dependency-name: "react"
-    # Locked to v18 until react-scripts exit plan lands.
-    versions: ["19.x", "20.x", "21.x"]
-  - dependency-name: "react-dom"
-    # Same rationale as `react`.
-    versions: ["19.x", "20.x", "21.x"]
-  - dependency-name: "react-scripts"
-    # EOL; the roadmap removes it.
