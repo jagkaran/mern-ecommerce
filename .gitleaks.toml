@@ -3,13 +3,20 @@ title = "gitleaks config"
 [extend]
 useDefault = true
 
-[allowlist]
+# v8.25+ deprecates the single-table [allowlist] form. Migrate to the
+# array-of-tables [[allowlists]] form. Anchored regex so paths like
+# `frontend/src/utils/node_modules-helper.js` no longer match the
+# `node_modules` rule.
+[[allowlists]]
+description = "MERN repo: generated/vendor noise"
 paths = [
-  '''node_modules''',
-  '''package-lock.json''',
-  '''frontend/build''',
-  '''coverage/''',
-  '''playwright-report/''',
-  '''test-results/''',
-  '''.playwright-mcp''',
+  '''(^|/)node_modules/''',
+  '''(^|/)frontend/build/''',
+  '''(^|/)coverage/''',
+  '''(^|/)playwright-report/''',
+  '''(^|/)test-results/''',
+  '''(^|/)logs/''',
+  '''(^|/)\.playwright-mcp/''',
+  '''package-lock\.json$''',
+  '''frontend/package-lock\.json$''',
 ]
