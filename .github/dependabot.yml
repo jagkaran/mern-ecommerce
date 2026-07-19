@@ -72,6 +72,12 @@ updates:
         versions: ["19.x", "20.x", "21.x"]
       - dependency-name: "react-scripts"
         # EOL; the roadmap removes it.
+      - dependency-name: "@mui/material"
+        # v6+ requires React 18+. Unblock when F8 (Vite) ships.
+        versions: ["6.x", "7.x", "8.x", "9.x", "10.x"]
+      - dependency-name: "react-redux"
+        # v8+ requires React 18+. Unblock when F8 (Vite) ships.
+        versions: ["8.x", "9.x", "10.x"]
 
   # ─── GitHub Actions ──────────────────────────────────────────────────────
   - package-ecosystem: "github-actions"
