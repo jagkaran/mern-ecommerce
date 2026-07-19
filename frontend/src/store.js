@@ -1,4 +1,5 @@
 import { configureStore } from "@reduxjs/toolkit";
+import { thunk } from "redux-thunk";
 import { cartReducer } from "./reducers/Cart";
 import {
   allOrdersReducer,
@@ -58,7 +59,9 @@ const store = configureStore({
     coupon: couponReducer,
   },
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().concat(apiMiddleware, persistMiddleware),
+    // RTK 2 dropped `thunk` from getDefaultMiddleware — actions/*.js still
+    // dispatch plain function thunks, so re-add it explicitly.
+    getDefaultMiddleware().concat(thunk, apiMiddleware, persistMiddleware),
 });
 
 export default store;
