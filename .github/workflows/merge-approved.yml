@@ -47,6 +47,13 @@ jobs:
     name: Merge PR #${{ inputs.pr_number }}
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v7
+        with:
+          # PR data lives in the GraphQL API; we don't need the working
+          # tree, but `gh pr` shells out to git which fails without a
+          # repo on disk. Shallow checkout is enough.
+          fetch-depth: 1
+
       - name: Verify PR is approved and CI-green
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
