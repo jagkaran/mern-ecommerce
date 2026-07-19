@@ -67,16 +67,13 @@ const userSchema = new mongoose.Schema({
 // The email unique index is managed by the schema field definition above.
 userSchema.index({ createdAt: -1 }); // For sorting by creation date
 
-userSchema.pre("save", async function (next) {
-  // Critical: RETURN next() when password is unchanged. The prior version
-  // called next() but didn't return, so the bcrypt.hash line below ran on
-  // every non-password save and re-hashed the already-hashed password —
-  // locking users out after the first forgot/reset/profile-update.
-  if (!this.isModified("password")) {
-    return next();
-  }
+// Mongoose 9 removed the `next` callback from middleware hooks; async functions
+// signal completion by returning a Promise. Returning `undefined` from an
+// async hook short-circuits the chain (equivalent to calling `next()` with
+// no argument). See https://mongoosejs.com/docs/middleware.html.
+userSchema.pre("save", async function () {
+  if (!this.isModified("password")) return;
   this.password = await bcrypt.hash(this.password, 10);
-  next();
 });
 
 // JWT Token

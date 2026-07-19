@@ -11,7 +11,7 @@ exports.couponLimiter = rateLimit({
   // Tight enough to make brute-forcing a 3-32-char alphanumeric code painful,
   // loose enough that a real shopper entering codes repeatedly during a sale
   // won't get rate-limited.
-  max: process.env.E2E_BYPASS_LIMITS ? 1_000_000 : 30,
+  limit: process.env.E2E_BYPASS_LIMITS ? 1_000_000 : 30,
   standardHeaders: true,
   legacyHeaders: false,
   skip: () => !!process.env.E2E_BYPASS_LIMITS,

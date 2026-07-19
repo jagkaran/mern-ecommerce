@@ -144,7 +144,7 @@ async function createOrder(
       await Product.findByIdAndUpdate(
         item.product,
         { $inc: { stock: -item.quantity } },
-        { session, new: true, runValidators: true }
+        { session, returnDocument: "after", runValidators: true }
       );
     }
 

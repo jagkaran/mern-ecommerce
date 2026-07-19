@@ -149,7 +149,7 @@ exports.stripeWebhook = (req, res) => {
       Order.findOneAndUpdate(
         { "paymentInfo.id": paymentIntent.id },
         { "paymentInfo.status": "succeeded", paidAt: new Date() },
-        { new: true }
+        { returnDocument: "after" }
       ).catch((dbErr) => {
         logger.error(
           `Failed to update order for payment intent ${paymentIntent.id}: ${dbErr.message}`
@@ -164,7 +164,7 @@ exports.stripeWebhook = (req, res) => {
       Order.findOneAndUpdate(
         { "paymentInfo.id": paymentIntent.id },
         { "paymentInfo.status": "failed" },
-        { new: true }
+        { returnDocument: "after" }
       ).catch((dbErr) => {
         logger.error(
           `Failed to update order for failed payment intent ${paymentIntent.id}: ${dbErr.message}`

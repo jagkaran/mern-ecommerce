@@ -7,14 +7,14 @@ const rateLimit = require("express-rate-limit");
  * isAuthenticatedUser middleware), falling back to req.ip for unauthenticated
  * requests so the limiter is still effective before login.
  *
- * @param {number} max       - Maximum number of requests allowed per window.
+ * @param {number} limit     - Maximum number of requests allowed per window.
  * @param {number} windowMin - Window duration in minutes.
  * @returns {import('express').RequestHandler} Express middleware
  */
-const createUserLimiter = (max = 60, windowMin = 15) =>
+const createUserLimiter = (limit = 60, windowMin = 15) =>
   rateLimit({
     windowMs: windowMin * 60 * 1000,
-    max,
+    limit,
     keyGenerator: (req) => req.user?._id?.toString() ?? req.ip,
     message: { success: false, message: "Too many requests. Please slow down." },
     standardHeaders: true,

@@ -3,7 +3,13 @@ const path = require("path");
 // Load env vars FIRST using __dirname so path works from ANY working directory
 // path.join(__dirname, ...) is always relative to server.js itself, never to cwd
 if (process.env.NODE_ENV?.toLowerCase() !== "production") {
-  require("dotenv").config({ path: path.join(__dirname, "config", "config.env") });
+  // ponytail: dotenv 17 defaults quiet:false and prints an "injected env (N)"
+  // banner on every boot. Our logger already records the boot event; the extra
+  // stdout line is noise. Add `quiet:true` to silence it.
+  require("dotenv").config({
+    path: path.join(__dirname, "config", "config.env"),
+    quiet: true,
+  });
 }
 
 const app = require("./app");

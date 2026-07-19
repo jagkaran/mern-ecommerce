@@ -11,14 +11,15 @@ class StorageService {
       return { public_id: result.public_id, url: result.secure_url };
     } catch (error) {
       logger.error(`Cloudinary upload failed [${folder}]: ${error.message}`);
-      throw new Error("Image upload failed. Please try again.");
+      // ponytail: attach the original error as `cause` so debug logs and
+      // Sentry/GlitchTip breadcrumbs keep the full chain (Cloudinary SDK
+      // errors vanish otherwise).
+      throw new Error("Image upload failed. Please try again.", { cause: error });
     }
   }
 
   async uploadMany(dataUris, folder, options = {}) {
-    return Promise.all(
-      dataUris.map((uri) => this.uploadImage(uri, folder, options))
-    );
+    return Promise.all(dataUris.map((uri) => this.uploadImage(uri, folder, options)));
   }
 
   async destroyImage(publicId) {

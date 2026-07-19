@@ -163,7 +163,7 @@ exports.updateProduct = catchAsyncErrors(async (req, res, next) => {
     fields.images = imagesLinks;
   }
   product = await Product.findByIdAndUpdate(req.params.id, fields, {
-    new: true,
+    returnDocument: "after",
     runValidators: true,
   });
   if (!product) {
@@ -258,7 +258,7 @@ exports.deleteProductReview = catchAsyncErrors(async (req, res, next) => {
   await Product.findByIdAndUpdate(
     req.query.productId,
     { reviews, ratings, numOfReviews },
-    { new: true, runValidators: true }
+    { returnDocument: "after", runValidators: true }
   );
   res.status(200).json({ success: true });
 });
