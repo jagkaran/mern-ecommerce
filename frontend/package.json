@@ -11,7 +11,7 @@
     "@mui/material": "^5.4.4",
     "@mui/styles": "^5.5.0",
     "@reduxjs/toolkit": "^1.7.2",
-    "@stripe/react-stripe-js": "^1.7.2",
+    "@stripe/react-stripe-js": "^6.8.0",
     "@stripe/stripe-js": "^9.10.0",
     "@testing-library/jest-dom": "^5.11.4",
     "@testing-library/react": "^11.1.0",
