@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import AddIcon from "@mui/icons-material/Add";
 import { useToast } from "../../../hooks/useToast";
@@ -78,7 +78,6 @@ function DiscountBadge({ type, value }) {
 
 function AllCouponsList({ coupons }) {
   const dispatch = useDispatch();
-  const navigate = useNavigate();
   const toast = useToast();
   const { isDeleted, isToggled, error } = useSelector((s) => s.coupon);
 
