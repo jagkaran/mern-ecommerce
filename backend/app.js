@@ -9,7 +9,7 @@ const path = require("path");
 const helmet = require("helmet");
 const cors = require("cors");
 const rateLimit = require("express-rate-limit");
-const mongoSanitize = require("express-mongo-sanitize");
+const mongoSanitize = require("./middleware/mongoSanitize"); // ponytail: local in-place replacement for express-mongo-sanitize@2.2.0, which reassigns req.query (illegal in Express 5)
 const { xss } = require("express-xss-sanitizer");
 const compression = require("compression");
 
@@ -136,7 +136,7 @@ app.use(
 );
 
 // Data sanitisation
-app.use(mongoSanitize());
+app.use(mongoSanitize);
 app.use(xss()); // express-xss-sanitizer
 
 // ─── CSRF protection (double-submit cookie, webhook excluded) ─────────────────
@@ -189,7 +189,10 @@ app.use("/api", (_req, res) => {
 if (process.env.NODE_ENV?.toLowerCase() === "production") {
   app.use(express.static(path.join(__dirname, "../frontend/build")));
 
-  app.get("*", (req, res) => {
+  // Express 5 uses path-to-regexp@8 which requires NAMED wildcards.
+  // Bare "*" now throws TypeError: Missing parameter name at index 1: *.
+  // The new {*splat} syntax captures the whole tail as `req.params.splat`.
+  app.get("/{*splat}", (req, res) => {
     res.sendFile(path.resolve(__dirname, "../frontend/build/index.html"));
   });
 }
