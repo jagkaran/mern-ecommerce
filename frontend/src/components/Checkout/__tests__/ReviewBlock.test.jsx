@@ -4,6 +4,7 @@
 
 import { render, screen } from "@testing-library/react";
 import ReviewBlock from "../ReviewBlock";
+import PaymentInfoCard from "../../Order/OrderDetails/PaymentInfoCard.jsx";
 
 describe("ReviewBlock — totals math", () => {
   it("no coupon: total = subtotal + shipping + tax (default fallback)", () => {
@@ -100,7 +101,6 @@ describe("PaymentInfoCard — order details breakdown uses the right currency", 
   // the historical view matches the historical charge, even if the header
   // selector has since switched.
   const renderCard = (props) => {
-    const PaymentInfoCard = require("../../Order/OrderDetails/PaymentInfoCard").default;
     render(<PaymentInfoCard {...props} />);
   };
 

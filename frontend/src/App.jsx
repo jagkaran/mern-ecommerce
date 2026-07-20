@@ -1,20 +1,20 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { BrowserRouter as Router, Navigate, Route, Routes } from "react-router-dom";
 import { ThemeProvider } from "@mui/material";
-import { TokenCSS } from "./design/tokens-css";
+import { TokenCSS } from "./design/tokens-css.jsx";
 import theme from "./design/theme";
 import { useDispatch, useSelector } from "react-redux";
 import axios from "axios";
 import { loadUser } from "./actions/userAction";
 import Header from "./components/Home/Header";
-import Footer from "./components/Home/Footer";
-import ProtectedRoute from "./components/ProtectedRoute";
-import AdminRoute from "./components/AdminRoute";
+import Footer from "./components/Home/Footer.jsx";
+import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import AdminRoute from "./components/AdminRoute.jsx";
 import useCsrfToken from "./hooks/useCsrfToken";
 import ToastHost from "./components/ToastHost";
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
-import CurrencyProvider from "./utils/currencyContext";
+import CurrencyProvider from "./utils/currencyContext.jsx";
 
 // Eagerly loaded — always needed on first paint
 import Home from "./components/Home/Home";

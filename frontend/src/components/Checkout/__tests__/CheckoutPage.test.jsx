@@ -8,7 +8,7 @@ import CheckoutPage from "../CheckoutPage";
 // After C4 wiring, CheckoutPage calls useStripe/useElements + CardElement
 // directly. jsdom has no Stripe context — mock everything to plain shims.
 // CardElement is rendered by the embedded PaymentForm.
-jest.mock("@stripe/react-stripe-js", () => ({
+vi.mock("@stripe/react-stripe-js", () => ({
   CardElement: () => <div data-testid="stripe-card-element" />,
   useStripe: () => ({}),
   useElements: () => ({}),

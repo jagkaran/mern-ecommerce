@@ -1,4 +1,4 @@
-import { TokenCSS } from "../design/tokens-css";
+import { TokenCSS } from "../design/tokens-css.jsx";
 
 describe("CSS keyframe tokens", () => {
   function getKeyframe(name) {

@@ -12,7 +12,7 @@ import { MemoryRouter } from "react-router-dom";
 import { cartReducer } from "../../../reducers/Cart";
 import Basket from "../Basket";
 
-jest.mock("axios");
+vi.mock("axios");
 
 // jsdom doesn't ship matchMedia — Basket's UI primitives use it for the
 // prefers-reduced-motion branch. Stub it.
@@ -26,12 +26,12 @@ if (typeof window !== "undefined" && !window.matchMedia) {
   });
 }
 
-jest.mock("../../../utils/currencyContext", () => ({
+vi.mock("../../../utils/currencyContext", () => ({
   useCurrency: () => ({ fmt: (n) => `$${Number(n).toFixed(2)}`, code: "USD", rate: 1 }),
 }));
 
-jest.mock("../../../hooks/useToast", () => ({
-  useToast: () => ({ success: jest.fn(), error: jest.fn(), info: jest.fn() }),
+vi.mock("../../../hooks/useToast", () => ({
+  useToast: () => ({ success: vi.fn(), error: vi.fn(), info: vi.fn() }),
 }));
 
 // Suppress stock re-fetch noise; not relevant to this test.
@@ -43,6 +43,10 @@ const items = (subtotalEach, qty) => [
 ];
 
 describe("Basket — coupon revalidation on cart change", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("keeps the coupon applied while subtotal meets minSubtotal", async () => {
     const cart = {
       cartItems: items(50, 3),

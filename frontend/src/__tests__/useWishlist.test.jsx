@@ -8,7 +8,7 @@ import { useWishlist } from "../hooks/useWishlist";
 
 // Mock the action creators module — must be plain actions so the default RTK
 // store (which has redux-thunk enabled by default since RTK 1.7) accepts them.
-jest.mock("../actions/wishlistAction", () => {
+vi.mock("../actions/wishlistAction", () => {
   const make = (type) => (payload) => ({ type, payload });
   return {
     __esModule: true,

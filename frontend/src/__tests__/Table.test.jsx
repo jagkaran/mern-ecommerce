@@ -26,7 +26,7 @@ describe("Table primitive", () => {
   });
 
   it("invokes onSortChange when a sortable header clicked", () => {
-    const onSortChange = jest.fn();
+    const onSortChange = vi.fn();
     const colsWithSort = [...cols, { key: "price", label: "Price", sortable: true }];
     render(
       <Table
@@ -42,7 +42,7 @@ describe("Table primitive", () => {
   });
 
   it("fires onRowClick when row clicked", () => {
-    const onRowClick = jest.fn();
+    const onRowClick = vi.fn();
     render(<Table columns={cols} rows={rows} onRowClick={onRowClick} />);
     fireEvent.click(screen.getByText("Wooden bowl").closest("tr"));
     expect(onRowClick).toHaveBeenCalledWith(rows[0]);

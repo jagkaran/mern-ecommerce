@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
-import Login from "../components/Login/Login";
+import Login from "../components/Login/Login.jsx";
 
 function userReducer(state = { loading: false, error: null, isAuthenticated: false }, _action) {
   return state;
