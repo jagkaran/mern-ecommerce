@@ -11,13 +11,13 @@
 
 | Layer    | Technology                                                                    |
 | -------- | ----------------------------------------------------------------------------- |
-| Frontend | React 17, Redux Toolkit + RTK Query, Material UI, Tailwind CSS                |
+| Frontend | React 18, Redux Toolkit, Material UI, Tailwind CSS, Vite, react-router v7    |
 | Backend  | Node.js v20+, Express 4, Mongoose 8                                           |
 | Database | MongoDB Atlas                                                                 |
 | Auth     | JWT (httpOnly + secure + sameSite=strict cookie)                              |
 | Storage  | Cloudinary                                                                    |
 | Payments | Stripe                                                                        |
-| Testing  | Jest + Supertest + mongodb-memory-server (unit/integration), Playwright (E2E) |
+| Testing  | Jest + Supertest + mongodb-memory-server (BE), Vitest + RTL (FE), Playwright (E2E) |
 | CI/CD    | GitHub Actions → Render                                                       |
 
 ---
@@ -38,8 +38,8 @@ cp backend/config/config.env.example backend/config/config.env
 # Fill in: DB_URI, JWT_SECRET, CLOUDINARY_*, STRIPE_API_KEY, SMTP_*
 
 # 4. Run in development
-npm run dev          # backend on :4000
-npm start --prefix frontend  # frontend on :3000
+npm run dev          # backend on :10000
+npm start --prefix frontend  # frontend on :3000 (vite dev server, proxies /api → :10000)
 ```
 
 ---
@@ -183,11 +183,20 @@ node agents/orchestrator.js --agents=security,test  # selective
 ## 🧪 Tests
 
 ```bash
-# Run all Jest tests
+# Run backend Jest tests
 npm test
 
-# Run tests with coverage
+# Run backend tests with coverage
 npm test -- --coverage
+
+# Run frontend Vitest tests
+npm test --prefix frontend
+
+# Run frontend tests in watch mode
+npm test:watch --prefix frontend
+
+# Build frontend (output → frontend/build/)
+npm run build --prefix frontend
 
 # Run E2E tests
 npm run e2e
