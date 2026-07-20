@@ -13,7 +13,7 @@ const CELL_SX = { px: 3, py: 1.75 };
 
 function UpdateReviews({ reviews, deleteReviewHandler }) {
   return (
-    <Grid item xs={12} md={12} lg={6}>
+    <Grid size={{ xs: 12, md: 12, lg: 6 }}>
       {reviews && reviews.length > 0 ? (
         <Box
           sx={{

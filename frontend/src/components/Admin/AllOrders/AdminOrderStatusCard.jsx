@@ -34,17 +34,7 @@ function AdminOrderStatusCard({
       <CardContent>
         <form onSubmit={updateOrderSubmitHandler}>
           <Grid container spacing={6} wrap="wrap">
-            <Grid
-              item
-              md={4}
-              sm={6}
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "center",
-              }}
-              xs={12}
-            >
+            <Grid sx={{ display: "flex", flexDirection: "column", justifyContent: "center", }} size={{ md: 4, sm: 6, xs: 12 }}>
               <Typography gutterBottom variant="body1">
                 <SeverityPill
                   color={
@@ -61,15 +51,7 @@ function AdminOrderStatusCard({
               </Typography>
             </Grid>
 
-            <Grid
-              item
-              md={4}
-              sm={6}
-              sx={{
-                display: status === "Delivered" ? "none" : "flex",
-              }}
-              xs={12}
-            >
+            <Grid sx={{ display: status === "Delivered" ? "none" : "flex", }} size={{ md: 4, sm: 6, xs: 12 }}>
               <FormControl fullWidth>
                 <InputLabel id="demo-simple-select-label">
                   Order Status

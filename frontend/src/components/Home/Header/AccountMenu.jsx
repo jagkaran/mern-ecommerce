@@ -58,9 +58,9 @@ export default function AccountMenu({ anchorEl, open, onClose, navigate, onLogou
       open={open}
       onClose={onClose}
       onClick={(e) => e.stopPropagation()}
-      PaperProps={{
+      slotProps={{ paper: {
         sx: { minWidth: 180, mt: 1 },
-      }}
+      } }}
       transformOrigin={{ horizontal: "right", vertical: "top" }}
       anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
     >

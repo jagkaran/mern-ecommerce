@@ -140,13 +140,13 @@ export default function MobileDrawer({
             open={drawerState[anchor]}
             onClose={toggleDrawer(anchor, false)}
             onOpen={toggleDrawer(anchor, true)}
-            PaperProps={{
+            slotProps={{ paper: {
               sx: {
                 width: 260,
                 backgroundColor: "var(--t-neutral-50)",
                 borderLeft: "1px solid var(--t-neutral-200)",
               },
-            }}
+            } }}
           >
             <Box
               sx={{

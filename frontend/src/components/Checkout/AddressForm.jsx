@@ -42,7 +42,7 @@ function AddressForm({ values, errors = {}, touched = {}, handleChange }) {
         Shipping address
       </Typography>
       <Grid container spacing={3}>
-        <Grid item xs={12} sm={6}>
+        <Grid size={{ xs: 12, sm: 6 }}>
           <TextField
             required
             id="firstName"
@@ -56,7 +56,7 @@ function AddressForm({ values, errors = {}, touched = {}, handleChange }) {
             {...fieldProps("firstName")}
           />
         </Grid>
-        <Grid item xs={12} sm={6}>
+        <Grid size={{ xs: 12, sm: 6 }}>
           <TextField
             required
             id="lastName"
@@ -70,7 +70,7 @@ function AddressForm({ values, errors = {}, touched = {}, handleChange }) {
             {...fieldProps("lastName")}
           />
         </Grid>
-        <Grid item xs={12}>
+        <Grid size={{ xs: 12 }}>
           <TextField
             required
             id="address"
@@ -84,7 +84,7 @@ function AddressForm({ values, errors = {}, touched = {}, handleChange }) {
             {...fieldProps("address")}
           />
         </Grid>
-        <Grid item xs={12}>
+        <Grid size={{ xs: 12 }}>
           <TextField
             required
             id="phone"
@@ -98,7 +98,7 @@ function AddressForm({ values, errors = {}, touched = {}, handleChange }) {
             {...fieldProps("phone")}
           />
         </Grid>
-        <Grid item xs={12} sm={6}>
+        <Grid size={{ xs: 12, sm: 6 }}>
           <FormControl
             variant="standard"
             sx={{ minWidth: 230 }}
@@ -124,7 +124,7 @@ function AddressForm({ values, errors = {}, touched = {}, handleChange }) {
             )}
           </FormControl>
         </Grid>
-        <Grid item xs={12} sm={6}>
+        <Grid size={{ xs: 12, sm: 6 }}>
           <FormControl variant="standard" sx={{ minWidth: 230 }}>
             <InputLabel id="state-label">State / Province / Region</InputLabel>
             <Select
@@ -146,7 +146,7 @@ function AddressForm({ values, errors = {}, touched = {}, handleChange }) {
             </Select>
           </FormControl>
         </Grid>
-        <Grid item xs={12} sm={6}>
+        <Grid size={{ xs: 12, sm: 6 }}>
           <TextField
             required
             id="city"
@@ -160,7 +160,7 @@ function AddressForm({ values, errors = {}, touched = {}, handleChange }) {
             {...fieldProps("city")}
           />
         </Grid>
-        <Grid item xs={12} sm={6}>
+        <Grid size={{ xs: 12, sm: 6 }}>
           <TextField
             required
             id="zip"

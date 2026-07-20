@@ -94,7 +94,7 @@ function UpdateOrder() {
         >
           <Container maxWidth="lg">
             <Grid container spacing={3}>
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 {loading ? (
                   <div className="grid place-items-center h-screen">
                     <CircularProgress />

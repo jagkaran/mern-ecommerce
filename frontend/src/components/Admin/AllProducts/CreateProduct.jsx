@@ -120,7 +120,7 @@ function CreateProduct() {
               >
                 <Grid container spacing={2}>
                   {/* Product Name */}
-                  <Grid item xs={12}>
+                  <Grid size={{ xs: 12 }}>
                     <TextField
                       required
                       fullWidth
@@ -135,7 +135,7 @@ function CreateProduct() {
                   </Grid>
 
                   {/* Price */}
-                  <Grid item xs={12}>
+                  <Grid size={{ xs: 12 }}>
                     <TextField
                       required
                       fullWidth
@@ -151,7 +151,7 @@ function CreateProduct() {
                   </Grid>
 
                   {/* Description */}
-                  <Grid item xs={12}>
+                  <Grid size={{ xs: 12 }}>
                     <TextField
                       required
                       fullWidth
@@ -167,7 +167,7 @@ function CreateProduct() {
                   </Grid>
 
                   {/* Category */}
-                  <Grid item xs={12}>
+                  <Grid size={{ xs: 12 }}>
                     <FormControl
                       fullWidth
                       required
@@ -196,7 +196,7 @@ function CreateProduct() {
                   </Grid>
 
                   {/* Stock */}
-                  <Grid item xs={12}>
+                  <Grid size={{ xs: 12 }}>
                     <TextField
                       required
                       fullWidth
@@ -212,11 +212,7 @@ function CreateProduct() {
                   </Grid>
 
                   {/* Image upload */}
-                  <Grid
-                    item
-                    xs={12}
-                    sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 1 }}
-                  >
+                  <Grid sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 1 }} size={{ xs: 12 }}>
                     <Button
                       variant="contained"
                       component="label"
