@@ -13,7 +13,7 @@ import { createOrderNumber } from "../../Order/MyOrders";
 import AdminOrderStatusCard from "./AdminOrderStatusCard";
 import DashboardAppBar from "../Sidebar/DashboardAppBar";
 import DashboardDrawer from "../Sidebar/DashboardDrawer";
-import { useTheme } from "@mui/styles";
+import { useTheme } from "@mui/material/styles";
 import Seo from "../../Seo";
 
 function UpdateOrder() {

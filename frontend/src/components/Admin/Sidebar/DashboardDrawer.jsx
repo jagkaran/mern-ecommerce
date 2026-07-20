@@ -5,7 +5,6 @@ import IconButton from "@mui/material/IconButton";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ListItems from "./ListItems";
-import { makeStyles } from "@mui/styles";
 
 const drawerWidth = 220;
 
@@ -48,12 +47,6 @@ const Drawer = styled(MuiDrawer, {
   }),
 }));
 
-const useStyles = makeStyles({
-  drawerPaper: {
-    marginTop: "90px",
-  },
-});
-
 const DrawerHeader = styled("div")(({ theme }) => ({
   display: "flex",
   alignItems: "center",
@@ -65,17 +58,13 @@ const DrawerHeader = styled("div")(({ theme }) => ({
 
 function DashboardDrawer({ open, handleDrawerClose }) {
   const theme = useTheme();
-  const classes = useStyles();
   return (
     <Drawer
       variant="permanent"
       open={open}
-      classes={{
-        paper: classes.drawerPaper,
-      }}
       sx={{
         display: { xs: "none", md: "block" },
-        "& .MuiDrawer-paper": { borderWidth: 0 },
+        "& .MuiDrawer-paper": { borderWidth: 0, marginTop: "90px" },
       }}
     >
       <DrawerHeader>
