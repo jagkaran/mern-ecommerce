@@ -2,7 +2,7 @@ import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { CircularProgress, Box } from "@mui/material";
 
-function AdminRoute({ isAuthenticated, loading }) {
+function AdminRoute({ children, isAuthenticated, loading }) {
   const location = useLocation();
   const { user } = useSelector((s) => s.user);
 
@@ -19,7 +19,11 @@ function AdminRoute({ isAuthenticated, loading }) {
     return <Navigate to={`/signin?redirect=${redirect}`} replace />;
   }
 
-  return user?.role === "admin" ? <Outlet /> : <Navigate to="/account" replace />;
+  if (user?.role !== "admin") {
+    return <Navigate to="/account" replace />;
+  }
+
+  return children ? children : <Outlet />;
 }
 
 export default AdminRoute;
