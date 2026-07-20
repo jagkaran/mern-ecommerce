@@ -110,7 +110,7 @@ function UpdateUser() {
         >
           <Container maxWidth="xs" sx={{ mt: 2, mb: 2 }}>
             <Grid container spacing={3}>
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 {loading ? (
                   <div className="grid place-items-center h-screen">
                     <CircularProgress />
@@ -136,7 +136,7 @@ function UpdateUser() {
                       sx={{ mt: 3 }}
                     >
                       <Grid container spacing={2}>
-                        <Grid item xs={12}>
+                        <Grid size={{ xs: 12 }}>
                           <TextField
                             name="name"
                             fullWidth
@@ -148,7 +148,7 @@ function UpdateUser() {
                             onChange={(e) => setName(e.target.value)}
                           />
                         </Grid>
-                        <Grid item xs={12}>
+                        <Grid size={{ xs: 12 }}>
                           <TextField
                             required
                             fullWidth
@@ -159,7 +159,7 @@ function UpdateUser() {
                             onChange={(e) => setEmail(e.target.value)}
                           />
                         </Grid>
-                        <Grid item xs={12}>
+                        <Grid size={{ xs: 12 }}>
                           <FormControl fullWidth>
                             <InputLabel id="role-select-label">Role</InputLabel>
                             <Select

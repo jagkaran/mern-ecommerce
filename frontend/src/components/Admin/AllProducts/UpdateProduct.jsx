@@ -178,7 +178,7 @@ function UpdateProduct() {
           <Toolbar />
           <Container maxWidth="lg" sx={{ mt: 2, mb: 4 }}>
             <Grid container spacing={3}>
-              <Grid item xs={12} md={12} lg={6}>
+              <Grid size={{ xs: 12, md: 12, lg: 6 }}>
                 {loading ? (
                   <div className="grid place-items-center h-screen">
                     <CircularProgress />
@@ -204,7 +204,7 @@ function UpdateProduct() {
                       sx={{ mt: 3 }}
                     >
                       <Grid container spacing={2}>
-                        <Grid item xs={12}>
+                        <Grid size={{ xs: 12 }}>
                           <TextField
                             name="name"
                             fullWidth
@@ -220,7 +220,7 @@ function UpdateProduct() {
                             })}
                           />
                         </Grid>
-                        <Grid item xs={12}>
+                        <Grid size={{ xs: 12 }}>
                           <TextField
                             required
                             InputLabelProps={{ shrink: true }}
@@ -237,7 +237,7 @@ function UpdateProduct() {
                             })}
                           />
                         </Grid>
-                        <Grid item xs={12}>
+                        <Grid size={{ xs: 12 }}>
                           <TextField
                             required
                             fullWidth
@@ -252,7 +252,7 @@ function UpdateProduct() {
                             })}
                           />
                         </Grid>
-                        <Grid item xs={12}>
+                        <Grid size={{ xs: 12 }}>
                           <FormControl fullWidth {...(errors.category && { error: true })}>
                             <InputLabel id="category-select-label">Category</InputLabel>
                             <Select
@@ -275,7 +275,7 @@ function UpdateProduct() {
                             {errors.category && <FormHelperText>{errors.category}</FormHelperText>}
                           </FormControl>
                         </Grid>
-                        <Grid item xs={12}>
+                        <Grid size={{ xs: 12 }}>
                           <TextField
                             required
                             fullWidth
@@ -291,7 +291,7 @@ function UpdateProduct() {
                             })}
                           />
                         </Grid>
-                        <Grid item xs={12} sx={{ display: "flex", alignItems: "center" }}>
+                        <Grid sx={{ display: "flex", alignItems: "center" }} size={{ xs: 12 }}>
                           <Typography variant="caption" display="block" gutterBottom>
                             Old Images:
                           </Typography>
@@ -305,7 +305,7 @@ function UpdateProduct() {
                             />
                           ))}
                         </Grid>
-                        <Grid item xs={12} mt={2} sx={{ display: "flex", alignItems: "center" }}>
+                        <Grid mt={2} sx={{ display: "flex", alignItems: "center" }} size={{ xs: 12 }}>
                           <Typography variant="caption" display="block" gutterBottom>
                             New Images:
                           </Typography>
@@ -319,7 +319,7 @@ function UpdateProduct() {
                             />
                           ))}
                         </Grid>
-                        <Grid item xs={12} sx={{ display: "flex", justifyContent: "flex-end" }}>
+                        <Grid sx={{ display: "flex", justifyContent: "flex-end" }} size={{ xs: 12 }}>
                           <Button
                             sx={{ m: 1, backgroundColor: "secondary.main" }}
                             variant="contained"

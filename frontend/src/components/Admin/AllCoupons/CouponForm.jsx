@@ -140,7 +140,7 @@ function CouponForm({ initialValues, onSubmit, busy, submitLabel = "Save" }) {
         </Headline>
         <form onSubmit={handleSubmit}>
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 fullWidth
                 required
@@ -156,7 +156,7 @@ function CouponForm({ initialValues, onSubmit, busy, submitLabel = "Save" }) {
                 }
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 fullWidth
                 required
@@ -165,7 +165,7 @@ function CouponForm({ initialValues, onSubmit, busy, submitLabel = "Save" }) {
                 onChange={(e) => set("name", e.target.value)}
               />
             </Grid>
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <TextField
                 fullWidth
                 label="Description (shown in admin + offers list)"
@@ -175,7 +175,7 @@ function CouponForm({ initialValues, onSubmit, busy, submitLabel = "Save" }) {
                 rows={2}
               />
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid size={{ xs: 12, sm: 4 }}>
               <FormControl fullWidth>
                 <InputLabel>Discount type</InputLabel>
                 <Select
@@ -191,7 +191,7 @@ function CouponForm({ initialValues, onSubmit, busy, submitLabel = "Save" }) {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid size={{ xs: 12, sm: 4 }}>
               <TextField
                 fullWidth
                 type="number"
@@ -202,7 +202,7 @@ function CouponForm({ initialValues, onSubmit, busy, submitLabel = "Save" }) {
                 helperText="Required for percentage / flat. Free shipping ignores."
               />
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid size={{ xs: 12, sm: 4 }}>
               <FormControl fullWidth>
                 <InputLabel>Stack policy</InputLabel>
                 <Select
@@ -221,7 +221,7 @@ function CouponForm({ initialValues, onSubmit, busy, submitLabel = "Save" }) {
 
             {/* Tiered sub-form */}
             {values.discountType === "tiered" && (
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <Box sx={{ border: "1px solid var(--t-neutral-200)", borderRadius: 1, p: 2 }}>
                   <Typography variant="subtitle2" sx={{ mb: 1 }}>
                     Tiers
@@ -258,7 +258,7 @@ function CouponForm({ initialValues, onSubmit, busy, submitLabel = "Save" }) {
 
             {/* BOGO sub-form */}
             {values.discountType === "bogo" && (
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <Box sx={{ border: "1px solid var(--t-neutral-200)", borderRadius: 1, p: 2 }}>
                   <Typography variant="subtitle2" sx={{ mb: 1 }}>
                     Buy N get M at X% off
@@ -291,13 +291,13 @@ function CouponForm({ initialValues, onSubmit, busy, submitLabel = "Save" }) {
             )}
 
             {/* Eligibility */}
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <Box sx={{ border: "1px solid var(--t-neutral-200)", borderRadius: 1, p: 2 }}>
                 <Typography variant="subtitle2" sx={{ mb: 1 }}>
                   Eligibility
                 </Typography>
                 <Grid container spacing={2}>
-                  <Grid item xs={6} sm={3}>
+                  <Grid size={{ xs: 6, sm: 3 }}>
                     <TextField
                       fullWidth
                       type="number"
@@ -306,7 +306,7 @@ function CouponForm({ initialValues, onSubmit, busy, submitLabel = "Save" }) {
                       onChange={(e) => setElig("minSubtotal", e.target.value)}
                     />
                   </Grid>
-                  <Grid item xs={6} sm={3}>
+                  <Grid size={{ xs: 6, sm: 3 }}>
                     <TextField
                       fullWidth
                       type="number"
@@ -315,7 +315,7 @@ function CouponForm({ initialValues, onSubmit, busy, submitLabel = "Save" }) {
                       onChange={(e) => setElig("minItems", e.target.value)}
                     />
                   </Grid>
-                  <Grid item xs={6} sm={3}>
+                  <Grid size={{ xs: 6, sm: 3 }}>
                     <TextField
                       fullWidth
                       type="number"
@@ -324,7 +324,7 @@ function CouponForm({ initialValues, onSubmit, busy, submitLabel = "Save" }) {
                       onChange={(e) => setElig("usageLimitPerUser", e.target.value)}
                     />
                   </Grid>
-                  <Grid item xs={6} sm={3}>
+                  <Grid size={{ xs: 6, sm: 3 }}>
                     <FormControlLabel
                       control={
                         <Checkbox
@@ -340,7 +340,7 @@ function CouponForm({ initialValues, onSubmit, busy, submitLabel = "Save" }) {
             </Grid>
 
             {/* Caps + dates */}
-            <Grid item xs={12} sm={4}>
+            <Grid size={{ xs: 12, sm: 4 }}>
               <TextField
                 fullWidth
                 type="number"
@@ -350,7 +350,7 @@ function CouponForm({ initialValues, onSubmit, busy, submitLabel = "Save" }) {
                 helperText="Empty = unlimited"
               />
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid size={{ xs: 12, sm: 4 }}>
               <TextField
                 fullWidth
                 type="datetime-local"
@@ -360,7 +360,7 @@ function CouponForm({ initialValues, onSubmit, busy, submitLabel = "Save" }) {
                 onChange={(e) => set("startAt", e.target.value)}
               />
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid size={{ xs: 12, sm: 4 }}>
               <TextField
                 fullWidth
                 type="datetime-local"
@@ -371,7 +371,7 @@ function CouponForm({ initialValues, onSubmit, busy, submitLabel = "Save" }) {
               />
             </Grid>
 
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <FormControlLabel
                 control={
                   <Checkbox

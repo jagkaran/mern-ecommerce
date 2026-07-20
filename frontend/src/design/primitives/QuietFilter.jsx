@@ -49,13 +49,13 @@ export const QuietFilter = ({ title = "Filters", children, sx, mobileBreakpoint 
         anchor="right"
         open={open}
         onClose={() => setOpen(false)}
-        PaperProps={{
+        slotProps={{ paper: {
           sx: {
             width: { xs: "85vw", sm: 360 },
             p: 3,
             backgroundColor: "var(--t-neutral-50)",
           },
-        }}
+        } }}
       >
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
           <Typography variant="h5">{title}</Typography>

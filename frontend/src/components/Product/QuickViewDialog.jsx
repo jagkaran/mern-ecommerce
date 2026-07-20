@@ -75,14 +75,14 @@ function QuickViewDialog({ open, productId, onClose }) {
       maxWidth="md"
       fullWidth
       aria-labelledby="quickview-title"
-      PaperProps={{
+      slotProps={{ paper: {
         sx: {
           borderRadius: 'var(--t-border-radius-md)',
           backgroundColor: 'var(--t-neutral-50)',
           overflow: 'hidden',
           maxHeight: { xs: '90vh', md: '85vh' },
         },
-      }}
+      } }}
     >
       <IconButton
         onClick={onClose}
