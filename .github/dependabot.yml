@@ -68,36 +68,31 @@ updates:
         # Locked to v18 until react-scripts exit plan lands.
         versions: ["19.x", "20.x", "21.x"]
       - dependency-name: "react-dom"
-        # Same rationale as `react`.
-        versions: ["18.x", "19.x", "20.x", "21.x"]
+        # Locked to v18 (now live). Bump to v19+ blocks on React 19
+        # codemod (no upgrade plan yet).
+        versions: ["19.x", "20.x", "21.x"]
       - dependency-name: "react-scripts"
         # EOL; the roadmap removes it.
       - dependency-name: "web-vitals"
         # Removed: declared but zero source usage. Re-add when needed.
-      - dependency-name: "react-router-dom"
-        # v7 requires React 18 + data router API rewrite. Unblock with F8+F11.
-        versions: ["7.x", "8.x", "9.x"]
-      - dependency-name: "react-router"
-        # Same rationale as react-router-dom.
-        versions: ["7.x", "8.x", "9.x"]
-      - dependency-name: "@mui/material"
-        # v6+ requires React 18+. Unblock when F8 (Vite) ships.
-        versions: ["6.x", "7.x", "8.x", "9.x", "10.x"]
-      - dependency-name: "@mui/icons-material"
-        # v6+ requires React 18+. Same block as @mui/material.
-        versions: ["6.x", "7.x", "8.x", "9.x", "10.x"]
-      - dependency-name: "react-redux"
-        # v8+ requires React 18+. Unblock when F8 (Vite) ships.
-        versions: ["8.x", "9.x", "10.x"]
-      - dependency-name: "@testing-library/react"
-        # v12+ requires React 18+. F7 consumes result after F8.
-        versions: ["12.x", "13.x", "14.x", "15.x", "16.x"]
-      - dependency-name: "@testing-library/jest-dom"
-        # v6+ requires React 18+. Same as @testing-library/react.
-        versions: ["6.x", "7.x", "8.x"]
-      - dependency-name: "@testing-library/user-event"
-        # v14+ requires React 18+. Same as @testing-library/react.
-        versions: ["14.x", "15.x", "16.x"]
+      # F8 unblock — Vite + React 18 shipped in PR #60. react-router-dom v7
+      # data router migration is F11 (also shipped in PR #62). @mui/material
+      # and @mui/icons-material v6+ work on React 18. react-redux v8 works
+      # on React 18. All four packages can now receive dependabot bumps.
+      #
+      # (Previous entries for react-router-dom v7+, react-router v7+,
+      #  @mui/material v6+, @mui/icons-material v6+, react-redux v8+
+      #  deleted.)
+      #
+      # F7 unblock — F8 landed React 18; testing-library trio (and friends)
+      # can now upgrade. The ignores below are removed; dependabot will
+      # open PRs for any available major/minor/patch releases.
+      #
+      # (Previous entries for @testing-library/react v12+, jest-dom v6+,
+      #  user-event v14+ deleted.)
+      #
+      # Still ignored because no React 18-compatible release exists yet:
+      # (none currently)
 
   # ─── GitHub Actions ──────────────────────────────────────────────────────
   - package-ecosystem: "github-actions"
