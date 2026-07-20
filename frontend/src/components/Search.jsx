@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Seo from "./Seo";
+import Seo from "./Seo.jsx";
 import {
   Section,
   Overline,

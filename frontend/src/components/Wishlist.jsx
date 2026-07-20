@@ -4,11 +4,11 @@ import { Box, Container, IconButton, Rating, CircularProgress } from "@mui/mater
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import { useSelector } from "react-redux";
 import { useWishlist } from "../hooks/useWishlist";
-import { useCurrency } from "../utils/currencyContext";
+import { useCurrency } from "../utils/currencyContext.jsx";
 import { addItemsToCart } from "../actions/cartAction";
 import { useDispatch } from "react-redux";
 import { useToast } from "../hooks/useToast";
-import Seo from "./Seo";
+import Seo from "./Seo.jsx";
 import { Overline, Headline, BodyText, PrimaryBtn, GhostBtn, Surface } from "../design/primitives";
 
 export default function Wishlist() {

@@ -51,7 +51,7 @@ export const myOrders = () => async (dispatch) => {
   } catch (error) {
     dispatch({
       type: "MyOrdersFail",
-      payload: error.response.data.message,
+      payload: error?.response?.data?.message || error.message || "Failed to load orders",
     });
   }
 };

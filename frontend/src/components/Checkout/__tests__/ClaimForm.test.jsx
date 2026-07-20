@@ -6,7 +6,7 @@ import { MemoryRouter } from "react-router-dom";
 import { userReducer } from "../../../reducers/User";
 import ClaimForm from "../ClaimForm";
 
-jest.mock("axios");
+vi.mock("axios");
 
 const renderWith = (ui) =>
   render(

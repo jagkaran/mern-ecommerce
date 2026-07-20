@@ -1,7 +1,7 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import NotFound from "../components/NotFound";
+import NotFound from "../components/NotFound.jsx";
 
 describe("NotFound page", () => {
   it("renders themed empty-state copy", () => {

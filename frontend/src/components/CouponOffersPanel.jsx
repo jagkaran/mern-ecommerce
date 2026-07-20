@@ -11,7 +11,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Box } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { useToast } from "../hooks/useToast";
-import { useCurrency } from "../utils/currencyContext";
+import { useCurrency } from "../utils/currencyContext.jsx";
 import { getAvailableCoupons, getBestDeal } from "../actions/couponAction";
 import { BodyText, GhostBtn, Overline } from "../design/primitives";
 

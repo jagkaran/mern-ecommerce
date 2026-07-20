@@ -1,7 +1,7 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import ProtectedRoute from "../components/ProtectedRoute";
+import ProtectedRoute from "../components/ProtectedRoute.jsx";
 
 // Helper: wrap component in a router with a destination route
 function renderWithRouter(ui, { initialEntries = ["/protected"] } = {}) {

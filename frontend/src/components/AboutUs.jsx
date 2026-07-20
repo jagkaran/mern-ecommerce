@@ -2,7 +2,7 @@ import React from "react";
 import { Box, Container } from "@mui/material";
 import { Link } from "react-router-dom";
 import { Overline, PrimaryBtn, GhostBtn, Reveal, Breadcrumb } from "../design/primitives";
-import Seo from "./Seo";
+import Seo from "./Seo.jsx";
 import EditorialSplit from "./Home/EditorialSplit";
 
 const PILLARS = [

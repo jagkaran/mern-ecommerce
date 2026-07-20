@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import Seo from "./Seo";
+import Seo from "./Seo.jsx";
 import {
   Headline,
   BodyText,
