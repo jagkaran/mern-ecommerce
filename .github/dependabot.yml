@@ -69,9 +69,17 @@ updates:
         versions: ["19.x", "20.x", "21.x"]
       - dependency-name: "react-dom"
         # Same rationale as `react`.
-        versions: ["19.x", "20.x", "21.x"]
+        versions: ["18.x", "19.x", "20.x", "21.x"]
       - dependency-name: "react-scripts"
         # EOL; the roadmap removes it.
+      - dependency-name: "web-vitals"
+        # Removed: declared but zero source usage. Re-add when needed.
+      - dependency-name: "react-router-dom"
+        # v7 requires React 18 + data router API rewrite. Unblock with F8+F11.
+        versions: ["7.x", "8.x", "9.x"]
+      - dependency-name: "react-router"
+        # Same rationale as react-router-dom.
+        versions: ["7.x", "8.x", "9.x"]
       - dependency-name: "@mui/material"
         # v6+ requires React 18+. Unblock when F8 (Vite) ships.
         versions: ["6.x", "7.x", "8.x", "9.x", "10.x"]
