@@ -13,11 +13,20 @@
  *   backend/config/database.js   (was 0%   — covers lines 1-33)
  */
 
+// The global setup file mocks sendEmail/gmailOAuth/emailService so that
+// integration tests never hit the network. This file explicitly exercises
+// the real implementations, so unmock them.
+jest.unmock("../utils/sendEmail");
+jest.unmock("../utils/gmailOAuth");
+jest.unmock("../services/emailService");
+
 // ─── sendEmail ────────────────────────────────────────────────────────────────
 describe("sendEmail utility", () => {
   let sendEmail;
   let mockSendMail;
   let mockCreateTransport;
+  let mockGetAccessToken;
+  let mockSendViaGmailApi;
 
   beforeEach(() => {
     jest.resetModules();
@@ -25,14 +34,28 @@ describe("sendEmail utility", () => {
     mockCreateTransport = jest.fn().mockReturnValue({ sendMail: mockSendMail });
 
     jest.mock("nodemailer", () => ({ createTransport: mockCreateTransport }));
+
+    // Force OAuth to be unavailable by default — each test opts in via
+    // `mockGetAccessToken.mockResolvedValueOnce(...)`.
+    mockGetAccessToken = jest.fn().mockResolvedValue(null);
+    mockSendViaGmailApi = jest.fn().mockResolvedValue({ id: "gmail-msg-id" });
+    jest.doMock("../utils/gmailOAuth", () => ({
+      getAccessToken: mockGetAccessToken,
+      sendViaGmailApi: mockSendViaGmailApi,
+      _resetCache: jest.fn(),
+    }));
+
     sendEmail = require("../utils/sendEmail");
   });
 
   afterEach(() => {
     jest.restoreAllMocks();
+    jest.dontMock("../utils/gmailOAuth");
     delete process.env.SMTP_SERVICE;
     delete process.env.SMTP_HOST;
     delete process.env.SMTP_PORT;
+    delete process.env.SMTP_MAIL;
+    delete process.env.SMTP_PASSWORD;
   });
 
   it("uses service-based transport when SMTP_SERVICE is set", async () => {
@@ -83,6 +106,71 @@ describe("sendEmail utility", () => {
     await expect(
       sendEmail({ email: "x@x.com", subject: "S", message: "M" })
     ).rejects.toThrow("SMTP failure");
+  });
+
+  it("uses Gmail API via sendViaGmailApi when OAuth is configured", async () => {
+    process.env.SMTP_MAIL = "worldwidesingh@gmail.com";
+    mockGetAccessToken.mockResolvedValueOnce({
+      user: "worldwidesingh@gmail.com",
+      clientId: "cid",
+      clientSecret: "csec",
+      accessToken: "ya29.fake-access",
+      refreshToken: "1//fake-refresh",
+    });
+
+    const result = await sendEmail({
+      email: "user@example.com",
+      subject: "Reset",
+      message: "Click here",
+    });
+
+    expect(mockSendViaGmailApi).toHaveBeenCalledWith(
+      expect.objectContaining({
+        user: "worldwidesingh@gmail.com",
+        accessToken: "ya29.fake-access",
+        from: `"Click.it Store" <worldwidesingh@gmail.com>`,
+        to: "user@example.com",
+        subject: "Reset",
+        text: "Click here",
+      })
+    );
+    expect(mockCreateTransport).not.toHaveBeenCalled();
+    expect(result).toEqual({ id: "gmail-msg-id" });
+  });
+
+  it("falls back to SMTP when getAccessToken returns null", async () => {
+    process.env.SMTP_SERVICE  = "gmail";
+    process.env.SMTP_MAIL     = "fallback@gmail.com";
+    process.env.SMTP_PASSWORD = "app-password";
+    mockGetAccessToken.mockResolvedValueOnce(null);
+
+    await sendEmail({ email: "u@e.com", subject: "S", message: "M" });
+
+    expect(mockSendViaGmailApi).not.toHaveBeenCalled();
+    expect(mockCreateTransport).toHaveBeenCalledWith(
+      expect.objectContaining({
+        service: "gmail",
+        auth: expect.objectContaining({ user: "fallback@gmail.com", pass: "app-password" }),
+      })
+    );
+  });
+
+  it("falls back to SMTP when sendViaGmailApi throws", async () => {
+    process.env.SMTP_SERVICE  = "gmail";
+    process.env.SMTP_MAIL     = "fb@gmail.com";
+    process.env.SMTP_PASSWORD = "pw";
+    mockGetAccessToken.mockResolvedValueOnce({
+      user: "fb@gmail.com",
+      accessToken: "ya29.x",
+      refreshToken: "1//r",
+    });
+    mockSendViaGmailApi.mockRejectedValueOnce(new Error("Gmail API send failed: 401"));
+
+    await sendEmail({ email: "u@e.com", subject: "S", message: "M" });
+
+    expect(mockCreateTransport).toHaveBeenCalledWith(
+      expect.objectContaining({ service: "gmail" })
+    );
   });
 });
 

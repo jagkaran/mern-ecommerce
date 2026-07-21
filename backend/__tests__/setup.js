@@ -13,6 +13,7 @@ process.env.JWT_SECRET        = "test_jwt_secret_for_jest_only";
 process.env.JWT_EXPIRE        = "7d";
 process.env.COOKIE_EXPIRE     = "7";
 process.env.STRIPE_SECRET_KEY = "sk_test_mock";
+process.env.CLIENT_URL        = "http://localhost:3000";
 
 // Stripe mock — covers paymentService.createPaymentIntent, retrievePaymentIntent, verifyWebhookSignature.
 // Singleton instance so per-test `mockRejectedValueOnce` overrides on the test's
@@ -44,6 +45,19 @@ jest.mock("../services/emailQualityService", () => ({
 }));
 jest.mock("../services/passwordBreachService", () => ({
   isPasswordBreached: jest.fn().mockResolvedValue(false),
+}));
+
+// Email transport must never hit the network in tests. The sendEmail
+// utility is force-mocked so any code path that accidentally reaches it
+// (forgotPassword, registration flows, etc.) no-ops instead of trying
+// real Gmail/SMTP and hanging the run.
+// emailService.js itself is NOT globally mocked — its tests
+// (emailService.test.js) exercise the real wrapper, which calls the
+// sendEmail stub above. Controllers that don't care about email
+// assertions get the no-op for free.
+jest.mock("../utils/sendEmail", () => jest.fn().mockResolvedValue(undefined));
+jest.mock("../utils/gmailOAuth", () => ({
+  getAccessToken: jest.fn().mockResolvedValue(null),
 }));
 
 // Cloudinary mock

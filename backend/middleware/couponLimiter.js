@@ -5,6 +5,7 @@
 // session can hammer validate freely.
 
 const rateLimit = require("express-rate-limit");
+const { ipKeyGenerator } = require("express-rate-limit");
 
 exports.couponLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
@@ -15,7 +16,7 @@ exports.couponLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skip: () => !!process.env.E2E_BYPASS_LIMITS,
-  keyGenerator: (req) => req.ip || "anon",
+  keyGenerator: (req) => ipKeyGenerator(req.ip) || "anon",
   message: {
     success: false,
     message: "Too many coupon attempts. Please wait a minute and try again.",

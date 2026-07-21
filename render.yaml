@@ -11,4 +11,32 @@ services:
         value: production
       - key: PORT
         value: 10000
+      # Frontend origin used for absolute URLs in transactional emails
+      # (password reset link, etc.). Must be the Render URL OR your custom
+      # domain — NOT the API host.
+      - key: CLIENT_URL
+        value: https://mern-ecommerce-app-91py.onrender.com
+      # Gmail account that sends mail. The "From" header uses this.
+      - key: SMTP_MAIL
+        value: worldwidesingh@gmail.com
+      # OAuth2 credentials JSON — REQUIRED for Gmail API path. Leave the
+      # path at the default (backend/config/gmail-oauth-credentials.json)
+      # and upload the file via Render's Secret Files (see README).
+      - key: GMAIL_OAUTH_CREDENTIALS_PATH
+        value: backend/config/gmail-oauth-credentials.json
+      # Refresh-token JSON — also a Secret File at the default path.
+      - key: GMAIL_OAUTH_TOKEN_PATH
+        value: backend/config/gmail-oauth-token.json
+      # SMTP fallback. Only used if OAuth files are missing/broken.
+      # In production you almost certainly want this unset so the broken
+      # SMTP path never tries to send. If you do keep it set, SMTP_PASSWORD
+      # MUST be a 16-char Gmail App Password, not the account password.
+      # - key: SMTP_SERVICE
+      #   value: gmail
+      # - key: SMTP_HOST
+      #   value: smtp.gmail.com
+      # - key: SMTP_PORT
+      #   value: "465"
+      # - key: SMTP_PASSWORD
+      #   sync: false   # sensitive — paste in Render dashboard, not in YAML
     autoDeploy: true

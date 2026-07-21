@@ -6,6 +6,8 @@ frontend/.pnp.js
 
 # ─── Environment / Secrets (NEVER commit these) ──────────────────────────────
 backend/config/config.env
+backend/config/gmail-oauth-credentials.json
+backend/config/gmail-oauth-token.json
 .env
 .env.*
 !.env.example

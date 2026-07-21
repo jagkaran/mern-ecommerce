@@ -92,9 +92,14 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
   }
   const resetToken = user.getResetPasswordToken();
   await user.save({ validateBeforeSave: false });
-  const resetPasswordUrl = `${req.protocol}://${req.get("host")}/password/reset/${resetToken}`;
+  // Use the frontend origin from CLIENT_URL so the link opens the React app,
+  // not the API. Fall back to req.host for local dev when CLIENT_URL is not
+  // set — works only when the API and frontend share a port.
+  const clientOrigin =
+    process.env.CLIENT_URL || `${req.protocol}://${req.get("host")}`;
+  const resetPasswordUrl = `${clientOrigin}/password/reset/${resetToken}`;
   try {
-    await emailService.sendPasswordReset(user.email, resetPasswordUrl);
+    await emailService.sendPasswordReset(user.email, resetPasswordUrl, user.name);
     res.status(200).json({ success: true, message: `Email sent to ${user.email} successfully` });
   } catch (error) {
     user.resetPasswordToken = undefined;

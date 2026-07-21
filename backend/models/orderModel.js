@@ -58,8 +58,6 @@ const orderSchema = new mongoose.Schema({
     type: mongoose.Schema.ObjectId,
     ref: "User",
     required: false,
-    index: true,
-    sparse: true,
   },
 
   guestEmail: {
