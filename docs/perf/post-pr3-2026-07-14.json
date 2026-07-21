@@ -1,4 +1,0 @@
-{
-  "date": null,
-  "note": "post-PR3 capture skipped: dev servers (frontend :3000, backend :5001) did not auto-start in this environment. Recapture via `npm run perf` before merge. PR1 baseline at docs/perf/baseline-2026-07-14.json. post-PR2 stub at docs/perf/post-pr2-2026-07-14.json."
-}

@@ -1,11 +1,13 @@
 "use strict";
 const rateLimit = require("express-rate-limit");
+const { ipKeyGenerator } = require("express-rate-limit");
 
 /**
  * Factory that creates a per-authenticated-user rate limiter.
  * Uses req.user._id as the key when the user is resolved (i.e. after
  * isAuthenticatedUser middleware), falling back to req.ip for unauthenticated
- * requests so the limiter is still effective before login.
+ * requests so the limiter is still effective before login. ipKeyGenerator
+ * normalises IPv6 so ipv4-mapped addresses can't bypass per-IP quotas.
  *
  * @param {number} limit     - Maximum number of requests allowed per window.
  * @param {number} windowMin - Window duration in minutes.
@@ -15,7 +17,8 @@ const createUserLimiter = (limit = 60, windowMin = 15) =>
   rateLimit({
     windowMs: windowMin * 60 * 1000,
     limit,
-    keyGenerator: (req) => req.user?._id?.toString() ?? req.ip,
+    keyGenerator: (req) =>
+      req.user?._id?.toString() ?? ipKeyGenerator(req.ip),
     message: { success: false, message: "Too many requests. Please slow down." },
     standardHeaders: true,
     legacyHeaders: false,

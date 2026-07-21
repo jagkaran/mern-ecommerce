@@ -1,12 +1,14 @@
 const crypto = require("crypto");
 const Order = require("../models/orderModel");
 const Product = require("../models/productModel");
+const User = require("../models/userModel");
 const ErrorHandler = require("../utils/errorHandler");
 const logger = require("../utils/logger");
 const { withTransaction } = require("../utils/transaction");
 const { computeOrderPricing } = require("../utils/pricing");
 const couponService = require("./couponService");
 const paymentService = require("./paymentService");
+const emailService = require("./emailService");
 const { mintClaimToken } = require("./claimService");
 
 /**
@@ -185,11 +187,26 @@ async function createOrder(
     }
   }
 
+  // ─── 7. Send order confirmation email (best-effort, never blocks) ────
+  // emailService catches its own errors and logs them so a Gmail hiccup
+  // can never roll back or fail an already-paid order.
   if (userId) {
+    try {
+      const userDoc = await User.findById(userId).select("name email").lean();
+      if (userDoc && userDoc.email) {
+        await emailService.sendOrderConfirmation(userDoc.email, result, userDoc.name);
+      }
+    } catch (e) {
+      logger.warn(`Order confirmation lookup failed for ${userId}: ${e.message}`);
+    }
     logger.info(
       `Order created: ${result._id} by user ${userId}` + (coupon ? ` (coupon ${coupon.code})` : "")
     );
     return result;
+  }
+  // Guest: send to the email they supplied at checkout.
+  if (guestEmail) {
+    await emailService.sendOrderConfirmation(guestEmail, result.order);
   }
   logger.info(
     `Order created: ${result.order._id} for guest ${guestEmail}` +
