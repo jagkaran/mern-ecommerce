@@ -16,7 +16,8 @@ export default defineConfig({
     }),
   ],
   esbuild: {
-    loader: "jsx",
+    jsx: "automatic",
+    jsxImportSource: "react",
     include: /src\/.*\.jsx?$/,
     target: "es2020",
   },
