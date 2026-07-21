@@ -11,6 +11,9 @@ backend/config/gmail-oauth-token.json
 .env
 .env.*
 !.env.example
+
+# ─── Docs (local-only, not tracked) ─────────────────────────────────────────
+docs/
 # Note: frontend/.env follows CRA convention (defaults tracked, .env.local ignored).
 # See frontend/.gitignore for frontend-specific env rules.
 
