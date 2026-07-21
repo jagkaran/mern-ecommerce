@@ -63,58 +63,65 @@ const stripeLazy = (loader) => async () => {
   };
 };
 
+// RR v7 `lazy:` consumes `Component`/`element`, NOT `default`. Our pages all
+// `export default`, so wrap every plain loader to reshape {default} → {Component}.
+const lazyRoute = (loader) => async () => {
+  const mod = await loader();
+  return { Component: mod.default };
+};
+
 const router = createBrowserRouter([
   {
     path: "/",
     element: <RootLayout />,
     children: [
       { index: true, element: <Home /> },
-      { path: "product/:id", lazy: () => import("./components/Product/PDP/ProductDetailsV2") },
-      { path: "products", lazy: () => import("./components/Product/Products") },
-      { path: "products/:keyword", lazy: () => import("./components/Product/Products") },
-      { path: "search", lazy: () => import("./components/Search") },
-      { path: "wishlist", lazy: () => import("./components/Wishlist") },
-      { path: "signin", lazy: () => import("./components/Login/Login") },
-      { path: "signup", lazy: () => import("./components/Login/Register") },
-      { path: "password/forgot", lazy: () => import("./components/Account/ForgotPassword") },
-      { path: "cart", lazy: () => import("./components/Cart/Basket") },
+      { path: "product/:id", lazy: lazyRoute(() => import("./components/Product/PDP/ProductDetailsV2") ) },
+      { path: "products", lazy: lazyRoute(() => import("./components/Product/Products") ) },
+      { path: "products/:keyword", lazy: lazyRoute(() => import("./components/Product/Products") ) },
+      { path: "search", lazy: lazyRoute(() => import("./components/Search") ) },
+      { path: "wishlist", lazy: lazyRoute(() => import("./components/Wishlist") ) },
+      { path: "signin", lazy: lazyRoute(() => import("./components/Login/Login") ) },
+      { path: "signup", lazy: lazyRoute(() => import("./components/Login/Register") ) },
+      { path: "password/forgot", lazy: lazyRoute(() => import("./components/Account/ForgotPassword") ) },
+      { path: "cart", lazy: lazyRoute(() => import("./components/Cart/Basket") ) },
       { path: "checkout", lazy: stripeLazy(() => import("./components/Checkout/CheckoutPage")) },
-      { path: "aboutus", lazy: () => import("./components/AboutUs") },
+      { path: "aboutus", lazy: lazyRoute(() => import("./components/AboutUs") ) },
       {
         // Lives OUTSIDE ProtectedRoute — a guest who just placed an order
         // must be able to land here. Success page itself guards content
         // via the claim token in the query string.
         path: "success",
-        lazy: () => import("./components/Checkout/Success"),
+        lazy: lazyRoute(() => import("./components/Checkout/Success") ),
       },
       {
         element: <ProtectedLayout />,
         children: [
-          { path: "password/update", lazy: () => import("./components/Account/UpdatePassword") },
-          { path: "account", lazy: () => import("./components/Account/Account") },
-          { path: "myorders", lazy: () => import("./components/Order/MyOrders") },
-          { path: "order/:id", lazy: () => import("./components/Order/OrderDetails") },
+          { path: "password/update", lazy: lazyRoute(() => import("./components/Account/UpdatePassword") ) },
+          { path: "account", lazy: lazyRoute(() => import("./components/Account/Account") ) },
+          { path: "myorders", lazy: lazyRoute(() => import("./components/Order/MyOrders") ) },
+          { path: "order/:id", lazy: lazyRoute(() => import("./components/Order/OrderDetails") ) },
           { path: "shipping", lazy: stripeLazy(() => import("./components/Checkout/Shipping")) },
           {
             element: <AdminLayout />,
             children: [
-              { path: "dashboard", lazy: () => import("./components/Admin/DashBoard") },
-              { path: "admin/products", lazy: () => import("./components/Admin/AllProducts/AllAdminProducts") },
-              { path: "admin/orders", lazy: () => import("./components/Admin/AllOrders/AllAdminOrders") },
-              { path: "admin/users", lazy: () => import("./components/Admin/AllUsers/AllAdminUsers") },
-              { path: "admin/coupons", lazy: () => import("./components/Admin/AllCoupons/AllAdminCoupons") },
-              { path: "admin/coupon/new", lazy: () => import("./components/Admin/AllCoupons/CreateCoupon") },
-              { path: "admin/coupon/update/:id", lazy: () => import("./components/Admin/AllCoupons/UpdateCoupon") },
-              { path: "admin/product/new", lazy: () => import("./components/Admin/AllProducts/CreateProduct") },
-              { path: "admin/product/update/:id", lazy: () => import("./components/Admin/AllProducts/UpdateProduct") },
-              { path: "admin/user/update/:id", lazy: () => import("./components/Admin/AllUsers/UpdateUser") },
-              { path: "admin/order/update/:id", lazy: () => import("./components/Admin/AllOrders/UpdateOrder") },
+              { path: "dashboard", lazy: lazyRoute(() => import("./components/Admin/DashBoard") ) },
+              { path: "admin/products", lazy: lazyRoute(() => import("./components/Admin/AllProducts/AllAdminProducts") ) },
+              { path: "admin/orders", lazy: lazyRoute(() => import("./components/Admin/AllOrders/AllAdminOrders") ) },
+              { path: "admin/users", lazy: lazyRoute(() => import("./components/Admin/AllUsers/AllAdminUsers") ) },
+              { path: "admin/coupons", lazy: lazyRoute(() => import("./components/Admin/AllCoupons/AllAdminCoupons") ) },
+              { path: "admin/coupon/new", lazy: lazyRoute(() => import("./components/Admin/AllCoupons/CreateCoupon") ) },
+              { path: "admin/coupon/update/:id", lazy: lazyRoute(() => import("./components/Admin/AllCoupons/UpdateCoupon") ) },
+              { path: "admin/product/new", lazy: lazyRoute(() => import("./components/Admin/AllProducts/CreateProduct") ) },
+              { path: "admin/product/update/:id", lazy: lazyRoute(() => import("./components/Admin/AllProducts/UpdateProduct") ) },
+              { path: "admin/user/update/:id", lazy: lazyRoute(() => import("./components/Admin/AllUsers/UpdateUser") ) },
+              { path: "admin/order/update/:id", lazy: lazyRoute(() => import("./components/Admin/AllOrders/UpdateOrder") ) },
             ],
           },
         ],
       },
-      { path: "password/reset/:token", lazy: () => import("./components/Account/ResetPassword") },
-      { path: "notfound", lazy: () => import("./components/NotFound") },
+      { path: "password/reset/:token", lazy: lazyRoute(() => import("./components/Account/ResetPassword") ) },
+      { path: "notfound", lazy: lazyRoute(() => import("./components/NotFound") ) },
       { path: "*", element: <Navigate to="/notfound" replace /> },
     ],
   },
