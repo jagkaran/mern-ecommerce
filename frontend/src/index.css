@@ -91,6 +91,38 @@ h4 {
     align-self: flex-start;
   }
 }
+.pdp__dots {
+  display: none;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+@media (min-width: 900px) {
+  .pdp__dots {
+    display: flex;
+  }
+}
+.pdp__dot {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+.pdp__dot::after {
+  content: "";
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--t-neutral-300);
+  transition: background-color var(--t-motion-duration-fast);
+}
+.pdp__dot--active::after {
+  background: var(--t-primary-600);
+}
 
 img {
   max-width: 100%;
