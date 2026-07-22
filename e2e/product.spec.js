@@ -172,6 +172,51 @@ test.describe("Product Detail Page (PDP)", () => {
     // to continue editing). What we assert is that the field is still functional.
     await expect(commentBox).toBeVisible();
   });
+
+  test("mobile sticky ATC appears after scrolling past in-page ATC", async ({ browser }) => {
+    // Use a phone-sized context so the (max-width: 900px) media query matches
+    // and the IntersectionObserver-driven sticky-atc element gets a chance to
+    // become visible. Reusing the test fixture's page would fail because it
+    // opens with the default desktop viewport (~1280px) and StickyATC always
+    // returns null at >=901px.
+    const ctx = await browser.newContext({
+      viewport: { width: 375, height: 667 },
+      isMobile: true,
+      hasTouch: true,
+    });
+    const page = await ctx.newPage();
+    await page.goto(pdpUrl);
+
+    // Before scrolling, the in-page ATC is in view and the sticky is hidden
+    // (display:none from .pdp__sticky-atc when --visible modifier is absent).
+    await expect(page.locator(".pdp__sticky-atc")).toBeHidden({ timeout: 5000 });
+
+    // Scroll well past the in-page ATC so the parent observes the sentinel
+    // leaving the viewport and flips `visible` to true.
+    await page.evaluate(() => window.scrollTo(0, 1500));
+    await page.waitForTimeout(300);
+
+    await expect(page.locator(".pdp__sticky-atc")).toBeVisible({ timeout: 5000 });
+    await ctx.close();
+  });
+
+  test("desktop main image click opens lightbox, Esc closes it", async ({ page }) => {
+    await page.goto(pdpUrl);
+    const mainImg = page.locator("img.pdp__main-image");
+    await mainImg.waitFor({ timeout: 10000 });
+    await mainImg.click();
+    // ImageLightbox renders a native <dialog className="pdp__lightbox"> via
+    // showModal(); on open the dialog has display in normal flow (not none),
+    // so toBeVisible matches.
+    const dlg = page.locator("dialog.pdp__lightbox");
+    await expect(dlg).toBeVisible({ timeout: 5000 });
+    // Native <dialog> listens for Escape by default and fires the cancel event;
+    // the component's handleCancel calls onClose which sets `open` back to
+    // false, which the useEffect then maps onto dialog.close() — making the
+    // element have `display:none` in the computed style.
+    await page.keyboard.press("Escape");
+    await expect(dlg).not.toBeVisible({ timeout: 5000 });
+  });
 });
 
 test.describe("PDP Review submit (authenticated)", () => {
