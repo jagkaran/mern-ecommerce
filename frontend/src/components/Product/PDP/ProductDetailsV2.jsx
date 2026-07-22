@@ -180,17 +180,29 @@ function ProductDetailsV2() {
           <Grid size={{ xs: 12, md: 12, lg: 7 }} className="pdp__gallery-cell">
             {product?.images?.length > 0 && (
               <>
-                <ImageGrid
-                  images={product.images}
-                  onSelect={setSelectedImage}
-                  selectedImage={selectedImage}
-                  className="pdp__thumbs--xs"
-                />
-                <MainImage
-                  src={product.images[selectedImage]?.url}
-                  alt={product.name}
-                  onOpen={openLightbox}
-                />
+                {/*
+                  md (900-1199): thumbs in a vertical column to the LEFT of main (2-of-12 + 10-of-12).
+                  lg (>= 1200): thumbs hidden via CSS, dots shown, main takes whole cell.
+                  xs (< 600): the inner row collapses to a column so the thumbs row
+                    spans the full PDP width above the main image.
+                */}
+                <Grid container spacing={{ md: 2 }} className="pdp__thumbs-main-row">
+                  <Grid size={{ xs: 12, md: 2 }} className="pdp__thumbs-md-cell">
+                    <ImageGrid
+                      images={product.images}
+                      onSelect={setSelectedImage}
+                      selectedImage={selectedImage}
+                      className="pdp__thumbs pdp__thumbs--xs"
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 10 }}>
+                    <MainImage
+                      src={product.images[selectedImage]?.url}
+                      alt={product.name}
+                      onOpen={openLightbox}
+                    />
+                  </Grid>
+                </Grid>
                 <ImageDots
                   images={product.images}
                   selectedImage={selectedImage}

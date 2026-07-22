@@ -11,12 +11,14 @@ describe("ImageLightbox", () => {
 
   afterEach(cleanup);
 
-  it("renders no dialog when open=false", () => {
-    render(
+  it("renders dialog but without `open` attribute when open=false", () => {
+    const { container } = render(
       <ImageLightbox images={images} open={false} onClose={() => {}} initialIndex={0} alt="Test" />
     );
 
-    expect(screen.queryByRole("dialog")).toBeNull();
+    const dlg = container.querySelector("dialog");
+    expect(dlg).toBeTruthy();
+    expect(dlg.hasAttribute("open")).toBe(false);
   });
 
   it("renders dialog when open=true and shows first image", () => {

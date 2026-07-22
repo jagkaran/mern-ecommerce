@@ -57,6 +57,7 @@ const clampIndex = (index, length) => Math.max(0, Math.min(index, length - 1));
 
 function ImageLightbox({ images = [], open, onClose, initialIndex = 0, alt = "" }) {
   const dialogRef = useRef(null);
+  const openerRef = useRef(null);
   const touchStartXRef = useRef(null);
   const [index, setIndex] = useState(() => clampIndex(initialIndex, images.length));
 
@@ -64,6 +65,20 @@ function ImageLightbox({ images = [], open, onClose, initialIndex = 0, alt = "" 
     setIndex(clampIndex(initialIndex, images.length));
   }, [initialIndex, open, images.length]);
 
+  // Track opener for focus restoration on close. Capture whichever element
+  // had focus right before the dialog opened.
+  useEffect(() => {
+    if (open) {
+      const active = typeof document !== "undefined" ? document.activeElement : null;
+      if (active && active !== document.body && active.tagName !== "HTML") {
+        openerRef.current = active;
+      }
+    }
+  }, [open]);
+
+  // Sync open state with <dialog> native lifecycle. Keep the dialog mounted
+  // in the React tree so React owns its ref / event listeners; toggle the
+  // `open` attribute (and `showModal()`/`close()`) to control visibility.
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return undefined;
@@ -73,6 +88,26 @@ function ImageLightbox({ images = [], open, onClose, initialIndex = 0, alt = "" 
         dialog.showModal();
       } catch {
         dialog.setAttribute("open", "");
+      }
+    } else if (!open && dialog.hasAttribute("open")) {
+      try {
+        dialog.close();
+      } catch {
+        dialog.removeAttribute("open");
+      }
+      // Restore focus to the element that opened the dialog so keyboard
+      // users land where they were. Use rAF so React commits any state
+      // updates before we steal focus back.
+      const opener = openerRef.current;
+      openerRef.current = null;
+      if (opener && typeof opener.focus === "function") {
+        requestAnimationFrame(() => {
+          try {
+            opener.focus();
+          } catch {
+            // opener may have unmounted — nothing to do.
+          }
+        });
       }
     }
 
@@ -107,7 +142,7 @@ function ImageLightbox({ images = [], open, onClose, initialIndex = 0, alt = "" 
     };
   }, [onClose]);
 
-  if (!open || !images.length) return null;
+  if (!images.length) return null;
 
   const image = images[index];
 

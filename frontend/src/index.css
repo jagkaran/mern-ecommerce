@@ -81,7 +81,17 @@ h4 {
   scroll-snap-type: x mandatory;
   padding-block: 8px;
 }
-@media (min-width: 900px) {
+@media (min-width: 900px) and (max-width: 1199px) {
+  /* md: thumbs render as a vertical column to the LEFT of main (2-of-12 + 10-of-12).
+     xs already flows them as a horizontal scroll row inside the thumbs-md-cell. */
+  .pdp__thumbs--xs {
+    flex-direction: column;
+    overflow-x: visible;
+    overflow-y: auto;
+    scroll-snap-type: y mandatory;
+  }
+}
+@media (min-width: 1200px) {
   .pdp__thumbs--xs {
     display: none;
   }
@@ -97,9 +107,32 @@ h4 {
   gap: 8px;
   margin-top: 12px;
 }
-@media (min-width: 900px) {
+@media (min-width: 1200px) {
   .pdp__dots {
     display: flex;
+  }
+}
+/* Inner sub-layout: at md, the gallery cell needs to lay out thumbs (vertical
+   column) and main image side-by-side. The inner Grid container handles the
+   row direction itself; the gallery cell must STACK at xs so the thumbs row
+   sits above main (full width). */
+@media (max-width: 1199px) {
+  .pdp__gallery-cell {
+    flex-direction: column;
+  }
+  .pdp__gallery-cell > .pdp__thumbs-main-row {
+    flex-direction: row;
+  }
+  .pdp__thumbs-md-cell {
+    min-width: 0;
+  }
+}
+@media (max-width: 599px) {
+  .pdp__gallery-cell {
+    flex-direction: column;
+  }
+  .pdp__thumbs-main-row {
+    flex-direction: column !important;
   }
 }
 .pdp__dot {
