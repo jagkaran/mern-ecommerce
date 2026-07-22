@@ -28,6 +28,7 @@ function ProductDetailsV2() {
   const [open, setOpen] = React.useState(false);
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
+  const [stickyVisible, setStickyVisible] = useState(false);
 
   // Mobile sticky ATC: show only when the in-page ATC button has scrolled
   // ABOVE the viewport (not merely "not intersecting"). IntersectionObserver
