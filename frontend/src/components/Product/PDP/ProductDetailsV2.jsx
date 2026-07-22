@@ -1,3 +1,4 @@
+import ImageDots from "./ImageDots";
 import ImageGrid from "./ImageGrid";
 import MainImage from "./MainImage";
 import ProductInfo from "./ProductInfo";
@@ -148,6 +149,11 @@ function ProductDetailsV2() {
                 <MainImage
                   src={product.images[selectedImage]?.url}
                   alt={product.name}
+                />
+                <ImageDots
+                  images={product.images}
+                  selectedImage={selectedImage}
+                  onSelect={setSelectedImage}
                 />
               </>
             )}
