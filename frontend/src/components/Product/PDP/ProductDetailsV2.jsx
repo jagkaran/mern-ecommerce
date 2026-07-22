@@ -2,6 +2,7 @@ import ImageDots from "./ImageDots";
 import ImageGrid from "./ImageGrid";
 import MainImage from "./MainImage";
 import ProductInfo from "./ProductInfo";
+import StickyATC from "./StickyATC";
 import { Grid, Typography, Box, Container } from "@mui/material";
 import Seo from "../../Seo";
 import JsonLd from "../../JsonLd";
@@ -27,6 +28,22 @@ function ProductDetailsV2() {
   const [open, setOpen] = React.useState(false);
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
+
+  // Mobile sticky ATC: show only when the in-page ATC button is scrolled
+  // out of view. IntersectionObserver — no scroll listeners.
+  const sentinelRef = React.useRef(null);
+  const [stickyVisible, setStickyVisible] = useState(false);
+
+  useEffect(() => {
+    const node = sentinelRef.current;
+    if (!node) return;
+    const io = new IntersectionObserver(
+      ([entry]) => setStickyVisible(!entry.isIntersecting),
+      { threshold: 0 }
+    );
+    io.observe(node);
+    return () => io.disconnect();
+  }, []);
 
   const { loading, error, product } = useSelector((state) => state.productDetails);
 
@@ -175,8 +192,22 @@ function ProductDetailsV2() {
               reviewSubmitHandler={reviewSubmitHandler}
               handleClickOpen={handleClickOpen}
             />
+            {/* IO sentinel: when this in-page ATC is out of view, show
+                the mobile sticky ATC bar at the bottom of the viewport. */}
+            <div ref={sentinelRef} aria-hidden style={{ height: 1 }} />
           </Grid>
         </Grid>
+
+        <StickyATC
+          price={product?.price}
+          quantity={quantity}
+          setQuantity={setQuantity}
+          increaseQty={increaseQty}
+          decreaseQty={decreaseQty}
+          addToCartHandler={addToCartHandler}
+          stock={product?.stock}
+          visible={stickyVisible}
+        />
 
         <Box sx={{ maxWidth: 720, mx: "auto", mt: { xs: 6, md: 10 } }}>
           <Overline sx={{ display: "block", mb: 3, color: "var(--t-neutral-500)" }}>
