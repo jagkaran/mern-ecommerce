@@ -23,6 +23,7 @@ import { getProduct } from "../../../actions/productAction";
 function ProductDetailsV2() {
   const [selectedImage, setSelectedImage] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const openLightbox = React.useCallback(() => setLightboxOpen(true), []);
   const dispatch = useDispatch();
   const toast = useToast();
   const { id } = useParams();
@@ -185,7 +186,11 @@ function ProductDetailsV2() {
                   selectedImage={selectedImage}
                   className="pdp__thumbs--xs"
                 />
-                <MainImage src={product.images[selectedImage]?.url} alt={product.name} />
+                <MainImage
+                  src={product.images[selectedImage]?.url}
+                  alt={product.name}
+                  onOpen={openLightbox}
+                />
                 <ImageDots
                   images={product.images}
                   selectedImage={selectedImage}
