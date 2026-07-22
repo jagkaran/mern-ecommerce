@@ -29,20 +29,39 @@ function ProductDetailsV2() {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
 
-  // Mobile sticky ATC: show only when the in-page ATC button is scrolled
-  // out of view. IntersectionObserver — no scroll listeners.
-  const sentinelRef = React.useRef(null);
-  const [stickyVisible, setStickyVisible] = useState(false);
-
-  useEffect(() => {
-    const node = sentinelRef.current;
-    if (!node) return;
+  // Mobile sticky ATC: show only when the in-page ATC button has scrolled
+  // ABOVE the viewport (not merely "not intersecting"). IntersectionObserver
+  // — no scroll listeners.
+  //
+  // Uses a callback ref rather than a one-shot effect with [] deps so the
+  // observer re-binds when the sentinel remounts (e.g. the loading branch
+  // unmounts the whole tree and the success branch mounts a fresh one).
+  // The callback runs again with `node = null` when the sentinel unmounts
+  // (or when the component itself unmounts) — we tear down the prior
+  // observer and reset stickyVisible.
+  //
+  // `entry.boundingClientRect.bottom <= 0` means the sentinel has scrolled
+  // past the top edge (genuinely "above the viewport"). The plain
+  // `!isIntersecting` form also fires for "below the viewport" on initial
+  // load, which would show the sticky bar at the bottom of the page before
+  // the user has scrolled — wrong UX.
+  const sentinelIoRef = React.useRef(null);
+  const attachSentinel = React.useCallback((node) => {
+    sentinelIoRef.current?.disconnect();
+    sentinelIoRef.current = null;
+    if (!node) {
+      setStickyVisible(false);
+      return;
+    }
     const io = new IntersectionObserver(
-      ([entry]) => setStickyVisible(!entry.isIntersecting),
+      ([entry]) => {
+        const aboveViewport = entry.boundingClientRect.bottom <= 0;
+        setStickyVisible(aboveViewport);
+      },
       { threshold: 0 }
     );
     io.observe(node);
-    return () => io.disconnect();
+    sentinelIoRef.current = io;
   }, []);
 
   const { loading, error, product } = useSelector((state) => state.productDetails);
@@ -192,9 +211,10 @@ function ProductDetailsV2() {
               reviewSubmitHandler={reviewSubmitHandler}
               handleClickOpen={handleClickOpen}
             />
-            {/* IO sentinel: when this in-page ATC is out of view, show
-                the mobile sticky ATC bar at the bottom of the viewport. */}
-            <div ref={sentinelRef} aria-hidden style={{ height: 1 }} />
+            {/* IO sentinel: when this in-page ATC has scrolled above the
+                viewport, show the mobile sticky ATC bar at the bottom of
+                the viewport. */}
+            <div ref={attachSentinel} aria-hidden style={{ height: 1 }} />
           </Grid>
         </Grid>
 

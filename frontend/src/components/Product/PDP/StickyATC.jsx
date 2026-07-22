@@ -9,7 +9,7 @@ const css = `
   display: none;
   position: fixed;
   inset-inline: 0;
-  bottom: 0;
+  inset-block-end: 0;
   z-index: 1000;
   background: var(--t-neutral-50);
   box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.06);
@@ -46,7 +46,7 @@ function StickyATC({
     return () => mq.removeEventListener("change", update);
   }, []);
 
-  if (!mqMobile || stock <= 0 || !visible) return null;
+  if (!mqMobile || !(stock > 0) || !visible) return null;
 
   return (
     <>

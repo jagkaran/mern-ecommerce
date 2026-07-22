@@ -54,6 +54,11 @@ describe("StickyATC", () => {
     expect(container.firstChild).toBeNull();
   });
 
+  it("hides entirely when stock is undefined", () => {
+    const { container } = render(<StickyATC {...baseProps} stock={undefined} />);
+    expect(container.firstChild).toBeNull();
+  });
+
   it("ATC button click invokes addToCartHandler", () => {
     const add = vi.fn();
     render(<StickyATC {...baseProps} addToCartHandler={add} />);
