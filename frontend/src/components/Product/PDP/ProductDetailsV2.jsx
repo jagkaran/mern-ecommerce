@@ -1,5 +1,6 @@
 import ImageDots from "./ImageDots";
 import ImageGrid from "./ImageGrid";
+import ImageLightbox from "./ImageLightbox";
 import MainImage from "./MainImage";
 import ProductInfo from "./ProductInfo";
 import StickyATC from "./StickyATC";
@@ -21,6 +22,7 @@ import { getProduct } from "../../../actions/productAction";
 
 function ProductDetailsV2() {
   const [selectedImage, setSelectedImage] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   const dispatch = useDispatch();
   const toast = useToast();
   const { id } = useParams();
@@ -183,10 +185,7 @@ function ProductDetailsV2() {
                   selectedImage={selectedImage}
                   className="pdp__thumbs--xs"
                 />
-                <MainImage
-                  src={product.images[selectedImage]?.url}
-                  alt={product.name}
-                />
+                <MainImage src={product.images[selectedImage]?.url} alt={product.name} />
                 <ImageDots
                   images={product.images}
                   selectedImage={selectedImage}
@@ -218,6 +217,16 @@ function ProductDetailsV2() {
             <div ref={attachSentinel} aria-hidden style={{ height: 1 }} />
           </Grid>
         </Grid>
+
+        {product?.images?.length > 0 && (
+          <ImageLightbox
+            images={product.images}
+            open={lightboxOpen}
+            initialIndex={selectedImage}
+            alt={product.name}
+            onClose={() => setLightboxOpen(false)}
+          />
+        )}
 
         <StickyATC
           price={product?.price}
