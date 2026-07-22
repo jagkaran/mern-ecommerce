@@ -135,18 +135,24 @@ function ProductDetailsV2() {
         maxWidth={false}
         sx={{ maxWidth: "var(--t-grid-containerMax)", px: "var(--t-grid-containerPad)" }}
       >
-        <Grid container spacing={{ xs: 2, md: 4 }}>
-          <Grid size={{ xs: 3, md: 2, lg: 1 }}>
-            <ImageGrid
-              images={product?.images}
-              onSelect={setSelectedImage}
-              selectedImage={selectedImage}
-            />
+        <Grid container spacing={{ xs: 2, md: 4 }} className="pdp__gallery-row">
+          <Grid size={{ xs: 12, md: 12, lg: 7 }} className="pdp__gallery-cell">
+            {product?.images?.length > 0 && (
+              <>
+                <ImageGrid
+                  images={product.images}
+                  onSelect={setSelectedImage}
+                  selectedImage={selectedImage}
+                  className="pdp__thumbs--xs"
+                />
+                <MainImage
+                  src={product.images[selectedImage]?.url}
+                  alt={product.name}
+                />
+              </>
+            )}
           </Grid>
-          <Grid size={{ xs: 9, md: 10, lg: 6 }}>
-            <MainImage src={product?.images?.[selectedImage]?.url} alt={product?.name} />
-          </Grid>
-          <Grid size={{ xs: 12, md: 12, lg: 5 }}>
+          <Grid size={{ xs: 12, md: 12, lg: 5 }} className="pdp__info-cell">
             <ProductInfo
               {...product}
               quantity={quantity}

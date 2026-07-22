@@ -4,14 +4,14 @@ import React from "react";
  * ImageGrid — vertical thumbnail rail. Plain <button>+<img>, themed.
  * Selected thumb gets primary border + filled bg.
  */
-function ImageGrid({ images = [], onSelect, selectedImage = 0 }) {
+function ImageGrid({ images = [], onSelect, selectedImage = 0, className = "" }) {
   if (!images.length) return null;
 
   return (
     <div
       role="tablist"
       aria-label="Product images"
-      style={{ display: "flex", flexDirection: "column", gap: 8 }}
+      className={`pdp__thumbs ${className}`.trim()}
     >
       {images.map((image, index) => {
         const selected = index === selectedImage;

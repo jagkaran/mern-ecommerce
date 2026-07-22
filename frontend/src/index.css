@@ -70,6 +70,28 @@ h4 {
   outline-offset: 2px;
 }
 
+/* PDP gallery + info layout */
+.pdp__thumbs {
+  display: flex;
+  gap: 8px;
+}
+.pdp__thumbs--xs {
+  flex-direction: row;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding-block: 8px;
+}
+@media (min-width: 900px) {
+  .pdp__thumbs--xs {
+    display: none;
+  }
+  .pdp__info-cell {
+    position: sticky;
+    top: 16px;
+    align-self: flex-start;
+  }
+}
+
 img {
   max-width: 100%;
   height: auto;
