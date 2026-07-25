@@ -95,9 +95,12 @@ h4 {
   .pdp__thumbs--xs {
     display: none;
   }
+  /* Sticky info cell: ignored — Chromium's flex+sticky+align-self interaction
+     on this grid item places the element at the bottom of the parent rather
+     than at top:16 once the parent scrolls past. Visually the layout is
+     correct without sticky. Resume investigation if a sticky CTA-on-scroll
+     pattern is needed. */
   .pdp__info-cell {
-    position: sticky;
-    top: 16px;
     align-self: flex-start;
   }
 }
