@@ -212,22 +212,24 @@ function ProductDetailsV2() {
             )}
           </Grid>
           <Grid size={{ xs: 12, md: 12, lg: 5 }} className="pdp__info-cell">
-            <ProductInfo
-              {...product}
-              quantity={quantity}
-              setQuantity={setQuantity}
-              decreaseQty={decreaseQty}
-              increaseQty={increaseQty}
-              addToCartHandler={addToCartHandler}
-              open={open}
-              handleClose={handleClose}
-              rating={rating}
-              setRating={setRating}
-              comment={comment}
-              setComment={setComment}
-              reviewSubmitHandler={reviewSubmitHandler}
-              handleClickOpen={handleClickOpen}
-            />
+            <div className="pdp__info-sticky">
+              <ProductInfo
+                {...product}
+                quantity={quantity}
+                setQuantity={setQuantity}
+                decreaseQty={decreaseQty}
+                increaseQty={increaseQty}
+                addToCartHandler={addToCartHandler}
+                open={open}
+                handleClose={handleClose}
+                rating={rating}
+                setRating={setRating}
+                comment={comment}
+                setComment={setComment}
+                reviewSubmitHandler={reviewSubmitHandler}
+                handleClickOpen={handleClickOpen}
+              />
+            </div>
             {/* IO sentinel: when this in-page ATC has scrolled above the
                 viewport, show the mobile sticky ATC bar at the bottom of
                 the viewport. */}
