@@ -76,6 +76,11 @@
   },
   "author": "",
   "license": "ISC",
+  "overrides": {
+    "brace-expansion": "^5.0.8",
+    "glob": "^11.0.0",
+    "minimatch": "^10.0.3"
+  },
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "cloudinary": "^2.5.1",
