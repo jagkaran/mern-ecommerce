@@ -4,7 +4,7 @@ import ImageLightbox from "./ImageLightbox";
 import MainImage from "./MainImage";
 import ProductInfo from "./ProductInfo";
 import StickyATC from "./StickyATC";
-import { Grid, Typography, Box, Container } from "@mui/material";
+import { Grid2 as Grid, Typography, Box, Container } from "@mui/material";
 import Seo from "../../Seo";
 import JsonLd from "../../JsonLd";
 import { productJsonLd } from "../../../utils/jsonLd";
