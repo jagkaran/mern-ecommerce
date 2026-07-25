@@ -38,7 +38,7 @@ function MainImage({ src, alt, onOpen }) {
         aria-hidden
         style={{
           width: "100%",
-          aspectRatio: "1 / 1",
+          aspectRatio: "4 / 5",
           backgroundColor: "var(--t-neutral-100)",
           color: "var(--t-neutral-400)",
           display: "flex",
@@ -86,7 +86,7 @@ function MainImage({ src, alt, onOpen }) {
           style={{
             display: "block",
             width: "100%",
-            aspectRatio: "1 / 1",
+            aspectRatio: "4 / 5",
             objectFit: "cover",
             backgroundColor: "var(--t-neutral-100)",
             borderRadius: "var(--t-border-radius-base)",
