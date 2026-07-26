@@ -78,8 +78,7 @@
   "license": "ISC",
   "overrides": {
     "brace-expansion": "^5.0.8",
-    "glob": "^11.0.0",
-    "minimatch": "^10.0.3"
+    "test-exclude": "^8.0.0"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
