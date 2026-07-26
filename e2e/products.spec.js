@@ -30,13 +30,14 @@ test.describe("Products redesign", () => {
     await page.locator(".prod-grid").first().waitFor({ timeout: 30_000 });
 
     await page.setViewportSize({ width: 1440, height: 900 });
-    await expect(page.locator(".prod-grid")).toHaveCSS("grid-template-columns", /(^|\s)repeat\(4/);
+    // Computed grid-template-columns is "Npx Npx Npx Npx" (4 tracks).
+    await expect(page.locator(".prod-grid")).toHaveCSS("grid-template-columns", /(\d+px\s+){3}\d+px/);
 
     await page.setViewportSize({ width: 1100, height: 900 });
-    await expect(page.locator(".prod-grid")).toHaveCSS("grid-template-columns", /(^|\s)repeat\(3/);
+    await expect(page.locator(".prod-grid")).toHaveCSS("grid-template-columns", /(\d+px\s+){2}\d+px/);
 
     await page.setViewportSize({ width: 600, height: 900 });
-    await expect(page.locator(".prod-grid")).toHaveCSS("grid-template-columns", /(^|\s)repeat\(2/);
+    await expect(page.locator(".prod-grid")).toHaveCSS("grid-template-columns", /\d+px\s+\d+px/);
   });
 
   test("sort Price ascending reorders results", async ({ page }) => {

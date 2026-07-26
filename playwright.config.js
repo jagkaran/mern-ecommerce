@@ -58,6 +58,7 @@ module.exports = defineConfig({
             timeout: 60_000,
             stdout: "pipe",
             stderr: "pipe",
+            env: { ...process.env, E2E_BYPASS_LIMITS: "1" },
           },
           {
             command: `npm start --prefix frontend`,

@@ -16,19 +16,19 @@ const BasePage = require("./BasePage");
 class SignInPage extends BasePage {
   // ---- Form fields -------------------------------------------------------
 
-  /** Email input (label: "Email") */
+  /** Email input (label: "Email Address") */
   get emailInput() {
-    return this.page.getByLabel(/^email$/i);
+    return this.page.getByLabel(/^email/i);
   }
 
   /** Password input (label: "Password") */
   get passwordInput() {
-    return this.page.getByLabel(/^password$/i);
+    return this.page.getByLabel(/^password/i);
   }
 
   /** Name input on /signup (label: "Name") */
   get nameInput() {
-    return this.page.getByLabel(/^name$/i);
+    return this.page.getByLabel(/^name/i);
   }
 
   /** Confirm-password input on /signup */
