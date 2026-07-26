@@ -16,10 +16,11 @@ require("dotenv").config({ path: ".env.e2e" });
 
 const FRONTEND_PORT = parseInt(process.env.FRONTEND_PORT || "3000", 10);
 const BACKEND_PORT = parseInt(process.env.BACKEND_PORT || "10000", 10);
-const BASE_URL =
-  process.env.BASE_URL || `http://localhost:${FRONTEND_PORT}`;
-const skipWebServer =
-  !!process.env.E2E_NO_WEBSERVER || !!process.env.BASE_URL;
+// BASE_URL env = "point at deployed app" → skip webServers.
+// Local default falls back to localhost but is NOT an explicit override.
+const BASE_URL_EXPLICIT = process.env.BASE_URL;
+const BASE_URL = BASE_URL_EXPLICIT || `http://localhost:${FRONTEND_PORT}`;
+const skipWebServer = !!process.env.E2E_NO_WEBSERVER || !!BASE_URL_EXPLICIT;
 
 module.exports = defineConfig({
   testDir: "./e2e",
@@ -49,7 +50,7 @@ module.exports = defineConfig({
   ...(skipWebServer
     ? {}
     : {
-        webServers: [
+        webServer: [
           {
             command: `node backend/server.js`,
             url: `http://localhost:${BACKEND_PORT}${process.env.BASE_URL ? "" : "/api/v1/health"}`,
