@@ -87,8 +87,9 @@ test.describe("Anonymous shopper happy path", () => {
     const checkoutBtn = page.getByRole("link", { name: /continue to checkout/i }).first();
     await expect(checkoutBtn).toBeVisible({ timeout: 10_000 });
     await checkoutBtn.click();
-    // Logged-in user gets bounced: /signin?redirect=shipping → /shipping.
-    await page.waitForURL(/\/shipping/, { timeout: 15_000 });
+    // Logged-in user lands on the single-page /checkout (Contact → Shipping
+    // → Payment are internal steps, URL stays at /checkout throughout).
+    await page.waitForURL(/\/checkout/, { timeout: 15_000 });
     await expect(page.locator("main").first()).toBeVisible({ timeout: 10_000 });
   });
 });

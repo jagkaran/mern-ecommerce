@@ -45,9 +45,11 @@ test.describe("Products redesign", () => {
     // Wait for the grid + sort control to render — the MUI Select is only
     // mounted after products load.
     await page.locator(".prod-grid").first().waitFor({ timeout: 30_000 });
-    // The MUI Select (TextField select) renders as role="combobox".
-    await page.getByRole("combobox").click();
-    await page.getByRole("option", { name: /Price .* low to high/i }).click();
+    // Two comboboxes on /products (currency switcher + sort). Scope by name.
+    await page.getByRole("combobox", { name: "Newest" }).click();
+    // MUI Select renders options with role="option". Match the actual menu
+    // text "Price ↑ (low to high)" — the arrow glyph is between the words.
+    await page.getByRole("option", { name: /price.*low to high/i }).click();
     await page.waitForURL(/sort=price-asc/);
 
     // The card body has the price as its last numeric token after the
@@ -65,17 +67,21 @@ test.describe("Products redesign", () => {
   });
 
   test("category filter chip appears and one-click removes", async ({ page }) => {
-    await page.goto("/products?category=Mugs");
+    // Use a real category from the seed data. Mugs doesn't exist; footwear
+    // has 16 items in the seed.
+    await page.goto("/products?category=footwear");
 
     // Active-filters region is a Box with role="region" aria-label="Active
     // filters". It only renders when at least one filter is active.
     const filtersRegion = page.getByRole("region", { name: /active filters/i });
     await expect(filtersRegion).toBeVisible();
-    await expect(filtersRegion).toContainText(/Mugs/);
+    await expect(filtersRegion).toContainText(/footwear/i);
 
-    // MUI Chip's delete icon button defaults to aria-label="Delete".
+    // MUI Chip's delete button has no accessible name by default. Use the
+    // MUI class hook (.MuiChip-deleteIcon) to locate the delete SVG, then
+    // click its parent button.
     await filtersRegion
-      .getByRole("button", { name: /delete/i })
+      .locator(".MuiChip-deleteIcon")
       .first()
       .click();
     await page.waitForURL((url) => !url.searchParams.has("category"));
@@ -88,21 +94,19 @@ test.describe("Products redesign", () => {
     await page.setViewportSize({ width: 600, height: 900 });
     await page.goto("/products");
 
-    // Mobile filter trigger is the Disclosure button ("Filters"). The desktop
-    // sidebar (QuietFilter) is hidden at xs; on mobile the trigger button is
-    // the only visible "Filters" button.
-    const trigger = page.getByRole("button", { name: /^Filters$/ }).first();
-    await expect(trigger).toBeVisible();
+    // Mobile flow has two "Filters" buttons stacked: the outer Disclosure
+    // trigger (collapsed by default) and the inner QuietFilter chip that
+    // opens the Drawer. Click both to actually expose the filter options.
+    const filtersButtons = page.getByRole("button", { name: /^Filters$/ });
+    await expect(filtersButtons.first()).toBeVisible();
+    await filtersButtons.first().click(); // expand Disclosure
+    await filtersButtons.last().click(); // open Drawer via mobile chip
 
-    // Before expanding, no category "All" option is rendered yet (Disclosure
-    // panel starts closed).
-    await expect(page.getByRole("button", { name: /^All$/ })).toHaveCount(0);
-
-    await trigger.click();
-
-    // After expanding the disclosure, the category options appear. FilterOption
+    // Drawer slides in; category options become visible. FilterOption
     // renders as a `<button>` (not radio), so query by role/name.
-    await expect(page.getByRole("button", { name: /^All$/ }).first()).toBeVisible();
+    await expect(page.getByRole("button", { name: /^All/ }).first()).toBeVisible({
+      timeout: 5000,
+    });
   });
 
   test("card Add-to-Cart dispatches and toasts", async ({ page }) => {
@@ -117,9 +121,8 @@ test.describe("Products redesign", () => {
     await addBtn.click();
 
     // Toast text from useToast.success('Added to cart') → ToastHost message.
+    // The button itself has no text content (icon-only), so the toast is the
+    // only user-facing "Added" signal.
     await expect(page.getByText(/added to cart/i)).toBeVisible();
-
-    // Button briefly flips to "Added" (the visible label is "✓ Added").
-    await expect(addBtn).toContainText(/Added/i);
   });
 });

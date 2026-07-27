@@ -240,13 +240,13 @@ async function ensureUserHasPurchasedFirstProduct() {
     cookies = await login();
   } catch (e) {
     console.warn(`[reviewSeed] ${e.message}`);
-    return;
+    return false;
   }
 
   const product = await fetchFirstInStock(cookies);
   if (!product) {
     console.warn("[reviewSeed] no in-stock products to seed purchase against");
-    return;
+    return false;
   }
 
   try {
@@ -268,9 +268,11 @@ async function ensureUserHasPurchasedFirstProduct() {
     console.log(
       `[reviewSeed] seeded purchase of ${product.name} (${product._id}) for ${USER_EMAIL}`
     );
+    return true;
   } catch (e) {
     // Likely already purchased or stock issue — tolerable for E2E purposes.
     console.warn(`[reviewSeed] ${e.message}`);
+    return false;
   }
 }
 
