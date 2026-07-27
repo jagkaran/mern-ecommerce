@@ -4,7 +4,7 @@ This document provides context and guidance for Claude Code to work effectively 
 
 ## Project Overview
 
-A full-stack e-commerce platform built with MongoDB, Express, React, and Node.js. The project includes a comprehensive SDLC agent system for automated code quality, security, and performance monitoring.
+A full-stack e-commerce platform built with MongoDB, Express, React, and Node.js. Code quality, security, and performance checks run through GitHub Actions CI + pre-commit hooks.
 
 ### Tech Stack
 
@@ -21,16 +21,6 @@ A full-stack e-commerce platform built with MongoDB, Express, React, and Node.js
 
 ```
 mern-ecommerce/
-├── agents/                    # SDLC agent system
-│   ├── orchestrator.js        # Pipeline coordinator
-│   ├── security-agent.js      # Security analysis
-│   ├── test-agent.js          # Test suite management
-│   ├── coverage-agent.js      # Coverage analysis
-│   ├── critic-agent.js        # Code review
-│   ├── readme-agent.js        # Documentation
-│   ├── perf-agent.js          # Performance analysis
-│   ├── quality-agent.js       # Code quality
-│   └── dev-agent.js          # Code implementation
 ├── backend/                   # Express.js backend
 │   ├── controllers/           # Business logic
 │   ├── models/               # Mongoose schemas
@@ -47,7 +37,6 @@ mern-ecommerce/
 │   │   └── utils/            # Frontend utilities
 │   └── public/
 ├── docs/                      # Documentation
-│   ├── sdlc/                 # SDLC agent system docs
 │   ├── reports/              # Analysis and implementation reports
 │   └── guides/               # Quick reference and guides
 ├── e2e/                       # Playwright E2E tests
@@ -117,19 +106,6 @@ npm run e2e
 
 # Run E2E tests with UI
 npm run e2e:ui
-```
-
-### Running SDLC Agents
-
-```bash
-# Run full pipeline
-node agents/orchestrator.js
-
-# Run selective agents
-node agents/orchestrator.js --agents=security,test,critic
-
-# Run individual agent
-node agents/security-agent.js
 ```
 
 ## Code Conventions
@@ -252,27 +228,6 @@ const products = await Product.find()
 - Current thresholds: statements 65%, branches 30%, functions 40%, lines 65%
 - Target thresholds: statements 80%, branches 70%, functions 75%, lines 80%
 
-## SDLC Agent System
-
-The project includes a comprehensive SDLC agent system that can work independently or together:
-
-### Agents
-
-1. **security-agent** - Security analysis (npm audit, middleware checks, secret scan)
-2. **dev-agent** - Code implementation (auto-patch known bugs)
-3. **quality-agent** - Code quality (ESLint v9 + Prettier)
-4. **test-agent** - Test suite (Jest + mongodb-memory-server)
-5. **coverage-agent** - Coverage analysis (thresholds: 65% lines, 30% branches)
-6. **perf-agent** - Performance analysis (anti-patterns, bottlenecks)
-7. **critic-agent** - Code review (HTTP status codes, async patterns)
-8. **readme-agent** - Documentation (auto-update README)
-
-### Pipeline Flows
-
-- **New Feature**: dev → test → coverage → security → critic → readme
-- **Bug Fix**: dev → test → coverage → security → critic
-- **Hotfix**: dev → test → security → critic
-
 ## Important Files
 
 ### Configuration
@@ -295,8 +250,6 @@ The project includes a comprehensive SDLC agent system that can work independent
 - `backend/utils/transaction.js` - Transaction utilities
 
 ### Documentation
-- `docs/sdlc/AGENTIC_SDLC_SYSTEM.md` - Complete SDLC system documentation
-- `docs/sdlc/AGENT_SPECIFICATIONS.md` - Agent technical specifications
 - `docs/reports/CODEBASE_ANALYSIS_REPORT.md` - Codebase analysis report
 - `docs/guides/QUICK_REFERENCE.md` - Quick start guide
 
@@ -397,8 +350,7 @@ All models have indexes for frequently queried fields:
 
 ## Contributing
 
-1. Run the SDLC agent pipeline before committing
-2. Ensure all tests pass
+1. Ensure all tests pass
 3. Follow code conventions
 4. Add tests for new features
 5. Update documentation
@@ -406,7 +358,6 @@ All models have indexes for frequently queried fields:
 ## Getting Help
 
 - Check documentation in `docs/`
-- Review agent specifications in `docs/sdlc/`
 - Check codebase analysis report in `docs/reports/`
 - Review quick reference in `docs/guides/`
 
@@ -415,7 +366,7 @@ All models have indexes for frequently queried fields:
 - This project uses CommonJS (not ES modules)
 - The backend uses Express 4.x
 - Tests use in-memory MongoDB (no local database required)
-- The SDLC agent system is a key feature - understand it before making changes
+- CI workflows (`.github/workflows/ci.yml`) and pre-commit hooks enforce quality gates
 - All Cloudinary operations have error handling
 - All order operations use transactions
 - All stock updates use atomic operations
