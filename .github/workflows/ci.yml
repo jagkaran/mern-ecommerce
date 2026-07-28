@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [master]
 
+# Least-privilege default for every job below. The repo-level default was
+# tightened to `read` too; this makes it explicit and survives that setting
+# being changed. Any job needing more must opt in with its own `permissions:`.
+permissions:
+  contents: read
+
 jobs:
   lint:
     name: Lint

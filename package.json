@@ -24,6 +24,10 @@
     "testMatch": [
       "**/backend/__tests__/**/*.test.js"
     ],
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/.claude/"
+    ],
     "setupFiles": [
       "<rootDir>/backend/__tests__/setup.js"
     ],
