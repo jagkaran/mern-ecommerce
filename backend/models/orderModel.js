@@ -18,12 +18,16 @@ const orderSchema = new mongoose.Schema({
       type: String,
       required: true,
     },
+    // String preserves leading zeros (e.g. German 01234, Dutch 0612...).
+    // Number would silently strip the leading zero on cast.
     zip: {
-      type: Number,
+      type: String,
       required: true,
     },
+    // String preserves leading zeros in international phone numbers
+    // (e.g. UK 07700900123, NL 0612345678).
     phone: {
-      type: Number,
+      type: String,
       required: true,
     },
   },
@@ -169,5 +173,7 @@ orderSchema.index({ user: 1 }); // For user order lookups
 orderSchema.index({ createdAt: -1 }); // For sorting by creation date
 orderSchema.index({ orderStatus: 1 }); // For status filtering
 orderSchema.index({ user: 1, createdAt: -1 }); // Compound index for user orders with sorting
+// Compound index for guest order lookups filtered by status
+orderSchema.index({ guestEmail: 1, orderStatus: 1 });
 
 module.exports = mongoose.model("Order", orderSchema);

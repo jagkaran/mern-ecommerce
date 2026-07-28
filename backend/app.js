@@ -69,14 +69,18 @@ app.use(compression());
 
 // ─── IP-based rate limiters (before body parsing) ────────────────────────────
 
-// Tight limit on auth endpoints — bypassed in E2E for the same reason.
+// Tight limit on auth endpoints — bypassed in E2E only outside production.
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: process.env.E2E_BYPASS_LIMITS ? 1_000_000 : 20,
   message: { success: false, message: "Too many requests, please try again later." },
   standardHeaders: true,
   legacyHeaders: false,
-  skip: () => !!process.env.E2E_BYPASS_LIMITS,
+  // Guard: E2E bypass is never active in production, even if the env var
+  // is accidentally set (e.g. copied from a CI .env into a live deployment).
+  skip: (req) =>
+    process.env.NODE_ENV?.toLowerCase() !== "production" &&
+    !!process.env.E2E_BYPASS_LIMITS,
 });
 app.use("/api/v1/login", authLimiter);
 app.use("/api/v1/register", authLimiter);
@@ -91,7 +95,9 @@ const productLimiter = rateLimit({
   message: { success: false, message: "Too many requests, please try again later." },
   standardHeaders: true,
   legacyHeaders: false,
-  skip: () => !!process.env.E2E_BYPASS_LIMITS,
+  skip: (req) =>
+    process.env.NODE_ENV?.toLowerCase() !== "production" &&
+    !!process.env.E2E_BYPASS_LIMITS,
 });
 app.use("/api/v1/products", productLimiter);
 app.use("/api/v1/product/:id", productLimiter);
@@ -110,7 +116,9 @@ const globalLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req) =>
-    !!process.env.E2E_BYPASS_LIMITS || req.path === "/payment/webhook",
+    (process.env.NODE_ENV?.toLowerCase() !== "production" &&
+      !!process.env.E2E_BYPASS_LIMITS) ||
+    req.path === "/payment/webhook",
 });
 app.use("/api/v1", globalLimiter);
 
@@ -173,11 +181,13 @@ app.use(xss()); // express-xss-sanitizer
 // GET /api/v1/csrf-token lets the React app hydrate the token on mount.
 // All subsequent POST/PUT/DELETE requests must include X-CSRF-Token header.
 //
-// Disabled in the test environment — supertest does not maintain cookies
-// between requests the same way a browser does, so CSRF would block all
+// Enabled in every environment except 'test'. Supertest does not maintain
+// cookies between requests the way a browser does, so CSRF would block all
 // mutation tests. CSRF is a browser-specific attack vector and does not
-// apply to server-to-server test runners.
-if (process.env.NODE_ENV?.toLowerCase() === "production") {
+// apply to server-to-server test runners. Staging/preview deployments are
+// now protected (previously only production was).
+const currentEnv = process.env.NODE_ENV?.toLowerCase();
+if (currentEnv !== "test") {
   const { csrfProtection, generateCsrfToken } = require("./middleware/csrf");
   app.get("/api/v1/csrf-token", generateCsrfToken);
   app.use(csrfProtection);

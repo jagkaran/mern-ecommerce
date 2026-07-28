@@ -11,8 +11,8 @@
 # production
 /build
 
-# misc
-.DS_Store
+# environment variables — never commit secrets
+.env
 .env.local
 .env.development.local
 .env.test.local
