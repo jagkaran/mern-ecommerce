@@ -97,6 +97,23 @@ app.use("/api/v1/products", productLimiter);
 app.use("/api/v1/product/:id", productLimiter);
 app.use("/api/v1/products/categories", productLimiter);
 
+// Floor limit for every other /api/v1 route. The two limiters above stay as
+// the tight limits on the endpoints that need them; this one only exists so
+// that no route is completely unlimited (CodeQL js/missing-rate-limiting, 46
+// handlers). Deliberately generous — it should never trip for a real user,
+// only for a flood. Stripe's webhook is excluded because Stripe retries on
+// failure and a 429 there would silently lose payment confirmations.
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: process.env.E2E_BYPASS_LIMITS ? 1_000_000 : 300,
+  message: { success: false, message: "Too many requests, please try again later." },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) =>
+    !!process.env.E2E_BYPASS_LIMITS || req.path === "/payment/webhook",
+});
+app.use("/api/v1", globalLimiter);
+
 // ─── Per-user rate limiters (keyed on req.user._id after auth resolves) ───────
 // These paths are registered BEFORE body parsers so limits engage early,
 // but the actual user resolution happens inside isAuthenticatedUser which

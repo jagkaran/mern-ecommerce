@@ -20,6 +20,17 @@ describe("cld", () => {
     expect(cld(url, { w: 480 })).toBe(url);
   });
 
+  // Regression: the host check used to be url.includes("res.cloudinary.com"),
+  // which also matched hostile URLs carrying the string anywhere in the path,
+  // query or userinfo (CodeQL js/incomplete-url-substring-sanitization).
+  it.each([
+    "https://evil.com/?x=res.cloudinary.com",
+    "https://evil.com/res.cloudinary.com/image/upload/v1/x.jpg",
+    "https://res.cloudinary.com.evil.com/image/upload/v1/x.jpg",
+  ])("does not treat %s as a Cloudinary URL", (url) => {
+    expect(cld(url, { w: 480 })).toBe(url);
+  });
+
   it("passes through undefined and empty strings", () => {
     expect(cld(undefined, { w: 480 })).toBeUndefined();
     expect(cld("", { w: 480 })).toBe("");

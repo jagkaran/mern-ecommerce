@@ -191,11 +191,12 @@ function buildRawMessage({ from, to, subject, text, html }) {
     body = text || "";
   }
   const message = `${headers.join("\r\n")}\r\n\r\n${body}`;
-  return Buffer.from(message, "utf8")
-    .toString("base64")
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
+  // Node's "base64url" encoding is exactly base64 with + → -, / → _ and the
+  // padding stripped, which is what the Gmail API wants. Using it instead of
+  // three chained .replace() calls removes the /=+$/ regex that CodeQL flagged
+  // as polynomial ReDoS (js/polynomial-redos) — the message body is
+  // user-influenced, so no user-reachable regex belongs on this path.
+  return Buffer.from(message, "utf8").toString("base64url");
 }
 
 /**

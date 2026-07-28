@@ -93,10 +93,15 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
   const resetToken = user.getResetPasswordToken();
   await user.save({ validateBeforeSave: false });
   // Use the frontend origin from CLIENT_URL so the link opens the React app,
-  // not the API. Fall back to req.host for local dev when CLIENT_URL is not
-  // set — works only when the API and frontend share a port.
-  const clientOrigin =
-    process.env.CLIENT_URL || `${req.protocol}://${req.get("host")}`;
+  // not the API.
+  //
+  // SECURITY: never derive this from req.get("host") / req.protocol. Those are
+  // attacker-controlled — a forged Host header makes us mail a valid reset
+  // token pointed at the attacker's domain, which is account takeover
+  // (CodeQL js/host-header-forgery-in-email-generation). CLIENT_URL is a
+  // required env var in production; the localhost fallback is dev-only and is
+  // a constant, so it can't be influenced by the request.
+  const clientOrigin = process.env.CLIENT_URL || "http://localhost:3000";
   const resetPasswordUrl = `${clientOrigin}/password/reset/${resetToken}`;
   try {
     await emailService.sendPasswordReset(user.email, resetPasswordUrl, user.name);
