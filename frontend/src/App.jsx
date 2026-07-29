@@ -139,7 +139,7 @@ function RootLayout() {
           <main
             id="main"
             tabIndex={-1}
-            style={{ paddingTop: "calc(var(--t-headerHeight) + 1.5rem)", outline: "none" }}
+            style={{ paddingTop: "var(--t-headerHeight)", outline: "none" }}
           >
             <Suspense fallback={<PageLoader />}>
               <Outlet />
