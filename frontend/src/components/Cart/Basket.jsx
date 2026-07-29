@@ -32,28 +32,36 @@ function Basket() {
   const [couponInput, setCouponInput] = useState("");
   const [couponBusy, setCouponBusy] = useState(false);
 
-  // Re-fetch stock so the QtyStepper respects the real cap
+  // Re-fetch stock so the QtyStepper respects the real cap. Key off the
+  // product-id set (stable string) instead of cartItems reference — every
+  // qty step dispatches AddToCart, producing a fresh array ref, but the
+  // stock values only change when a product is added/removed. Refetch
+  // skipped for products already present in productStocks.
   useEffect(() => {
     let cancelled = false;
-    async function fetchStocks() {
-      const stocks = {};
+    const ids = cartItems.map((i) => i.product).sort().join("|");
+    const missing = cartItems.filter((i) => !(i.product in productStocks));
+    if (!missing.length) return;
+    (async () => {
+      const updates = {};
       await Promise.all(
-        cartItems.map(async (item) => {
+        missing.map(async (item) => {
           try {
             const { data } = await axios.get(`/api/v1/product/${item.product}`);
-            stocks[item.product] = data.product?.stock ?? 0;
+            updates[item.product] = data.product?.stock ?? 0;
           } catch {
-            stocks[item.product] = 0;
+            updates[item.product] = 0;
           }
         })
       );
-      if (!cancelled) setProductStocks(stocks);
-    }
-    if (cartItems.length) fetchStocks();
+      if (cancelled) return;
+      setProductStocks((prev) => ({ ...prev, ...updates }));
+    })();
     return () => {
       cancelled = true;
     };
-  }, [cartItems]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cartItems.map((i) => i.product).sort().join("|")]);
 
   const setQty = (id, currentQty, nextQty) => {
     const maxStock = productStocks[id] ?? Infinity;

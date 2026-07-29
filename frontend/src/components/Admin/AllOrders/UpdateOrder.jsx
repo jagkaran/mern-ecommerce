@@ -11,21 +11,9 @@ import OrderItemsCard from "../../Order/OrderDetails/OrderItemsCard";
 import { clearErrors, getOrderDetails, updateOrder } from "../../../actions/orderAction";
 import { createOrderNumber } from "../../Order/MyOrders";
 import AdminOrderStatusCard from "./AdminOrderStatusCard";
-import DashboardAppBar from "../Sidebar/DashboardAppBar";
-import DashboardDrawer from "../Sidebar/DashboardDrawer";
-import { useTheme } from "@mui/material/styles";
 import Seo from "../../Seo";
 
 function UpdateOrder() {
-  const theme = useTheme();
-  const [open, setOpen] = React.useState(false);
-  const handleDrawerOpen = () => {
-    setOpen(true);
-  };
-
-  const handleDrawerClose = () => {
-    setOpen(false);
-  };
   const dispatch = useDispatch();
   const toast = useToast();
   const { id } = useParams();
@@ -81,18 +69,8 @@ function UpdateOrder() {
 
   return (
     <>
-      <Box sx={{ display: "flex" }}>
-        <CssBaseline />
-        <DashboardAppBar open={open} handleDrawerOpen={handleDrawerOpen} />
-        <DashboardDrawer open={open} handleDrawerClose={handleDrawerClose} theme={theme} />
-        <Box
-          component="main"
-          sx={{
-            flexGrow: 1,
-            py: 2,
-          }}
-        >
-          <Container maxWidth="lg">
+      <div style={{ padding: 16 }}>
+          <div style={{ maxWidth: 1200, margin: "0 auto" }}>
             <Grid container spacing={3}>
               <Grid size={{ xs: 12 }}>
                 {loading ? (
@@ -159,10 +137,8 @@ function UpdateOrder() {
                   )
                 )}
               </Grid>
-            </Grid>
-          </Container>
-        </Box>
-      </Box>
+            </div>
+        </div>
     </>
   );
 }

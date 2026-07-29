@@ -2,16 +2,11 @@ import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "../../../hooks/useToast";
-import { useTheme } from "@mui/material/styles";
 import Box from "@mui/material/Box";
-import CssBaseline from "@mui/material/CssBaseline";
-import DashboardAppBar from "../Sidebar/DashboardAppBar";
-import DashboardDrawer from "../Sidebar/DashboardDrawer";
 import {
   Avatar,
   Button,
   CircularProgress,
-  Container,
   FormControl,
   FormHelperText,
   Grid,
@@ -27,11 +22,6 @@ import { useProductForm, CATEGORIES } from "../../../hooks/useProductForm";
 import Seo from "../../Seo";
 
 function CreateProduct() {
-  const theme = useTheme();
-  const [open, setOpen] = React.useState(false);
-  const handleDrawerOpen = () => setOpen(true);
-  const handleDrawerClose = () => setOpen(false);
-
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const toast = useToast();
@@ -87,17 +77,13 @@ function CreateProduct() {
 
   return (
     <>
-      <Box sx={{ display: "flex" }}>
+      <div style={{ padding: 16 }}>
         <Seo
           title="Create Product - Click.it Dashboard - Admin access only"
           description="Dashboard panel to create a new product on Click.it store"
           path="/admin/product/new"
         />
-        <CssBaseline />
-        <DashboardAppBar open={open} handleDrawerOpen={handleDrawerOpen} />
-        <DashboardDrawer open={open} handleDrawerClose={handleDrawerClose} theme={theme} />
-        <Box component="main" sx={{ flexGrow: 1, py: 8 }}>
-          <Container maxWidth="sm" sx={{ mt: 2, mb: 2 }}>
+        <div style={{ maxWidth: 600, margin: "0 auto" }}>
             <Box
               sx={{
                 display: "flex",
@@ -251,9 +237,8 @@ function CreateProduct() {
                 </Button>
               </Box>
             </Box>
-          </Container>
-        </Box>
-      </Box>
+          </div>
+        </div>
     </>
   );
 }

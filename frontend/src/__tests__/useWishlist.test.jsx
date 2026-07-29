@@ -102,4 +102,29 @@ describe("useWishlist", () => {
     });
     expect(store.getState().wishlist.ids).not.toContain("abc");
   });
+
+  it("re-fires fetch when navigating to /wishlist after an add (items[] must refresh)", () => {
+    // Regression: a previous session-level "fetched-once" guard stopped
+    // Wishlist.jsx from refetching after addToWishlist, leaving items[]
+    // empty until a hard refresh. The Wishlist page mount MUST trigger
+    // a fetch — rely on thunk-level inflight dedupe, not session memo.
+    const store = makeStore({
+      user: { isAuthenticated: true, user: { _id: "u1", name: "t" } },
+    });
+    const dispatches = [];
+    const unsub = store.subscribe(() => dispatches.push(store.getState()));
+    // First mount (e.g. PLP card) — fetch dispatched once.
+    renderHookWith(() => useWishlist(), store);
+    // User adds a product. addToWishlist fires AddToWishlistRequest only.
+    act(() => {
+      store.dispatch({ type: "AddToWishlistRequest", payload: "p1" });
+    });
+    // User navigates to /wishlist — new useWishlist mount. The previous
+    // bug would skip the fetch here; now it must dispatch.
+    renderHookWith(() => useWishlist(), store);
+    unsub();
+    // We expect at least 2 transitions into "loading=true" (mount + nav).
+    // dedupe only collapses concurrent calls.
+    expect(dispatches.filter((s) => s.wishlist.loading === true).length).toBeGreaterThanOrEqual(2);
+  });
 });

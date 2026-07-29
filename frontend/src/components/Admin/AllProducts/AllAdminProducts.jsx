@@ -1,11 +1,6 @@
 import * as React from "react";
-import { useTheme } from "@mui/material/styles";
 import Box from "@mui/material/Box";
-import CssBaseline from "@mui/material/CssBaseline";
-import DashboardAppBar from "../Sidebar/DashboardAppBar";
-import DashboardDrawer from "../Sidebar/DashboardDrawer";
-import AdminMobileNav from "../AdminMobileNav";
-import { CircularProgress, Container, Grid } from "@mui/material";
+import { CircularProgress } from "@mui/material";
 import { useSelector, useDispatch } from "react-redux";
 import { clearErrors, getAdminProducts } from "../../../actions/productAction";
 import AllProductsList from "./AllProductsList";
@@ -13,12 +8,6 @@ import { useToast } from "../../../hooks/useToast";
 import Seo from "../../Seo";
 
 function AllAdminProducts() {
-  const theme = useTheme();
-  const [open, setOpen] = React.useState(false);
-
-  const handleDrawerOpen = () => setOpen(true);
-  const handleDrawerClose = () => setOpen(false);
-
   const dispatch = useDispatch();
   const toast = useToast();
 
@@ -51,31 +40,21 @@ function AllAdminProducts() {
 
   return (
     <>
-      <Box sx={{ display: "flex" }}>
-        <Seo
-          title="Manage Products - Click.it Dashboard - Admin access only"
-          description="Dashboard to manage products and reviews"
-          path="/admin/products"
-        />
-        <CssBaseline />
-        <DashboardAppBar open={open} handleDrawerOpen={handleDrawerOpen} />
-        <DashboardDrawer open={open} handleDrawerClose={handleDrawerClose} theme={theme} />
-        <Box component="main" sx={{ flexGrow: 1, py: 8 }}>
-          <AdminMobileNav />
-          <Container maxWidth="lg" sx={{ mt: 2, mb: 2 }}>
-            <Grid container spacing={3}>
-              <Grid size={{ xs: 12 }}>
-                {loading ? (
-                  <div className="grid place-items-center h-screen">
-                    <CircularProgress />
-                  </div>
-                ) : (
-                  <AllProductsList products={sortedProducts} />
-                )}
-              </Grid>
-            </Grid>
-          </Container>
-        </Box>
+      <Seo
+        title="Manage Products - Click.it Dashboard - Admin access only"
+        description="Dashboard to manage products and reviews"
+        path="/admin/products"
+      />
+      <Box sx={{ padding: "16px" }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto", width: "100%" }}>
+          {loading ? (
+            <div className="grid place-items-center" style={{ minHeight: "60vh" }}>
+              <CircularProgress />
+            </div>
+          ) : (
+            <AllProductsList products={sortedProducts} />
+          )}
+        </div>
       </Box>
     </>
   );

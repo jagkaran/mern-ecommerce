@@ -1,13 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
-import { useTheme } from "@mui/material/styles";
-import Box from "@mui/material/Box";
-import CssBaseline from "@mui/material/CssBaseline";
-import { Container, CircularProgress } from "@mui/material";
-import DashboardAppBar from "../Sidebar/DashboardAppBar";
-import DashboardDrawer from "../Sidebar/DashboardDrawer";
-import AdminMobileNav from "../AdminMobileNav";
+import { CircularProgress } from "@mui/material";
 import axios from "axios";
 import { updateCoupon, clearCouponErrors } from "../../../actions/couponAction";
 import { useToast } from "../../../hooks/useToast";
@@ -23,11 +17,6 @@ function toLocalInput(iso) {
 }
 
 function UpdateCoupon() {
-  const theme = useTheme();
-  const [open, setOpen] = React.useState(false);
-  const handleDrawerOpen = () => setOpen(true);
-  const handleDrawerClose = () => setOpen(false);
-
   const { id } = useParams();
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -85,29 +74,23 @@ function UpdateCoupon() {
   };
 
   return (
-    <Box sx={{ display: "flex" }}>
+    <div style={{ padding: 16 }}>
       <Seo title="Edit coupon" path={`/admin/coupon/update/${id}`} />
-      <CssBaseline />
-      <DashboardAppBar open={open} handleDrawerOpen={handleDrawerOpen} />
-      <DashboardDrawer open={open} handleDrawerClose={handleDrawerClose} theme={theme} />
-      <Box component="main" sx={{ flexGrow: 1, py: 8 }}>
-        <AdminMobileNav />
-        <Container maxWidth="md" sx={{ mt: 2, mb: 4 }}>
-          {loading ? (
-            <CircularProgress />
-          ) : initialValues ? (
-            <CouponForm
-              initialValues={initialValues}
-              onSubmit={handleSubmit}
-              busy={submitting}
-              submitLabel="Save changes"
-            />
-          ) : (
-            <div>Coupon not found.</div>
-          )}
-        </Container>
-      </Box>
-    </Box>
+      <div style={{ maxWidth: 960, margin: "0 auto" }}>
+        {loading ? (
+          <CircularProgress />
+        ) : initialValues ? (
+          <CouponForm
+            initialValues={initialValues}
+            onSubmit={handleSubmit}
+            busy={submitting}
+            submitLabel="Save changes"
+          />
+        ) : (
+          <div>Coupon not found.</div>
+        )}
+      </div>
+    </div>
   );
 }
 

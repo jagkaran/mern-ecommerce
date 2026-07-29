@@ -1,12 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { useTheme } from "@mui/material/styles";
 import Box from "@mui/material/Box";
-import CssBaseline from "@mui/material/CssBaseline";
-import DashboardAppBar from "../Sidebar/DashboardAppBar";
-import DashboardDrawer from "../Sidebar/DashboardDrawer";
 import {
   CircularProgress,
-  Container,
   FormControl,
   FormHelperText,
   Grid,
@@ -37,11 +32,7 @@ import Seo from "../../Seo";
 
 function UpdateProduct() {
   const theme = useTheme();
-  const [open, setOpen] = React.useState(false);
   const { id } = useParams();
-
-  const handleDrawerOpen = () => setOpen(true);
-  const handleDrawerClose = () => setOpen(false);
 
   const dispatch = useDispatch();
   const toast = useToast();
@@ -165,18 +156,13 @@ function UpdateProduct() {
 
   return (
     <>
-      <Box sx={{ display: "flex" }}>
+      <div style={{ padding: 16 }}>
         <Seo
           title="Update Product Details - Click.it Dashboard - Admin access only"
           description="Dashboard panel to manage available products on Click.it store"
           path="/admin/product/update"
         />
-        <CssBaseline />
-        <DashboardAppBar open={open} handleDrawerOpen={handleDrawerOpen} />
-        <DashboardDrawer open={open} handleDrawerClose={handleDrawerClose} theme={theme} />
-        <Box component="main" sx={{ flexGrow: 1, p: { xs: 2, sm: 3 } }}>
-          <Toolbar />
-          <Container maxWidth="lg" sx={{ mt: 2, mb: 4 }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
             <Grid container spacing={3}>
               <Grid size={{ xs: 12, md: 12, lg: 6 }}>
                 {loading ? (
@@ -356,9 +342,8 @@ function UpdateProduct() {
                 deleteReviewHandler={deleteReviewHandler}
               />
             </Grid>
-          </Container>
-        </Box>
-      </Box>
+        </div>
+      </div>
     </>
   );
 }

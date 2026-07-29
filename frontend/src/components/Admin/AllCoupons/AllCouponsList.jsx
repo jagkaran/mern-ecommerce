@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import AddIcon from "@mui/icons-material/Add";
 import { useToast } from "../../../hooks/useToast";
+import AdminTable from "../../../design/AdminTable";
 import { Card, CardBody, Overline, BodyText, GhostBtn } from "../../../design/primitives";
 import useAdminPagination, { PER_PAGE_OPTIONS } from "../Hooks/useAdminPagination";
 import { clearCouponErrors, deleteCoupon, toggleCoupon } from "../../../actions/couponAction";
@@ -142,188 +143,166 @@ function AllCouponsList({ coupons }) {
   }
 
   return (
-    <Card>
-      <CardBody style={{ padding: 0 }}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "16px 24px",
-            borderBottom: "1px solid var(--t-neutral-200)",
-          }}
+    <AdminTable stickyPage>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "16px 24px",
+          borderBottom: "1px solid var(--t-neutral-200)",
+          gridColumn: "1 / -1",
+        }}
+      >
+        <Overline>All Coupons</Overline>
+        <GhostBtn
+          component={Link}
+          to="/admin/coupon/new"
+          size="small"
+          style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4 }}
         >
-          <Overline>All Coupons</Overline>
-          <GhostBtn
-            component={Link}
-            to="/admin/coupon/new"
-            size="small"
-            style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4 }}
-          >
-            <AddIcon fontSize="small" /> New
-          </GhostBtn>
-        </div>
+          <AddIcon fontSize="small" /> New
+        </GhostBtn>
+      </div>
 
-        <div style={{ overflowX: "auto" }}>
-          <table
-            style={{
-              width: "100%",
-              borderCollapse: "collapse",
-              fontSize: "var(--t-fontSize-sm)",
-            }}
-          >
-            <thead>
-              <tr
-                style={{
-                  borderBottom: "1px solid var(--t-neutral-200)",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.05em",
-                }}
-              >
-                {["Code", "Name", "Discount", "Used", "Status", "Actions"].map((h) => (
-                  <th
-                    key={h}
-                    style={{
-                      padding: "12px 16px",
-                      textAlign: "left",
-                      fontWeight: 600,
-                      color: "var(--t-neutral-500)",
-                      fontSize: "var(--t-fontSize-xs)",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {paginated.map((coupon) => {
-                const status = statusOf(coupon);
-                const usedLabel = coupon.usageLimit
-                  ? `${coupon.usedCount || 0} / ${coupon.usageLimit}`
-                  : `${coupon.usedCount || 0} / ∞`;
-                return (
-                  <tr
-                    key={coupon._id}
-                    style={{
-                      borderBottom: "1px solid var(--t-neutral-100)",
-                      transition:
-                        "background var(--t-motion-duration-fast) var(--t-motion-easing-out)",
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "var(--t-neutral-50)")}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-                  >
-                    <td style={{ padding: "12px 16px", fontFamily: "monospace", fontWeight: 600 }}>
-                      {coupon.code}
-                    </td>
-                    <td style={{ padding: "12px 16px" }}>{coupon.name}</td>
-                    <td style={{ padding: "12px 16px" }}>
-                      <DiscountBadge type={coupon.discountType} value={coupon.discountValue} />
-                    </td>
-                    <td style={{ padding: "12px 16px", color: "var(--t-neutral-600)" }}>
-                      {usedLabel}
-                    </td>
-                    <td style={{ padding: "12px 16px" }}>
-                      <StatusChip label={status.label} tone={status.tone} />
-                    </td>
-                    <td style={{ padding: "12px 16px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <GhostBtn
-                          size="small"
-                          onClick={() => dispatch(toggleCoupon(coupon._id))}
-                          title={coupon.active ? "Deactivate" : "Activate"}
-                        >
-                          {coupon.active ? "Pause" : "Resume"}
-                        </GhostBtn>
-                        <Link
-                          to={`/admin/coupon/update/${coupon._id}`}
-                          style={{ color: "var(--t-neutral-500)", textDecoration: "none" }}
-                        >
-                          ✎
-                        </Link>
-                        <GhostBtn
-                          size="small"
-                          onClick={() => setConfirmDelete(coupon)}
-                          style={{ color: "var(--t-semantic-error)" }}
-                        >
-                          ✕
-                        </GhostBtn>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "12px 24px",
-            borderTop: "1px solid var(--t-neutral-200)",
-            flexWrap: "wrap",
-            gap: 12,
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <BodyText small style={{ color: "var(--t-neutral-500)" }}>
-              Rows per page:
-            </BodyText>
-            <select
-              value={perPage}
-              onChange={(e) => setPerPage(Number(e.target.value))}
+      <thead>
+        <tr>
+          {["Code", "Name", "Discount", "Used", "Status", "Actions"].map((h) => (
+            <th key={h} style={AdminTable.thStyle}>
+              {h}
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {paginated.map((coupon) => {
+          const status = statusOf(coupon);
+          const usedLabel = coupon.usageLimit
+            ? `${coupon.usedCount || 0} / ${coupon.usageLimit}`
+            : `${coupon.usedCount || 0} / ∞`;
+          return (
+            <tr
+              key={coupon._id}
               style={{
-                fontSize: "0.875rem",
-                border: "1px solid var(--t-neutral-300)",
-                borderRadius: "var(--t-border-radius-base)",
-                padding: "2px 8px",
-                background: "var(--t-neutral-50)",
-                color: "var(--t-neutral-700)",
+                borderBottom: "1px solid var(--t-neutral-100)",
+                transition:
+                  "background var(--t-motion-duration-fast) var(--t-motion-easing-out)",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "var(--t-neutral-50)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+            >
+              <td style={{ ...AdminTable.tdStyle, fontFamily: "monospace", fontWeight: 600 }}>
+                {coupon.code}
+              </td>
+              <td style={AdminTable.tdStyle}>{coupon.name}</td>
+              <td style={AdminTable.tdStyle}>
+                <DiscountBadge type={coupon.discountType} value={coupon.discountValue} />
+              </td>
+              <td style={{ ...AdminTable.tdStyle, color: "var(--t-neutral-600)" }}>
+                {usedLabel}
+              </td>
+              <td style={AdminTable.tdStyle}>
+                <StatusChip label={status.label} tone={status.tone} />
+              </td>
+              <td style={AdminTable.tdStyle}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <GhostBtn
+                    size="small"
+                    onClick={() => dispatch(toggleCoupon(coupon._id))}
+                    title={coupon.active ? "Deactivate" : "Activate"}
+                  >
+                    {coupon.active ? "Pause" : "Resume"}
+                  </GhostBtn>
+                  <Link
+                    to={`/admin/coupon/update/${coupon._id}`}
+                    style={{ color: "var(--t-neutral-500)", textDecoration: "none" }}
+                  >
+                    ✎
+                  </Link>
+                  <GhostBtn
+                    size="small"
+                    onClick={() => setConfirmDelete(coupon)}
+                    style={{ color: "var(--t-semantic-error)" }}
+                  >
+                    ✕
+                  </GhostBtn>
+                </div>
+              </td>
+            </tr>
+          );
+        })}
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colSpan={6} style={{ padding: 0 }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "12px 24px",
+                borderTop: "1px solid var(--t-neutral-200)",
+                flexWrap: "wrap",
+                gap: 12,
               }}
             >
-              {PER_PAGE_OPTIONS.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
-            <GhostBtn
-              size="small"
-              onClick={() => setPage(Math.max(1, page - 1))}
-              disabled={page <= 1}
-            >
-              ‹
-            </GhostBtn>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-              <GhostBtn
-                key={p}
-                size="small"
-                onClick={() => setPage(p)}
-                style={{
-                  background: p === page ? "var(--t-primary-600)" : "transparent",
-                  color: p === page ? "#fff" : "var(--t-neutral-700)",
-                  borderColor: p === page ? "var(--t-primary-600)" : "var(--t-neutral-300)",
-                }}
-              >
-                {p}
-              </GhostBtn>
-            ))}
-            <GhostBtn
-              size="small"
-              onClick={() => setPage(Math.min(totalPages, page + 1))}
-              disabled={page >= totalPages}
-            >
-              ›
-            </GhostBtn>
-          </div>
-        </div>
-      </CardBody>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <BodyText small style={{ color: "var(--t-neutral-500)" }}>
+                  Rows per page:
+                </BodyText>
+                <select
+                  value={perPage}
+                  onChange={(e) => setPerPage(Number(e.target.value))}
+                  style={{
+                    fontSize: "0.875rem",
+                    border: "1px solid var(--t-neutral-300)",
+                    borderRadius: "var(--t-border-radius-base)",
+                    padding: "2px 8px",
+                    background: "var(--t-neutral-50)",
+                    color: "var(--t-neutral-700)",
+                  }}
+                >
+                  {PER_PAGE_OPTIONS.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                <GhostBtn
+                  size="small"
+                  onClick={() => setPage(Math.max(1, page - 1))}
+                  disabled={page <= 1}
+                >
+                  ‹
+                </GhostBtn>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                  <GhostBtn
+                    key={p}
+                    size="small"
+                    onClick={() => setPage(p)}
+                    style={{
+                      background: p === page ? "var(--t-primary-600)" : "transparent",
+                      color: p === page ? "#fff" : "var(--t-neutral-700)",
+                      borderColor: p === page ? "var(--t-primary-600)" : "var(--t-neutral-300)",
+                    }}
+                  >
+                    {p}
+                  </GhostBtn>
+                ))}
+                <GhostBtn
+                  size="small"
+                  onClick={() => setPage(Math.min(totalPages, page + 1))}
+                  disabled={page >= totalPages}
+                >
+                  ›
+                </GhostBtn>
+              </div>
+            </div>
+          </td>
+        </tr>
+      </tfoot>
 
       {confirmDelete && (
         <div
@@ -375,7 +354,7 @@ function AllCouponsList({ coupons }) {
           </div>
         </div>
       )}
-    </Card>
+    </AdminTable>
   );
 }
 

@@ -1,11 +1,6 @@
 import * as React from "react";
-import { useTheme } from "@mui/material/styles";
 import Box from "@mui/material/Box";
-import CssBaseline from "@mui/material/CssBaseline";
-import DashboardAppBar from "../Sidebar/DashboardAppBar";
-import DashboardDrawer from "../Sidebar/DashboardDrawer";
-import AdminMobileNav from "../AdminMobileNav";
-import { CircularProgress, Container, Grid } from "@mui/material";
+import { CircularProgress } from "@mui/material";
 import { useSelector, useDispatch } from "react-redux";
 import { useToast } from "../../../hooks/useToast";
 import { useNavigate } from "react-router-dom";
@@ -14,17 +9,6 @@ import { clearErrors, deleteUser, getAllUsers } from "../../../actions/userActio
 import Seo from "../../Seo";
 
 function AllAdminUsers() {
-  const theme = useTheme();
-  const [open, setOpen] = React.useState(false);
-
-  const handleDrawerOpen = () => {
-    setOpen(true);
-  };
-
-  const handleDrawerClose = () => {
-    setOpen(false);
-  };
-
   const dispatch = useDispatch();
   const toast = useToast();
   const history = useNavigate();
@@ -68,41 +52,25 @@ function AllAdminUsers() {
 
   return (
     <>
-      <Box sx={{ display: "flex" }}>
-        <Seo
-          title="Manage Customers - Click.it Dashboard - Admin access only"
-          description="Dashboard to manage registered users on Click.it store"
-          path="/admin/users"
-        />
-        <CssBaseline />
-        <DashboardAppBar open={open} handleDrawerOpen={handleDrawerOpen} />
-        <DashboardDrawer open={open} handleDrawerClose={handleDrawerClose} theme={theme} />
-        <Box
-          component="main"
-          sx={{
-            flexGrow: 1,
-            py: 8,
-          }}
-        >
-          <AdminMobileNav />
-          <Container maxWidth="lg" sx={{ mt: 2, mb: 2 }}>
-            <Grid container spacing={3}>
-              <Grid size={{ xs: 12 }}>
-                {loading ? (
-                  <div className="grid place-items-center h-screen">
-                    <CircularProgress />
-                  </div>
-                ) : (
-                  <AllUsersList
-                    users={users && sortedUsersArrayByDate}
-                    deleteUserHandler={deleteUserHandler}
-                    usersCount={usersCount}
-                  />
-                )}
-              </Grid>
-            </Grid>
-          </Container>
-        </Box>
+      <Seo
+        title="Manage Customers - Click.it Dashboard - Admin access only"
+        description="Dashboard to manage registered users on Click.it store"
+        path="/admin/users"
+      />
+      <Box sx={{ padding: "16px" }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto", width: "100%" }}>
+          {loading ? (
+            <div className="grid place-items-center" style={{ minHeight: "60vh" }}>
+              <CircularProgress />
+            </div>
+          ) : (
+            <AllUsersList
+              users={users && sortedUsersArrayByDate}
+              deleteUserHandler={deleteUserHandler}
+              usersCount={usersCount}
+            />
+          )}
+        </div>
       </Box>
     </>
   );

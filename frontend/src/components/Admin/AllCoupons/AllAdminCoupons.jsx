@@ -1,11 +1,6 @@
 import * as React from "react";
-import { useTheme } from "@mui/material/styles";
 import Box from "@mui/material/Box";
-import CssBaseline from "@mui/material/CssBaseline";
-import DashboardAppBar from "../Sidebar/DashboardAppBar";
-import DashboardDrawer from "../Sidebar/DashboardDrawer";
-import AdminMobileNav from "../AdminMobileNav";
-import { CircularProgress, Container, Grid } from "@mui/material";
+import { CircularProgress } from "@mui/material";
 import { useSelector, useDispatch } from "react-redux";
 import { getAdminCoupons, clearCouponErrors } from "../../../actions/couponAction";
 import AllCouponsList from "./AllCouponsList";
@@ -13,11 +8,6 @@ import { useToast } from "../../../hooks/useToast";
 import Seo from "../../Seo";
 
 function AllAdminCoupons() {
-  const theme = useTheme();
-  const [open, setOpen] = React.useState(false);
-  const handleDrawerOpen = () => setOpen(true);
-  const handleDrawerClose = () => setOpen(false);
-
   const dispatch = useDispatch();
   const toast = useToast();
 
@@ -36,31 +26,21 @@ function AllAdminCoupons() {
 
   return (
     <>
-      <Box sx={{ display: "flex" }}>
-        <Seo
-          title="Manage Coupons - Click.it Dashboard - Admin access only"
-          description="Dashboard to manage promotional coupons"
-          path="/admin/coupons"
-        />
-        <CssBaseline />
-        <DashboardAppBar open={open} handleDrawerOpen={handleDrawerOpen} />
-        <DashboardDrawer open={open} handleDrawerClose={handleDrawerClose} theme={theme} />
-        <Box component="main" sx={{ flexGrow: 1, py: 8 }}>
-          <AdminMobileNav />
-          <Container maxWidth="lg" sx={{ mt: 2, mb: 2 }}>
-            <Grid container spacing={3}>
-              <Grid size={{ xs: 12 }}>
-                {loading && (!allCoupons || allCoupons.length === 0) ? (
-                  <div className="grid place-items-center h-screen">
-                    <CircularProgress />
-                  </div>
-                ) : (
-                  <AllCouponsList coupons={allCoupons || []} />
-                )}
-              </Grid>
-            </Grid>
-          </Container>
-        </Box>
+      <Seo
+        title="Manage Coupons - Click.it Dashboard - Admin access only"
+        description="Dashboard to manage promotional coupons"
+        path="/admin/coupons"
+      />
+      <Box sx={{ padding: "16px" }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto", width: "100%" }}>
+          {loading && (!allCoupons || allCoupons.length === 0) ? (
+            <div className="grid place-items-center" style={{ minHeight: "60vh" }}>
+              <CircularProgress />
+            </div>
+          ) : (
+            <AllCouponsList coupons={allCoupons || []} />
+          )}
+        </div>
       </Box>
     </>
   );
