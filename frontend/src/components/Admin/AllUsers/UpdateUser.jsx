@@ -51,17 +51,18 @@ function UpdateUser() {
     dispatch(updateUser(id, myForm));
   };
 
-  // Fetch + populate fields once on mount / id change — never on error change.
+  // Populate fields whenever the user record arrives (or id changes).
+  // Re-fetch only when the loaded record doesn't match the route id — never on
+  // error/toast changes (those live in the effect below, separate).
   useEffect(() => {
-    if (user && user._id !== id) {
+    if (user && user._id === id) {
+      setName(user.name || "");
+      setEmail(user.email || "");
+      setRole(user.role || "");
+    } else {
       dispatch(getUserDetails(id));
-    } else if (user) {
-      setName(user.name);
-      setEmail(user.email);
-      setRole(user.role);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dispatch, id]);
+  }, [dispatch, id, user]);
 
   useEffect(() => {
     if (error) {

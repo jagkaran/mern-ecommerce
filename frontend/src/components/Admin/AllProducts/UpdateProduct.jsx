@@ -96,24 +96,25 @@ function UpdateProduct() {
   };
 
   // setValues is a stable setter from useFormControls —
-  // Fetch product + reviews on mount/id change only — re-firing on error loops
-  // into 429 spam. Toast/redirect handlers live in a separate effect.
+  // Populate form when product record arrives (or id changes).
+  // Re-fetch only when the loaded record doesn't match the route id — never on
+  // error/toast changes (those live in the effect below, separate).
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    if (product && product._id !== id) {
-      dispatch(getProductDetails(id));
-      dispatch(getAllReviews(id));
-    } else if (product) {
+    if (product && product._id === id) {
       setValues({
-        name: product.name,
-        description: product.description,
-        price: product.price,
-        category: product.category,
-        stock: product.stock,
+        name: product.name || "",
+        description: product.description || "",
+        price: product.price || "",
+        category: product.category || "",
+        stock: product.stock || "",
       });
       setOldImages(product.images);
+    } else {
+      dispatch(getProductDetails(id));
+      dispatch(getAllReviews(id));
     }
-  }, [dispatch, id, product, setValues]);
+  }, [dispatch, id, product]);
 
   useEffect(() => {
     if (error) {
