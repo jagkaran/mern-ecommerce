@@ -33,6 +33,12 @@ function AllAdminOrders() {
     dispatch(deleteOrder(id));
   };
 
+  // Fetch on mount only — re-firing on every error change loops into 429 spam.
+  React.useEffect(() => {
+    dispatch(getAllOrders());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dispatch]);
+
   React.useEffect(() => {
     if (error) {
       toast.error(error);
@@ -47,7 +53,6 @@ function AllAdminOrders() {
       history("/dashboard");
       dispatch({ type: "DeleteOrderReset" });
     }
-    dispatch(getAllOrders());
   }, [dispatch, error, toast, deleteError, history, isDeleted]);
 
   return (

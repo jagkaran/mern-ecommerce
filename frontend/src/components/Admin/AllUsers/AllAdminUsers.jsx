@@ -33,6 +33,12 @@ function AllAdminUsers() {
     dispatch(deleteUser(id));
   };
 
+  // Fetch on mount only. Re-firing on every error change loops into 429 spam.
+  React.useEffect(() => {
+    dispatch(getAllUsers());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dispatch]);
+
   React.useEffect(() => {
     if (error) {
       toast.error(error);
@@ -47,7 +53,6 @@ function AllAdminUsers() {
       history("/dashboard");
       dispatch({ type: "DeleteUserReset" });
     }
-    dispatch(getAllUsers());
   }, [dispatch, error, toast, deleteError, history, isDeleted, message]);
 
   return (
