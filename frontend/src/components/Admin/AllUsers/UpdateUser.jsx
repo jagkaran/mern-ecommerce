@@ -51,14 +51,19 @@ function UpdateUser() {
     dispatch(updateUser(id, myForm));
   };
 
+  // Fetch + populate fields once on mount / id change — never on error change.
   useEffect(() => {
     if (user && user._id !== id) {
       dispatch(getUserDetails(id));
-    } else {
+    } else if (user) {
       setName(user.name);
       setEmail(user.email);
       setRole(user.role);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dispatch, id]);
+
+  useEffect(() => {
     if (error) {
       toast.error(error);
       dispatch(clearErrors());
@@ -73,7 +78,7 @@ function UpdateUser() {
       history("/admin/users");
       dispatch({ type: "UpdateUserReset" });
     }
-  }, [dispatch, error, toast, history, isUpdated, updateError, id, user]);
+  }, [dispatch, error, toast, history, isUpdated, updateError]);
 
   return (
     <div style={{ padding: "24px 16px" }}>

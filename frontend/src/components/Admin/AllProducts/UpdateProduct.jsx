@@ -96,12 +96,14 @@ function UpdateProduct() {
   };
 
   // setValues is a stable setter from useFormControls —
-  // adding it to deps would cause an infinite re-render loop.
+  // Fetch product + reviews on mount/id change only — re-firing on error loops
+  // into 429 spam. Toast/redirect handlers live in a separate effect.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (product && product._id !== id) {
       dispatch(getProductDetails(id));
-    } else {
+      dispatch(getAllReviews(id));
+    } else if (product) {
       setValues({
         name: product.name,
         description: product.description,
@@ -111,6 +113,9 @@ function UpdateProduct() {
       });
       setOldImages(product.images);
     }
+  }, [dispatch, id, product, setValues]);
+
+  useEffect(() => {
     if (error) {
       toast.error(error);
       dispatch(clearErrors());
@@ -137,7 +142,6 @@ function UpdateProduct() {
       history("/admin/products");
       dispatch({ type: "UpdateProductReset" });
     }
-    dispatch(getAllReviews(id));
   }, [
     dispatch,
     error,
@@ -145,12 +149,9 @@ function UpdateProduct() {
     history,
     isUpdated,
     updateError,
-    id,
-    product,
     allReviewsError,
     deleteReviewError,
     isDeleted,
-    setValues,
   ]);
 
   return (

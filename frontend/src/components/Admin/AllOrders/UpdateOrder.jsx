@@ -51,6 +51,12 @@ function UpdateOrder() {
     dispatch(updateOrder(id, myForm));
   };
 
+  // Fetch on mount/id change only — re-firing on error loops into 429 spam.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    dispatch(getOrderDetails(id));
+  }, [dispatch, id]);
+
   useEffect(() => {
     if (error) {
       toast.error(error);
@@ -64,8 +70,7 @@ function UpdateOrder() {
       toast.success("Order Updated Successfully");
       dispatch({ type: "UpdateOrderReset" });
     }
-    dispatch(getOrderDetails(id));
-  }, [dispatch, error, toast, id, isUpdated, updateError]);
+  }, [dispatch, error, toast, isUpdated, updateError]);
 
   return (
     <div style={{ padding: "24px 16px" }}>
