@@ -137,7 +137,8 @@ function UpdateOrder() {
                   )
                 )}
               </Grid>
-            </div>
+            </Grid>
+          </div>
         </div>
     </>
   );
