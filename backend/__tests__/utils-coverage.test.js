@@ -4,13 +4,13 @@
  *
  * Directly imports and exercises the utility modules that had 0% or very
  * low coverage, pushing the global statement/line totals past the 70%
- * threshold. All external I/O is mocked so no real SMTP, DB, or filesystem
- * access occurs.
+ * threshold. All external I/O is mocked so no real network, DB, or
+ * filesystem access occurs.
  *
  * Covered:
- *   backend/utils/sendEmail.js   (was 42% — covers lines 21-48)
- *   backend/utils/logger.js      (was 50%  — covers lines 18-60)
- *   backend/config/database.js   (was 0%   — covers lines 1-33)
+ *   backend/utils/sendEmail.js   (OAuth-only path)
+ *   backend/utils/logger.js      (lines 18-60)
+ *   backend/config/database.js   (lines 1-33)
  */
 
 // The global setup file mocks sendEmail/gmailOAuth/emailService so that
@@ -21,21 +21,19 @@ jest.unmock("../utils/gmailOAuth");
 jest.unmock("../services/emailService");
 
 // ─── sendEmail ────────────────────────────────────────────────────────────────
+// sendEmail is OAuth-only — it uses Gmail API exclusively. No nodemailer,
+// no SMTP. The legacy SMTP_* env vars are read solely to keep the helper
+// from throwing "SMTP_MAIL not set" when the From-address isn't loaded
+// from the env yet.
 describe("sendEmail utility", () => {
   let sendEmail;
-  let mockSendMail;
-  let mockCreateTransport;
   let mockGetAccessToken;
   let mockSendViaGmailApi;
 
   beforeEach(() => {
     jest.resetModules();
-    mockSendMail = jest.fn().mockResolvedValue({ messageId: "test-id" });
-    mockCreateTransport = jest.fn().mockReturnValue({ sendMail: mockSendMail });
 
-    jest.mock("nodemailer", () => ({ createTransport: mockCreateTransport }));
-
-    // Force OAuth to be unavailable by default — each test opts in via
+    // Default: OAuth unavailable. Each test opts in via
     // `mockGetAccessToken.mockResolvedValueOnce(...)`.
     mockGetAccessToken = jest.fn().mockResolvedValue(null);
     mockSendViaGmailApi = jest.fn().mockResolvedValue({ id: "gmail-msg-id" });
@@ -51,61 +49,7 @@ describe("sendEmail utility", () => {
   afterEach(() => {
     jest.restoreAllMocks();
     jest.dontMock("../utils/gmailOAuth");
-    delete process.env.SMTP_SERVICE;
-    delete process.env.SMTP_HOST;
-    delete process.env.SMTP_PORT;
     delete process.env.SMTP_MAIL;
-    delete process.env.SMTP_PASSWORD;
-  });
-
-  it("uses service-based transport when SMTP_SERVICE is set", async () => {
-    process.env.SMTP_SERVICE  = "gmail";
-    process.env.SMTP_MAIL     = "test@gmail.com";
-    process.env.SMTP_PASSWORD = "app-password";
-
-    await sendEmail({ email: "user@example.com", subject: "Hi", message: "Hello" });
-
-    expect(mockCreateTransport).toHaveBeenCalledWith(
-      expect.objectContaining({ service: "gmail" })
-    );
-    expect(mockSendMail).toHaveBeenCalledWith(
-      expect.objectContaining({ to: "user@example.com", subject: "Hi" })
-    );
-  });
-
-  it("uses host/port transport when SMTP_SERVICE is not set", async () => {
-    delete process.env.SMTP_SERVICE;
-    process.env.SMTP_HOST     = "smtp.mailtrap.io";
-    process.env.SMTP_PORT     = "2525";
-    process.env.SMTP_MAIL     = "test@mailtrap.io";
-    process.env.SMTP_PASSWORD = "secret";
-
-    await sendEmail({ email: "dest@example.com", subject: "Test", message: "Body" });
-
-    expect(mockCreateTransport).toHaveBeenCalledWith(
-      expect.objectContaining({ host: "smtp.mailtrap.io", port: 2525, secure: false })
-    );
-  });
-
-  it("uses secure:true when SMTP_PORT is 465", async () => {
-    delete process.env.SMTP_SERVICE;
-    process.env.SMTP_HOST = "smtp.example.com";
-    process.env.SMTP_PORT = "465";
-
-    await sendEmail({ email: "a@b.com", subject: "S", message: "M" });
-
-    expect(mockCreateTransport).toHaveBeenCalledWith(
-      expect.objectContaining({ secure: true })
-    );
-  });
-
-  it("propagates sendMail rejection", async () => {
-    process.env.SMTP_SERVICE = "gmail";
-    mockSendMail.mockRejectedValueOnce(new Error("SMTP failure"));
-
-    await expect(
-      sendEmail({ email: "x@x.com", subject: "S", message: "M" })
-    ).rejects.toThrow("SMTP failure");
   });
 
   it("uses Gmail API via sendViaGmailApi when OAuth is configured", async () => {
@@ -134,43 +78,47 @@ describe("sendEmail utility", () => {
         text: "Click here",
       })
     );
-    expect(mockCreateTransport).not.toHaveBeenCalled();
     expect(result).toEqual({ id: "gmail-msg-id" });
   });
 
-  it("falls back to SMTP when getAccessToken returns null", async () => {
-    process.env.SMTP_SERVICE  = "gmail";
-    process.env.SMTP_MAIL     = "fallback@gmail.com";
-    process.env.SMTP_PASSWORD = "app-password";
+  it("throws when OAuth token is unavailable", async () => {
+    process.env.SMTP_MAIL = "noauth@gmail.com";
     mockGetAccessToken.mockResolvedValueOnce(null);
 
-    await sendEmail({ email: "u@e.com", subject: "S", message: "M" });
-
+    await expect(
+      sendEmail({ email: "u@e.com", subject: "S", message: "M" })
+    ).rejects.toThrow(/Gmail OAuth not configured/);
     expect(mockSendViaGmailApi).not.toHaveBeenCalled();
-    expect(mockCreateTransport).toHaveBeenCalledWith(
-      expect.objectContaining({
-        service: "gmail",
-        auth: expect.objectContaining({ user: "fallback@gmail.com", pass: "app-password" }),
-      })
-    );
   });
 
-  it("falls back to SMTP when sendViaGmailApi throws", async () => {
-    process.env.SMTP_SERVICE  = "gmail";
-    process.env.SMTP_MAIL     = "fb@gmail.com";
-    process.env.SMTP_PASSWORD = "pw";
+  it("propagates sendViaGmailApi rejection", async () => {
+    process.env.SMTP_MAIL = "auth@gmail.com";
     mockGetAccessToken.mockResolvedValueOnce({
-      user: "fb@gmail.com",
+      user: "auth@gmail.com",
       accessToken: "ya29.x",
       refreshToken: "1//r",
     });
     mockSendViaGmailApi.mockRejectedValueOnce(new Error("Gmail API send failed: 401"));
 
-    await sendEmail({ email: "u@e.com", subject: "S", message: "M" });
+    await expect(
+      sendEmail({ email: "u@e.com", subject: "S", message: "M" })
+    ).rejects.toThrow("Gmail API send failed: 401");
+  });
 
-    expect(mockCreateTransport).toHaveBeenCalledWith(
-      expect.objectContaining({ service: "gmail" })
-    );
+  it("does not require nodemailer at all", async () => {
+    process.env.SMTP_MAIL = "auth@gmail.com";
+    mockGetAccessToken.mockResolvedValueOnce({
+      user: "auth@gmail.com",
+      accessToken: "ya29.x",
+      refreshToken: "1//r",
+    });
+
+    // If sendEmail still tried to require nodemailer, the absence of any
+    // mock would throw MODULE_NOT_FOUND. The fact that this resolves
+    // proves the SMTP path is gone.
+    await expect(
+      sendEmail({ email: "u@e.com", subject: "S", message: "M" })
+    ).resolves.toEqual({ id: "gmail-msg-id" });
   });
 });
 
