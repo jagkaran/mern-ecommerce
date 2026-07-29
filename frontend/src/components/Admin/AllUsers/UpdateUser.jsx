@@ -21,7 +21,6 @@ import PersonIcon from "@mui/icons-material/Person";
 import Seo from "../../Seo";
 
 function UpdateUser() {
-  const theme = useTheme();
   const { id } = useParams();
 
   const dispatch = useDispatch();
@@ -77,105 +76,88 @@ function UpdateUser() {
   }, [dispatch, error, toast, history, isUpdated, updateError, id, user]);
 
   return (
-    <>
-      <div style={{ padding: 16 }}>
-        <Seo
-          title="Manage Customer access - Click.it Dashboard - Admin access only"
-          description="Dashboard to manage registered users access on Click.it store"
-          path="/admin/users"
-        />
-        <div style={{ maxWidth: 480, margin: "0 auto" }}>
-            <Grid container spacing={3}>
-              <Grid size={{ xs: 12 }}>
-                {loading ? (
-                  <div className="grid place-items-center h-screen">
-                    <CircularProgress />
-                  </div>
-                ) : (
-                  <Box
-                    sx={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                    }}
-                  >
-                    <Avatar sx={{ m: 1, bgcolor: "secondary.main" }}>
-                      <PersonIcon />
-                    </Avatar>
-                    <Typography component="h1" variant="h5">
-                      Update User
-                    </Typography>
-                    <Box
-                      component="form"
-                      noValidate
-                      onSubmit={updateUserSubmitHandler}
-                      sx={{ mt: 3 }}
-                    >
-                      <Grid container spacing={2}>
-                        <Grid size={{ xs: 12 }}>
-                          <TextField
-                            name="name"
-                            fullWidth
-                            id="name"
-                            label="Name"
-                            autoFocus
-                            required
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                          />
-                        </Grid>
-                        <Grid size={{ xs: 12 }}>
-                          <TextField
-                            required
-                            fullWidth
-                            id="email"
-                            label="Email"
-                            name="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                          />
-                        </Grid>
-                        <Grid size={{ xs: 12 }}>
-                          <FormControl fullWidth>
-                            <InputLabel id="role-select-label">Role</InputLabel>
-                            <Select
-                              labelId="role-select-label"
-                              id="role"
-                              name="role"
-                              label="Select Role"
-                              value={role}
-                              onChange={(e) => setRole(e.target.value)}
-                            >
-                              <MenuItem value="">
-                                <em>None</em>
-                              </MenuItem>
-                              <MenuItem value="admin">
-                                <span className="capitalize">admin</span>
-                              </MenuItem>
-                              <MenuItem value="user">
-                                <span className="capitalize">user</span>
-                              </MenuItem>
-                            </Select>
-                          </FormControl>
-                        </Grid>
-                      </Grid>
-                      <Button
-                        type="submit"
-                        fullWidth
-                        variant="contained"
-                        sx={{ mt: 3, mb: 2, backgroundColor: "secondary.main" }}
-                        disabled={updateLoading ? true : false || role === "" ? true : false}
-                      >
-                        Update
-                      </Button>
-                    </Box>
-                  </Box>
-                )}
-              </Grid>
-            </Grid>
-        </div>
-      </div>
-    </>
+    <div style={{ padding: "24px 16px" }}>
+      <Seo
+        title="Manage Customer access - Click.it Dashboard - Admin access only"
+        description="Dashboard to manage registered users access on Click.it store"
+        path="/admin/users"
+      />
+      <Box
+        sx={{
+          maxWidth: "560px",
+          margin: "0 auto",
+          background: "#fff",
+          borderRadius: "var(--t-border-radius-base)",
+          padding: { xs: "20px", md: "32px" },
+          boxShadow: "var(--t-shadow-sm)",
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2, marginBottom: "24px" }}>
+          <Avatar sx={{ bgcolor: "secondary.main", width: 40, height: 40 }}>
+            <PersonIcon />
+          </Avatar>
+          <Typography component="h1" variant="h5" sx={{ fontWeight: 600 }}>
+            Update User
+          </Typography>
+        </Box>
+
+        {loading ? (
+          <Box sx={{ display: "flex", justifyContent: "center", padding: "48px" }}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          <Box component="form" noValidate onSubmit={updateUserSubmitHandler}>
+            <TextField
+              required
+              fullWidth
+              name="name"
+              id="name"
+              label="Name"
+              autoFocus
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              sx={{ marginBottom: "16px" }}
+            />
+            <TextField
+              required
+              fullWidth
+              id="email"
+              label="Email"
+              name="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              sx={{ marginBottom: "16px" }}
+            />
+            <FormControl fullWidth sx={{ marginBottom: "24px" }}>
+              <InputLabel id="role-select-label">Role</InputLabel>
+              <Select
+                labelId="role-select-label"
+                id="role"
+                name="role"
+                label="Role"
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+              >
+                <MenuItem value="">
+                  <em>None</em>
+                </MenuItem>
+                <MenuItem value="admin">admin</MenuItem>
+                <MenuItem value="user">user</MenuItem>
+              </Select>
+            </FormControl>
+            <Button
+              type="submit"
+              fullWidth
+              variant="contained"
+              sx={{ padding: "12px", backgroundColor: "secondary.main" }}
+              disabled={updateLoading || role === ""}
+            >
+              Update
+            </Button>
+          </Box>
+        )}
+      </Box>
+    </div>
   );
 }
 

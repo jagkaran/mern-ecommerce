@@ -13,7 +13,7 @@ function AllAdminOrders() {
   const toast = useToast();
   const history = useNavigate();
 
-  const { loading, error, orders } = useSelector((state) => state.allOrders);
+  const { loading, error, orders, orderCount } = useSelector((state) => state.allOrders);
 
   const { error: deleteError, isDeleted } = useSelector((state) => state.modifiedOrder);
 
@@ -66,6 +66,7 @@ function AllAdminOrders() {
           ) : (
             <AllOrdersList
               orders={orders && sortedOrdersArrayByDate}
+              totalCount={orderCount}
               deleteOrderHandler={deleteOrderHandler}
             />
           )}

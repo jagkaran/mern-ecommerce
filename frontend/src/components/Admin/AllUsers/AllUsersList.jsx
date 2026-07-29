@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Overline, Headline, BodyText, GhostBtn, SeverityPill } from "../../../design/primitives";
+import { Headline, BodyText, GhostBtn, SeverityPill } from "../../../design/primitives";
 import AdminTable from "../../../design/AdminTable";
 import { Link } from "react-router-dom";
 import { format, parseISO } from "date-fns";
@@ -36,23 +36,7 @@ function AllUsersList({ users, usersCount, deleteUserHandler }) {
   }
 
   return (
-    <AdminTable stickyPage>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "16px 24px",
-          borderBottom: "1px solid var(--t-neutral-200)",
-          gridColumn: "1 / -1",
-        }}
-      >
-        <Overline>All Users</Overline>
-        <Headline level="xl" style={{ fontSize: "var(--t-fontSize-xl)" }}>
-          {usersCount ?? 0}
-        </Headline>
-      </div>
-
+    <AdminTable title="All Users" count={usersCount ?? users.length}>
       <thead>
         <tr>
           {["Name", "Email", "Role", "Registered", "Actions"].map((h) => (

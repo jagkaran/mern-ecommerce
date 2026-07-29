@@ -31,7 +31,6 @@ import UpdateReviews from "./UpdateReviews";
 import Seo from "../../Seo";
 
 function UpdateProduct() {
-  const theme = useTheme();
   const { id } = useParams();
 
   const dispatch = useDispatch();
@@ -155,196 +154,191 @@ function UpdateProduct() {
   ]);
 
   return (
-    <>
-      <div style={{ padding: 16 }}>
-        <Seo
-          title="Update Product Details - Click.it Dashboard - Admin access only"
-          description="Dashboard panel to manage available products on Click.it store"
-          path="/admin/product/update"
-        />
-        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-            <Grid container spacing={3}>
-              <Grid size={{ xs: 12, md: 12, lg: 6 }}>
-                {loading ? (
-                  <div className="grid place-items-center h-screen">
-                    <CircularProgress />
-                  </div>
-                ) : (
-                  <Box
-                    sx={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                    }}
-                  >
-                    <Avatar sx={{ m: 1, bgcolor: "secondary.main" }}>
-                      <CategoryIcon />
-                    </Avatar>
-                    <Typography component="h1" variant="h5">
-                      Update Product
-                    </Typography>
-                    <Box
-                      component="form"
-                      noValidate
-                      onSubmit={updateProductSubmitHandler}
-                      sx={{ mt: 3 }}
-                    >
-                      <Grid container spacing={2}>
-                        <Grid size={{ xs: 12 }}>
-                          <TextField
-                            name="name"
-                            fullWidth
-                            id="name"
-                            label="Product Name"
-                            autoFocus
-                            required
-                            value={values.name}
-                            onChange={handleInputValue}
-                            {...(errors.name && {
-                              error: true,
-                              helperText: errors.name,
-                            })}
-                          />
-                        </Grid>
-                        <Grid size={{ xs: 12 }}>
-                          <TextField
-                            required
-                            InputLabelProps={{ shrink: true }}
-                            fullWidth
-                            id="price"
-                            label="Product Price"
-                            name="price"
-                            type="number"
-                            value={values.price}
-                            onChange={handleInputValue}
-                            {...(errors.price && {
-                              error: true,
-                              helperText: errors.price,
-                            })}
-                          />
-                        </Grid>
-                        <Grid size={{ xs: 12 }}>
-                          <TextField
-                            required
-                            fullWidth
-                            name="description"
-                            label="Product Description"
-                            id="description"
-                            value={values.description}
-                            onChange={handleInputValue}
-                            {...(errors.description && {
-                              error: true,
-                              helperText: errors.description,
-                            })}
-                          />
-                        </Grid>
-                        <Grid size={{ xs: 12 }}>
-                          <FormControl fullWidth {...(errors.category && { error: true })}>
-                            <InputLabel id="category-select-label">Category</InputLabel>
-                            <Select
-                              labelId="category-select-label"
-                              id="category"
-                              name="category"
-                              label="Select Category"
-                              value={values.category}
-                              onChange={handleInputValue}
-                            >
-                              <MenuItem value="">
-                                <em>None</em>
-                              </MenuItem>
-                              {categories.map((category) => (
-                                <MenuItem key={category.id} value={category.name}>
-                                  <span className="capitalize">{category.name}</span>
-                                </MenuItem>
-                              ))}
-                            </Select>
-                            {errors.category && <FormHelperText>{errors.category}</FormHelperText>}
-                          </FormControl>
-                        </Grid>
-                        <Grid size={{ xs: 12 }}>
-                          <TextField
-                            required
-                            fullWidth
-                            name="stock"
-                            label="Product Stock"
-                            id="stock"
-                            InputLabelProps={{ shrink: true }}
-                            value={values.stock}
-                            onChange={handleInputValue}
-                            {...(errors.stock && {
-                              error: true,
-                              helperText: errors.stock,
-                            })}
-                          />
-                        </Grid>
-                        <Grid sx={{ display: "flex", alignItems: "center" }} size={{ xs: 12 }}>
-                          <Typography variant="caption" display="block" gutterBottom>
-                            Old Images:
-                          </Typography>
-                          {oldImages?.map((image, index) => (
-                            <Avatar
-                              key={index}
-                              src={image.url}
-                              sx={{ m: 1, width: 60, height: 80 }}
-                              variant="square"
-                              alt="Old Images"
-                            />
-                          ))}
-                        </Grid>
-                        <Grid mt={2} sx={{ display: "flex", alignItems: "center" }} size={{ xs: 12 }}>
-                          <Typography variant="caption" display="block" gutterBottom>
-                            New Images:
-                          </Typography>
-                          {imagesPreview.map((image, index) => (
-                            <Avatar
-                              key={index}
-                              src={image}
-                              sx={{ m: 1, width: 60, height: 80 }}
-                              variant="square"
-                              alt="New Images"
-                            />
-                          ))}
-                        </Grid>
-                        <Grid sx={{ display: "flex", justifyContent: "flex-end" }} size={{ xs: 12 }}>
-                          <Button
-                            sx={{ m: 1, backgroundColor: "secondary.main" }}
-                            variant="contained"
-                            component="label"
-                            startIcon={<PhotoCamera />}
-                          >
-                            Upload Images
-                            <input
-                              type="file"
-                              name="avatar"
-                              accept="image/*"
-                              onChange={updateProductImagesChange}
-                              hidden
-                              multiple
-                            />
-                          </Button>
-                        </Grid>
-                      </Grid>
-                      <Button
-                        type="submit"
-                        fullWidth
-                        variant="contained"
-                        sx={{ mt: 3, mb: 2, backgroundColor: "secondary.main" }}
-                        disabled={!formIsValid()}
-                      >
-                        Update
-                      </Button>
-                    </Box>
-                  </Box>
-                )}
-              </Grid>
-              <UpdateReviews
-                reviews={reviews && reviews}
-                deleteReviewHandler={deleteReviewHandler}
+    <div style={{ padding: "24px 16px" }}>
+      <Seo
+        title="Update Product Details - Click.it Dashboard - Admin access only"
+        description="Dashboard panel to manage available products on Click.it store"
+        path="/admin/product/update"
+      />
+      <Box
+        sx={{
+          maxWidth: "720px",
+          margin: "0 auto",
+          background: "#fff",
+          borderRadius: "var(--t-border-radius-base)",
+          padding: { xs: "20px", md: "32px" },
+          boxShadow: "var(--t-shadow-sm)",
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2, marginBottom: "24px" }}>
+          <Avatar sx={{ bgcolor: "secondary.main", width: 40, height: 40 }}>
+            <CategoryIcon />
+          </Avatar>
+          <Typography component="h1" variant="h5" sx={{ fontWeight: 600 }}>
+            Update Product
+          </Typography>
+        </Box>
+
+        {loading ? (
+          <Box sx={{ display: "flex", justifyContent: "center", padding: "48px" }}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          <Box component="form" noValidate onSubmit={updateProductSubmitHandler}>
+            <TextField
+              required
+              fullWidth
+              name="name"
+              id="name"
+              label="Product Name"
+              autoFocus
+              value={values.name}
+              onChange={handleInputValue}
+              sx={{ marginBottom: "16px" }}
+              {...(errors.name && { error: true, helperText: errors.name })}
+            />
+
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
+                gap: "16px",
+                marginBottom: "16px",
+              }}
+            >
+              <TextField
+                required
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+                id="price"
+                label="Price"
+                name="price"
+                type="number"
+                value={values.price}
+                onChange={handleInputValue}
+                {...(errors.price && { error: true, helperText: errors.price })}
               />
-            </Grid>
-        </div>
-      </div>
-    </>
+              <TextField
+                required
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+                name="stock"
+                label="Stock"
+                id="stock"
+                value={values.stock}
+                onChange={handleInputValue}
+                {...(errors.stock && { error: true, helperText: errors.stock })}
+              />
+            </Box>
+
+            <TextField
+              required
+              fullWidth
+              name="description"
+              label="Description"
+              id="description"
+              multiline
+              rows={4}
+              value={values.description}
+              onChange={handleInputValue}
+              sx={{ marginBottom: "16px" }}
+              {...(errors.description && { error: true, helperText: errors.description })}
+            />
+
+            <FormControl
+              fullWidth
+              sx={{ marginBottom: "16px" }}
+              {...(errors.category && { error: true })}
+            >
+              <InputLabel id="category-select-label">Category</InputLabel>
+              <Select
+                labelId="category-select-label"
+                id="category"
+                name="category"
+                label="Category"
+                value={values.category}
+                onChange={handleInputValue}
+              >
+                <MenuItem value="">
+                  <em>None</em>
+                </MenuItem>
+                {categories.map((category) => (
+                  <MenuItem key={category.id} value={category.name}>
+                    {category.name}
+                  </MenuItem>
+                ))}
+              </Select>
+              {errors.category && <FormHelperText>{errors.category}</FormHelperText>}
+            </FormControl>
+
+            <Box sx={{ marginBottom: "16px" }}>
+              <Typography variant="caption" sx={{ display: "block", marginBottom: "8px" }}>
+                Current Images
+              </Typography>
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                {oldImages?.map((image, index) => (
+                  <Avatar
+                    key={index}
+                    src={image.url}
+                    sx={{ width: 60, height: 60 }}
+                    variant="square"
+                    alt="Old Images"
+                  />
+                ))}
+              </Box>
+            </Box>
+
+            <Box sx={{ marginBottom: "16px" }}>
+              <Typography variant="caption" sx={{ display: "block", marginBottom: "8px" }}>
+                New Image Previews
+              </Typography>
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                {imagesPreview.map((image, index) => (
+                  <Avatar
+                    key={index}
+                    src={image}
+                    sx={{ width: 60, height: 60 }}
+                    variant="square"
+                    alt="New Images"
+                  />
+                ))}
+              </Box>
+            </Box>
+
+            <Button
+              sx={{ marginBottom: "24px", backgroundColor: "secondary.main" }}
+              variant="contained"
+              component="label"
+              startIcon={<PhotoCamera />}
+            >
+              Upload Images
+              <input
+                type="file"
+                name="avatar"
+                accept="image/*"
+                onChange={updateProductImagesChange}
+                hidden
+                multiple
+              />
+            </Button>
+
+            <Button
+              type="submit"
+              fullWidth
+              variant="contained"
+              sx={{ padding: "12px", backgroundColor: "secondary.main" }}
+              disabled={!formIsValid()}
+            >
+              Update
+            </Button>
+          </Box>
+        )}
+      </Box>
+
+      <Box sx={{ maxWidth: "720px", margin: "24px auto 0" }}>
+        <UpdateReviews reviews={reviews} deleteReviewHandler={deleteReviewHandler} />
+      </Box>
+    </div>
   );
 }
 

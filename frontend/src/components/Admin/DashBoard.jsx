@@ -42,9 +42,9 @@ export default function Dashboard() {
       />
       <Box
         sx={{
-          paddingTop: { xs: 16, md: 24 },
-          paddingBottom: { xs: 32, md: 48 },
-          paddingInline: { xs: 2, md: "var(--t-space-lg)" },
+          paddingTop: "16px",
+          paddingBottom: "32px",
+          paddingInline: { xs: "16px", md: "var(--t-space-lg)" },
           maxWidth: "var(--t-grid-containerMax)",
           marginInline: "auto",
           width: "100%",
@@ -58,7 +58,7 @@ export default function Dashboard() {
               sm: "repeat(2, 1fr)",
               md: "repeat(4, 1fr)",
             },
-            gap: { xs: 2, md: "var(--t-space-md)" },
+            gap: { xs: "16px", md: "var(--t-space-md)" },
           }}
         >
           <Link to="/admin/orders" style={{ textDecoration: "none" }}>
@@ -76,8 +76,8 @@ export default function Dashboard() {
           sx={{
             display: "grid",
             gridTemplateColumns: { xs: "1fr", md: "2fr 1fr" },
-            gap: { xs: 2, md: "var(--t-space-md)" },
-            marginTop: { xs: 2, md: "var(--t-space-md)" },
+            gap: { xs: "16px", md: "var(--t-space-md)" },
+            marginTop: { xs: "16px", md: "var(--t-space-md)" },
           }}
         >
           <LastestSales totalRevenue={totalAmount ?? 0} />

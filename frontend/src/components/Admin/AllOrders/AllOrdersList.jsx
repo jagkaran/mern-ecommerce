@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import AdminTable from "../../../design/AdminTable";
-import { Overline, Headline, BodyText, GhostBtn, SeverityPill } from "../../../design/primitives";
+import { Headline, BodyText, GhostBtn, SeverityPill } from "../../../design/primitives";
 import { createOrderNumber } from "../../Order/MyOrders";
 import { fmtInCurrency } from "../../../utils/fmtInCurrency";
 import useAdminPagination, { PER_PAGE_OPTIONS } from "../Hooks/useAdminPagination";
@@ -17,7 +17,7 @@ function statusColor(status) {
   return PILL_COLOR[status] || "error";
 }
 
-function AllOrdersList({ orders, deleteOrderHandler }) {
+function AllOrdersList({ orders, totalCount, deleteOrderHandler }) {
   const [open, setOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState({});
 
@@ -44,30 +44,7 @@ function AllOrdersList({ orders, deleteOrderHandler }) {
   }
 
   return (
-    <AdminTable stickyPage>
-      <colgroup>
-        <col style={{ width: "minmax(140px, 1.4fr)" }} />
-        <col style={{ width: "minmax(120px, 1fr)" }} />
-        <col style={{ width: "minmax(80px, 0.6fr)" }} />
-        <col style={{ width: "minmax(110px, 1fr)" }} />
-        <col style={{ width: "minmax(110px, 0.8fr)" }} />
-      </colgroup>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "16px 24px",
-          borderBottom: "1px solid var(--t-neutral-200)",
-          gridColumn: "1 / -1",
-        }}
-      >
-        <Overline>All Orders</Overline>
-        <Headline level="xl" style={{ fontSize: "var(--t-fontSize-xl)" }}>
-          {orders.length}
-        </Headline>
-      </div>
-
+    <AdminTable title="All Orders" count={totalCount ?? orders.length}>
       <thead>
         <tr>
           {["Order ID", "Status", "Items", "Amount", "Actions"].map((h) => (
@@ -251,7 +228,7 @@ function AllOrdersList({ orders, deleteOrderHandler }) {
               >
                 <BodyText small style={{ color: "var(--t-neutral-500)" }}>
                   {Math.min((page - 1) * perPage + 1, orders.length)}–
-                  {Math.min(page * perPage, orders.length)} of {orders.length}
+                  {Math.min(page * perPage, orders.length)} of {totalCount ?? orders.length}
                 </BodyText>
                 <div style={{ display: "flex", gap: 4 }}>
                   <GhostBtn

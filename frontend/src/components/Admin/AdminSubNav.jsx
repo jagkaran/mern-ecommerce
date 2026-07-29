@@ -13,16 +13,8 @@ const ITEMS = [
   { label: "Customers", to: "/admin/users" },
 ];
 
-const HIDE_ON = [
-  /^\/admin\/product\/(new|update\/[^/]+)$/,
-  /^\/admin\/order\/update\/[^/]+$/,
-  /^\/admin\/user\/update\/[^/]+$/,
-  /^\/admin\/coupon\/(new|update\/[^/]+)$/,
-];
-
 export default function AdminSubNav() {
   const { pathname } = useLocation();
-  if (HIDE_ON.some((re) => re.test(pathname))) return null;
 
   return (
     <nav

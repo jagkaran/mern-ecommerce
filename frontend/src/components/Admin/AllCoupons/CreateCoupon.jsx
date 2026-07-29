@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { CircularProgress } from "@mui/material";
+import { Box, CircularProgress } from "@mui/material";
 import { createCoupon, clearCouponErrors } from "../../../actions/couponAction";
 import { useToast } from "../../../hooks/useToast";
 import Seo from "../../Seo";
@@ -37,9 +37,18 @@ function CreateCoupon() {
   };
 
   return (
-    <div style={{ padding: 16 }}>
+    <div style={{ padding: "24px 16px" }}>
       <Seo title="New coupon" path="/admin/coupon/new" />
-      <div style={{ maxWidth: 960, margin: "0 auto" }}>
+      <Box
+        sx={{
+          maxWidth: "960px",
+          margin: "0 auto",
+          background: "#fff",
+          borderRadius: "var(--t-border-radius-base)",
+          padding: { xs: "20px", md: "32px" },
+          boxShadow: "var(--t-shadow-sm)",
+        }}
+      >
         {loading && submitting ? (
           <CircularProgress />
         ) : (
@@ -50,7 +59,7 @@ function CreateCoupon() {
             submitLabel="Create coupon"
           />
         )}
-      </div>
+      </Box>
     </div>
   );
 }

@@ -2,12 +2,11 @@ import React, { useState, useEffect } from "react";
 import { Rating } from "@mui/material";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import AddIcon from "@mui/icons-material/Add";
 import { clearErrors, deleteProduct } from "../../../actions/productAction";
 import { useCurrency } from "../../../utils/currencyContext";
 import { useToast } from "../../../hooks/useToast";
 import AdminTable from "../../../design/AdminTable";
-import { Overline, Headline, BodyText, GhostBtn } from "../../../design/primitives";
+import { Headline, BodyText, GhostBtn } from "../../../design/primitives";
 import useAdminPagination, { PER_PAGE_OPTIONS } from "../Hooks/useAdminPagination";
 
 function AllProductsList({ products }) {
@@ -56,28 +55,11 @@ function AllProductsList({ products }) {
   }
 
   return (
-    <AdminTable stickyPage>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "16px 24px",
-          borderBottom: "1px solid var(--t-neutral-200)",
-          gridColumn: "1 / -1",
-        }}
-      >
-        <Overline>All Products</Overline>
-        <GhostBtn
-          component={Link}
-          to="/admin/product/new"
-          size="small"
-          style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4 }}
-        >
-          <AddIcon fontSize="small" /> New
-        </GhostBtn>
-      </div>
-
+    <AdminTable
+      title="All Products"
+      count={products.length}
+      action={{ to: "/admin/product/new", label: "+ New" }}
+    >
       <thead>
         <tr>
           {["Product ID", "Name", "Ratings", "Stock", "Price", "Actions"].map((h) => (

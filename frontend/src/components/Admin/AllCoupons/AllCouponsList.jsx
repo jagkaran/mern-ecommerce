@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import AddIcon from "@mui/icons-material/Add";
 import { useToast } from "../../../hooks/useToast";
 import AdminTable from "../../../design/AdminTable";
-import { Card, CardBody, Overline, BodyText, GhostBtn } from "../../../design/primitives";
+import { BodyText, GhostBtn } from "../../../design/primitives";
 import useAdminPagination, { PER_PAGE_OPTIONS } from "../Hooks/useAdminPagination";
 import { clearCouponErrors, deleteCoupon, toggleCoupon } from "../../../actions/couponAction";
 
@@ -106,65 +105,30 @@ function AllCouponsList({ coupons }) {
 
   if (!coupons || coupons.length === 0) {
     return (
-      <Card>
-        <CardBody>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: "16px 24px",
-              borderBottom: "1px solid var(--t-neutral-200)",
-            }}
-          >
-            <Overline>All Coupons</Overline>
-            <GhostBtn
-              component={Link}
-              to="/admin/coupon/new"
-              size="small"
-              style={{
-                textDecoration: "none",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 4,
-              }}
-            >
-              <AddIcon fontSize="small" /> New
-            </GhostBtn>
-          </div>
-          <div style={{ padding: "32px 24px", textAlign: "center" }}>
-            <BodyText style={{ color: "var(--t-neutral-400)" }}>
-              No coupons yet. Create your first promotion to get started.
-            </BodyText>
-          </div>
-        </CardBody>
-      </Card>
+      <AdminTable
+        title="All Coupons"
+        count={0}
+        action={{ to: "/admin/coupon/new", label: "+ New" }}
+      >
+        <tbody>
+          <tr>
+            <td colSpan={6} style={{ padding: "32px 24px", textAlign: "center" }}>
+              <BodyText style={{ color: "var(--t-neutral-400)" }}>
+                No coupons yet. Create your first promotion to get started.
+              </BodyText>
+            </td>
+          </tr>
+        </tbody>
+      </AdminTable>
     );
   }
 
   return (
-    <AdminTable stickyPage>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "16px 24px",
-          borderBottom: "1px solid var(--t-neutral-200)",
-          gridColumn: "1 / -1",
-        }}
-      >
-        <Overline>All Coupons</Overline>
-        <GhostBtn
-          component={Link}
-          to="/admin/coupon/new"
-          size="small"
-          style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4 }}
-        >
-          <AddIcon fontSize="small" /> New
-        </GhostBtn>
-      </div>
-
+    <AdminTable
+      title="All Coupons"
+      count={coupons.length}
+      action={{ to: "/admin/coupon/new", label: "+ New" }}
+    >
       <thead>
         <tr>
           {["Code", "Name", "Discount", "Used", "Status", "Actions"].map((h) => (

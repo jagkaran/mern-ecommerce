@@ -68,79 +68,68 @@ function UpdateOrder() {
   }, [dispatch, error, toast, id, isUpdated, updateError]);
 
   return (
-    <>
-      <div style={{ padding: 16 }}>
-          <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-            <Grid container spacing={3}>
-              <Grid size={{ xs: 12 }}>
-                {loading ? (
-                  <div className="grid place-items-center h-screen">
-                    <CircularProgress />
-                  </div>
-                ) : (
-                  order &&
-                  order.shippingInfo && (
-                    <Box
-                      component="main"
-                      sx={{
-                        flexGrow: 1,
-                        py: 8,
-                      }}
-                    >
-                      <Seo
-                        title={`Update Order ${createOrderNumber(
-                          order._id,
-                          order.shippingInfo.country ? order.shippingInfo.country : "IN"
-                        )} - Click.it store - Admin access only`}
-                        description="Dashboard to manage created orders on Click.it store"
-                        path="/admin/users"
-                      />
-                      <Typography sx={{ mb: 3 }} variant="h4">
-                        Order:{" "}
-                        {createOrderNumber(
-                          order._id,
-                          order.shippingInfo.country ? order.shippingInfo.country : "IN"
-                        )}
-                      </Typography>
-                      <ShippingInfoCard
-                        name={order.user?.name}
-                        phone={order.shippingInfo?.phone}
-                        address={addresses.join(", ")}
-                      />
-                      <Box sx={{ pt: 3 }}>
-                        <PaymentInfoCard
-                          status={order.paymentInfo.status}
-                          amount={order.totalPrice}
-                          tax={order.taxPrice}
-                          itemPrice={order.itemPrice}
-                          shippingPrice={order.shippingPrice}
-                          discount={order.discount}
-                          coupon={order.coupon}
-                          currency={orderCurrency}
-                          rate={orderRate}
-                        />
-                      </Box>
-                      <Box sx={{ pt: 3 }}>
-                        <AdminOrderStatusCard
-                          updateOrderSubmitHandler={updateOrderSubmitHandler}
-                          setOrderStatus={setOrderStatus}
-                          status={order.orderStatus}
-                          orderStatus={orderStatus}
-                          loading={loading}
-                          deliveredAt={order.deliveredAt}
-                        />
-                      </Box>
-                      <Box sx={{ pt: 3 }}>
-                        <OrderItemsCard orderItems={order.orderItems} />
-                      </Box>
-                    </Box>
-                  )
+    <div style={{ padding: "24px 16px" }}>
+      <Seo
+        title={`Update Order ${
+          order ? createOrderNumber(order._id, order.shippingInfo?.country || "IN") : ""
+        } - Click.it store - Admin access only`}
+        description="Dashboard to manage created orders on Click.it store"
+        path="/admin/users"
+      />
+      <div style={{ maxWidth: "960px", margin: "0 auto" }}>
+        {loading ? (
+          <Box sx={{ display: "flex", justifyContent: "center", padding: "48px" }}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          order &&
+          order.shippingInfo && (
+            <>
+              <Typography sx={{ marginBottom: "16px" }} variant="h4">
+                Order:{" "}
+                {createOrderNumber(
+                  order._id,
+                  order.shippingInfo.country ? order.shippingInfo.country : "IN"
                 )}
-              </Grid>
-            </Grid>
-          </div>
-        </div>
-    </>
+              </Typography>
+              <Box sx={{ marginBottom: "16px" }}>
+                <ShippingInfoCard
+                  name={order.user?.name}
+                  phone={order.shippingInfo?.phone}
+                  address={addresses.join(", ")}
+                />
+              </Box>
+              <Box sx={{ marginBottom: "16px" }}>
+                <PaymentInfoCard
+                  status={order.paymentInfo.status}
+                  amount={order.totalPrice}
+                  tax={order.taxPrice}
+                  itemPrice={order.itemPrice}
+                  shippingPrice={order.shippingPrice}
+                  discount={order.discount}
+                  coupon={order.coupon}
+                  currency={orderCurrency}
+                  rate={orderRate}
+                />
+              </Box>
+              <Box sx={{ marginBottom: "16px" }}>
+                <AdminOrderStatusCard
+                  updateOrderSubmitHandler={updateOrderSubmitHandler}
+                  setOrderStatus={setOrderStatus}
+                  status={order.orderStatus}
+                  orderStatus={orderStatus}
+                  loading={loading}
+                  deliveredAt={order.deliveredAt}
+                />
+              </Box>
+              <Box>
+                <OrderItemsCard orderItems={order.orderItems} />
+              </Box>
+            </>
+          )
+        )}
+      </div>
+    </div>
   );
 }
 
