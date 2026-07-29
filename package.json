@@ -105,7 +105,6 @@
     "mongoose": "^9.7.4",
     "node-cache": "^5.1.2",
     "nodemailer": "^9.0.3",
-    "nodemon": "^3.1.9",
     "stripe": "^22.3.2",
     "validator": "^13.12.0",
     "winston": "^3.17.0",
@@ -120,6 +119,7 @@
     "jest": "^30.4.2",
     "lighthouse": "^13.4.0",
     "mongodb-memory-server": "^11.0.1",
+    "nodemon": "^3.1.9",
     "prettier": "^3.9.5",
     "supertest": "^7.0.0"
   }

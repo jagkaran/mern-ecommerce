@@ -38,6 +38,13 @@ const userSchema = new mongoose.Schema({
   role: {
     type: String,
     default: "user",
+    // Enum constraint enforced at the DB/ODM layer so no arbitrary role
+    // string can be set by a MongoDB operator, admin-panel typo, or a
+    // direct DB write that bypasses the API.
+    enum: {
+      values: ["user", "admin"],
+      message: "Role must be one of: user, admin",
+    },
   },
   createdAt: {
     type: Date,

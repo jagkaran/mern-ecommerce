@@ -13,7 +13,9 @@ const productSchema = new mongoose.Schema({
   price: {
     type: Number,
     required: [true, "Please enter product price"],
-    maxLength: [8, "Price cannot exceed 8 figures"],
+    // max enforces an upper bound on a Number field.
+    // maxLength is a String validator and is silently ignored on Numbers.
+    max: [99999999, "Price cannot exceed 8 figures"],
   },
   ratings: {
     type: Number,
@@ -37,8 +39,10 @@ const productSchema = new mongoose.Schema({
   },
   stock: {
     type: Number,
-    required: [true, "please enter Product category"],
-    maxLength: [4, "Stock cannot exceed 4 figures"],
+    required: [true, "please enter Product stock"],
+    // max enforces an upper bound on a Number field.
+    // maxLength is a String validator and is silently ignored on Numbers.
+    max: [9999, "Stock cannot exceed 4 figures"],
     default: 1,
   },
   numOfReviews: {
