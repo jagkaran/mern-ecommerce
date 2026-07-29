@@ -17,6 +17,7 @@ import Header from "./components/Home/Header";
 import Footer from "./components/Home/Footer.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import AdminRoute from "./components/AdminRoute.jsx";
+import AdminSubNav from "./components/Admin/AdminSubNav";
 import useCsrfToken from "./hooks/useCsrfToken";
 import ToastHost from "./components/ToastHost";
 import CurrencyProvider from "./utils/currencyContext.jsx";
@@ -73,6 +74,10 @@ const lazyRoute = (loader) => async () => {
 const router = createBrowserRouter([
   {
     path: "/",
+    // RR v7 warns "No HydrateFallback element provided to render during
+    // initial hydration" when async `lazy:` loaders exist. Point it at the
+    // same PageLoader Suspense uses so the initial paint matches.
+    hydrateFallback: <PageLoader />,
     element: <RootLayout />,
     children: [
       { index: true, element: <Home /> },
@@ -170,6 +175,7 @@ function AdminLayout() {
   const { isAuthenticated, loading } = useSelector((state) => state.user);
   return (
     <AdminRoute isAuthenticated={isAuthenticated} loading={loading}>
+      <AdminSubNav />
       <Outlet />
     </AdminRoute>
   );
