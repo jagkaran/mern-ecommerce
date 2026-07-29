@@ -1,20 +1,17 @@
 import React from "react";
 import {
+  Box,
   Button,
-  Card,
-  CardContent,
-  CardHeader,
-  Divider,
   FormControl,
-  Grid,
   InputLabel,
   MenuItem,
   Select,
   Typography,
 } from "@mui/material";
-import SeverityPill from "../../Order/SeverityPill";
 import UpgradeIcon from "@mui/icons-material/Upgrade";
 import { format, parseISO } from "date-fns";
+import SeverityPill from "../../Order/SeverityPill";
+import { Card, CardBody, Overline } from "../../../design/primitives";
 
 function AdminOrderStatusCard({
   status,
@@ -24,78 +21,79 @@ function AdminOrderStatusCard({
   loading,
   deliveredAt,
 }) {
+  const currentPillColor =
+    (status === "Delivered" && "success") ||
+    (status === "Shipped" && "info") ||
+    (status === "Processing" && "warning") ||
+    "error";
+
   return (
     <Card>
-      <CardHeader
-        subheader="Update order status to Shipped or Deliverd"
-        title="Order Status"
-      />
-      <Divider />
-      <CardContent>
-        <form onSubmit={updateOrderSubmitHandler}>
-          <Grid container spacing={6} wrap="wrap">
-            <Grid sx={{ display: "flex", flexDirection: "column", justifyContent: "center", }} size={{ md: 4, sm: 6, xs: 12 }}>
-              <Typography gutterBottom variant="body1">
-                <SeverityPill
-                  color={
-                    (status === "Delivered" && "success") ||
-                    (status === "Shipped" && "info") ||
-                    (status === "Processing" && "warning") ||
-                    "error"
-                  }
-                >
-                  {status}
-                </SeverityPill>
-                {status === "Delivered" &&
-                  ` at ${format(parseISO(deliveredAt), `dd.MM.yyyy HH:mm`)}`}
-              </Typography>
-            </Grid>
+      <CardBody>
+        <Overline>Order Status</Overline>
+        <Typography variant="h6" sx={{ marginTop: "8px", marginBottom: "8px" }}>
+          Update order status to Shipped or Delivered
+        </Typography>
 
-            <Grid sx={{ display: status === "Delivered" ? "none" : "flex", }} size={{ md: 4, sm: 6, xs: 12 }}>
-              <FormControl fullWidth>
-                <InputLabel id="demo-simple-select-label">
-                  Order Status
-                </InputLabel>
-                <Select
-                  labelId="order-status-select-label"
-                  id="order-status-select"
-                  name="orderStatus"
-                  label="Select Order Status"
-                  value={orderStatus}
-                  onChange={(e) => setOrderStatus(e.target.value)}
-                >
-                  <MenuItem value="">
-                    <em>None</em>
-                  </MenuItem>
-                  {status === "Processing" && (
-                    <MenuItem value="Shipped">
-                      <span className="capitalize">shipped</span>
-                    </MenuItem>
-                  )}
+        <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: "16px" }}>
+          <SeverityPill color={currentPillColor}>{status}</SeverityPill>
+          {status === "Delivered" && deliveredAt && (
+            <Typography variant="body2" sx={{ color: "var(--t-neutral-500)" }}>
+              Delivered at {format(parseISO(deliveredAt), "dd.MM.yyyy HH:mm")}
+            </Typography>
+          )}
+        </Box>
 
-                  {status === "Shipped" && (
-                    <MenuItem value="Delivered">
-                      <span className="capitalize">delivered</span>
-                    </MenuItem>
-                  )}
-                </Select>
-              </FormControl>
-              <Button
-                type="submit"
-                fullWidth
-                variant="outlined"
-                sx={{ ml: 3 }}
-                startIcon={<UpgradeIcon />}
-                disabled={
-                  loading ? true : false || orderStatus === "" ? true : false
-                }
+        {status !== "Delivered" && (
+          <Box
+            component="form"
+            onSubmit={updateOrderSubmitHandler}
+            sx={{
+              display: "grid",
+              gridTemplateColumns: { xs: "1fr", sm: "1fr auto" },
+              gap: "12px",
+              marginTop: "20px",
+              alignItems: "flex-end",
+            }}
+          >
+            <FormControl fullWidth>
+              <InputLabel id="order-status-select-label">New status</InputLabel>
+              <Select
+                labelId="order-status-select-label"
+                id="order-status-select"
+                name="orderStatus"
+                label="New status"
+                value={orderStatus}
+                onChange={(e) => setOrderStatus(e.target.value)}
               >
-                Update
-              </Button>
-            </Grid>
-          </Grid>
-        </form>
-      </CardContent>
+                <MenuItem value="">
+                  <em>None</em>
+                </MenuItem>
+                {status === "Processing" && (
+                  <MenuItem value="Shipped">Shipped</MenuItem>
+                )}
+                {status === "Shipped" && (
+                  <MenuItem value="Delivered">Delivered</MenuItem>
+                )}
+              </Select>
+            </FormControl>
+            <Button
+              type="submit"
+              variant="contained"
+              startIcon={<UpgradeIcon />}
+              disabled={loading || orderStatus === ""}
+              sx={{
+                paddingInline: "24px",
+                paddingBlock: "10px",
+                backgroundColor: "secondary.main",
+                whiteSpace: "nowrap",
+              }}
+            >
+              Update
+            </Button>
+          </Box>
+        )}
+      </CardBody>
     </Card>
   );
 }

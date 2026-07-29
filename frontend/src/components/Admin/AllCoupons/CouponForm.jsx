@@ -1,6 +1,9 @@
 // Shared form for create + update. Keep it dumb: just collects the payload
 // shape the backend expects. Submit handler is the parent's responsibility
 // so the same form can drive both flows without re-mounting the fields.
+//
+// Renders as a plain <form> — the parent (CreateCoupon / UpdateCoupon) wraps
+// it in a Card so we don't get a card-inside-card.
 
 import React, { useState, useEffect } from "react";
 import {
@@ -9,7 +12,6 @@ import {
   Checkbox,
   FormControl,
   FormControlLabel,
-  Grid,
   InputLabel,
   MenuItem,
   Select,
@@ -19,7 +21,6 @@ import {
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
-import { Card, CardBody, Headline } from "../../../design/primitives";
 
 const DISCOUNT_TYPES = [
   { value: "percentage", label: "Percentage" },
@@ -133,265 +134,288 @@ function CouponForm({ initialValues, onSubmit, busy, submitLabel = "Save" }) {
   };
 
   return (
-    <Card>
-      <CardBody>
-        <Headline level="md" style={{ marginBottom: 24 }}>
-          {submitLabel} coupon
-        </Headline>
-        <form onSubmit={handleSubmit}>
-          <Grid container spacing={2}>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                fullWidth
-                required
-                label="Code (3-32 chars, A-Z 0-9 _ -)"
-                value={values.code}
-                disabled={codeLocked}
-                onChange={(e) => set("code", e.target.value.toUpperCase().trim())}
-                inputProps={{ style: { fontFamily: "monospace" } }}
-                helperText={
-                  codeLocked
-                    ? "Code is immutable after creation"
-                    : "Shown to shoppers in upper-case"
-                }
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                fullWidth
-                required
-                label="Internal name"
-                value={values.name}
-                onChange={(e) => set("name", e.target.value)}
-              />
-            </Grid>
-            <Grid size={{ xs: 12 }}>
-              <TextField
-                fullWidth
-                label="Description (shown in admin + offers list)"
-                value={values.description}
-                onChange={(e) => set("description", e.target.value)}
-                multiline
-                rows={2}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 4 }}>
-              <FormControl fullWidth>
-                <InputLabel>Discount type</InputLabel>
-                <Select
-                  value={values.discountType}
-                  label="Discount type"
-                  onChange={(e) => set("discountType", e.target.value)}
+    <form onSubmit={handleSubmit}>
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
+          gap: "20px",
+        }}
+      >
+        <TextField
+          fullWidth
+          required
+          label="Code (3-32 chars, A-Z 0-9 _ -)"
+          value={values.code}
+          disabled={codeLocked}
+          onChange={(e) => set("code", e.target.value.toUpperCase().trim())}
+          inputProps={{ style: { fontFamily: "monospace" } }}
+          helperText={codeLocked ? "Code is immutable after creation" : "Shown to shoppers in upper-case"}
+        />
+        <TextField
+          fullWidth
+          required
+          label="Internal name"
+          value={values.name}
+          onChange={(e) => set("name", e.target.value)}
+        />
+
+        <Box sx={{ gridColumn: "1 / -1" }}>
+          <TextField
+            fullWidth
+            label="Description (shown in admin + offers list)"
+            value={values.description}
+            onChange={(e) => set("description", e.target.value)}
+            multiline
+            rows={2}
+          />
+        </Box>
+
+        <FormControl fullWidth>
+          <InputLabel>Discount type</InputLabel>
+          <Select
+            value={values.discountType}
+            label="Discount type"
+            onChange={(e) => set("discountType", e.target.value)}
+          >
+            {DISCOUNT_TYPES.map((d) => (
+              <MenuItem key={d.value} value={d.value}>
+                {d.label}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        <TextField
+          fullWidth
+          type="number"
+          label="Discount value (% or $)"
+          value={values.discountValue}
+          onChange={(e) => set("discountValue", e.target.value)}
+          disabled={values.discountType === "freeShipping"}
+          helperText="Required for percentage / flat. Free shipping ignores."
+        />
+
+        <Box sx={{ gridColumn: "1 / -1" }}>
+          <FormControl fullWidth>
+            <InputLabel>Stack policy</InputLabel>
+            <Select
+              value={values.stackPolicy}
+              label="Stack policy"
+              onChange={(e) => set("stackPolicy", e.target.value)}
+            >
+              {STACK_POLICIES.map((s) => (
+                <MenuItem key={s.value} value={s.value}>
+                  {s.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Box>
+
+        {/* Tiered sub-form */}
+        {values.discountType === "tiered" && (
+          <Box sx={{ gridColumn: "1 / -1" }}>
+            <Box
+              sx={{
+                border: "1px solid var(--t-neutral-200)",
+                borderRadius: "8px",
+                padding: "16px",
+              }}
+            >
+              <Typography variant="subtitle2" sx={{ marginBottom: "12px" }}>
+                Tiers
+              </Typography>
+              {(values.tiers || []).map((t, idx) => (
+                <Box
+                  key={idx}
+                  sx={{
+                    display: "flex",
+                    gap: "12px",
+                    alignItems: "center",
+                    marginBottom: "12px",
+                  }}
                 >
-                  {DISCOUNT_TYPES.map((d) => (
-                    <MenuItem key={d.value} value={d.value}>
-                      {d.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 4 }}>
-              <TextField
-                fullWidth
-                type="number"
-                label="Discount value (% or $)"
-                value={values.discountValue}
-                onChange={(e) => set("discountValue", e.target.value)}
-                disabled={values.discountType === "freeShipping"}
-                helperText="Required for percentage / flat. Free shipping ignores."
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 4 }}>
-              <FormControl fullWidth>
-                <InputLabel>Stack policy</InputLabel>
-                <Select
-                  value={values.stackPolicy}
-                  label="Stack policy"
-                  onChange={(e) => set("stackPolicy", e.target.value)}
-                >
-                  {STACK_POLICIES.map((s) => (
-                    <MenuItem key={s.value} value={s.value}>
-                      {s.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-
-            {/* Tiered sub-form */}
-            {values.discountType === "tiered" && (
-              <Grid size={{ xs: 12 }}>
-                <Box sx={{ border: "1px solid var(--t-neutral-200)", borderRadius: 1, p: 2 }}>
-                  <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                    Tiers
-                  </Typography>
-                  {(values.tiers || []).map((t, idx) => (
-                    <Box key={idx} sx={{ display: "flex", gap: 1, alignItems: "center", mb: 1 }}>
-                      <TextField
-                        type="number"
-                        label="Min qty"
-                        size="small"
-                        value={t.minQty}
-                        onChange={(e) => setTier(idx, "minQty", e.target.value)}
-                        sx={{ width: 120 }}
-                      />
-                      <TextField
-                        type="number"
-                        label="Percent off"
-                        size="small"
-                        value={t.percent}
-                        onChange={(e) => setTier(idx, "percent", e.target.value)}
-                        sx={{ width: 120 }}
-                      />
-                      <IconButton size="small" onClick={() => removeTier(idx)}>
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </Box>
-                  ))}
-                  <Button size="small" startIcon={<AddIcon />} onClick={addTier}>
-                    Add tier
-                  </Button>
+                  <TextField
+                    type="number"
+                    label="Min qty"
+                    size="small"
+                    value={t.minQty}
+                    onChange={(e) => setTier(idx, "minQty", e.target.value)}
+                    sx={{ width: 140 }}
+                  />
+                  <TextField
+                    type="number"
+                    label="Percent off"
+                    size="small"
+                    value={t.percent}
+                    onChange={(e) => setTier(idx, "percent", e.target.value)}
+                    sx={{ width: 140 }}
+                  />
+                  <IconButton size="small" onClick={() => removeTier(idx)}>
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
                 </Box>
-              </Grid>
-            )}
+              ))}
+              <Button size="small" startIcon={<AddIcon />} onClick={addTier}>
+                Add tier
+              </Button>
+            </Box>
+          </Box>
+        )}
 
-            {/* BOGO sub-form */}
-            {values.discountType === "bogo" && (
-              <Grid size={{ xs: 12 }}>
-                <Box sx={{ border: "1px solid var(--t-neutral-200)", borderRadius: 1, p: 2 }}>
-                  <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                    Buy N get M at X% off
-                  </Typography>
-                  <Box sx={{ display: "flex", gap: 2 }}>
-                    <TextField
-                      type="number"
-                      label="Buy qty"
-                      size="small"
-                      value={values.bogoConfig.buyQty}
-                      onChange={(e) => setBogo("buyQty", Number(e.target.value))}
-                    />
-                    <TextField
-                      type="number"
-                      label="Get qty"
-                      size="small"
-                      value={values.bogoConfig.getQty}
-                      onChange={(e) => setBogo("getQty", Number(e.target.value))}
-                    />
-                    <TextField
-                      type="number"
-                      label="Get % off"
-                      size="small"
-                      value={values.bogoConfig.getPercent}
-                      onChange={(e) => setBogo("getPercent", Number(e.target.value))}
-                    />
-                  </Box>
-                </Box>
-              </Grid>
-            )}
-
-            {/* Eligibility */}
-            <Grid size={{ xs: 12 }}>
-              <Box sx={{ border: "1px solid var(--t-neutral-200)", borderRadius: 1, p: 2 }}>
-                <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                  Eligibility
-                </Typography>
-                <Grid container spacing={2}>
-                  <Grid size={{ xs: 6, sm: 3 }}>
-                    <TextField
-                      fullWidth
-                      type="number"
-                      label="Min cart subtotal"
-                      value={values.eligibility.minSubtotal}
-                      onChange={(e) => setElig("minSubtotal", e.target.value)}
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 6, sm: 3 }}>
-                    <TextField
-                      fullWidth
-                      type="number"
-                      label="Min items"
-                      value={values.eligibility.minItems}
-                      onChange={(e) => setElig("minItems", e.target.value)}
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 6, sm: 3 }}>
-                    <TextField
-                      fullWidth
-                      type="number"
-                      label="Per-user cap"
-                      value={values.eligibility.usageLimitPerUser}
-                      onChange={(e) => setElig("usageLimitPerUser", e.target.value)}
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 6, sm: 3 }}>
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          checked={Boolean(values.eligibility.firstOrderOnly)}
-                          onChange={(e) => setElig("firstOrderOnly", e.target.checked)}
-                        />
-                      }
-                      label="First order only"
-                    />
-                  </Grid>
-                </Grid>
+        {/* BOGO sub-form */}
+        {values.discountType === "bogo" && (
+          <Box sx={{ gridColumn: "1 / -1" }}>
+            <Box
+              sx={{
+                border: "1px solid var(--t-neutral-200)",
+                borderRadius: "8px",
+                padding: "16px",
+              }}
+            >
+              <Typography variant="subtitle2" sx={{ marginBottom: "12px" }}>
+                Buy N get M at X% off
+              </Typography>
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: { xs: "1fr", sm: "repeat(3, 1fr)" },
+                  gap: "16px",
+                }}
+              >
+                <TextField
+                  type="number"
+                  label="Buy qty"
+                  size="small"
+                  value={values.bogoConfig.buyQty}
+                  onChange={(e) => setBogo("buyQty", Number(e.target.value))}
+                />
+                <TextField
+                  type="number"
+                  label="Get qty"
+                  size="small"
+                  value={values.bogoConfig.getQty}
+                  onChange={(e) => setBogo("getQty", Number(e.target.value))}
+                />
+                <TextField
+                  type="number"
+                  label="Get % off"
+                  size="small"
+                  value={values.bogoConfig.getPercent}
+                  onChange={(e) => setBogo("getPercent", Number(e.target.value))}
+                />
               </Box>
-            </Grid>
+            </Box>
+          </Box>
+        )}
 
-            {/* Caps + dates */}
-            <Grid size={{ xs: 12, sm: 4 }}>
+        {/* Eligibility */}
+        <Box sx={{ gridColumn: "1 / -1" }}>
+          <Box
+            sx={{
+              border: "1px solid var(--t-neutral-200)",
+              borderRadius: "8px",
+              padding: "16px",
+            }}
+          >
+            <Typography variant="subtitle2" sx={{ marginBottom: "12px" }}>
+              Eligibility
+            </Typography>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: { xs: "1fr 1fr", sm: "repeat(4, 1fr)" },
+                gap: "16px",
+                alignItems: "center",
+              }}
+            >
               <TextField
                 fullWidth
                 type="number"
-                label="Total usage limit"
-                value={values.usageLimit}
-                onChange={(e) => set("usageLimit", e.target.value)}
-                helperText="Empty = unlimited"
+                label="Min cart subtotal"
+                value={values.eligibility.minSubtotal}
+                onChange={(e) => setElig("minSubtotal", e.target.value)}
               />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 4 }}>
               <TextField
                 fullWidth
-                type="datetime-local"
-                label="Starts at"
-                InputLabelProps={{ shrink: true }}
-                value={values.startAt}
-                onChange={(e) => set("startAt", e.target.value)}
+                type="number"
+                label="Min items"
+                value={values.eligibility.minItems}
+                onChange={(e) => setElig("minItems", e.target.value)}
               />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 4 }}>
               <TextField
                 fullWidth
-                type="datetime-local"
-                label="Ends at"
-                InputLabelProps={{ shrink: true }}
-                value={values.endAt}
-                onChange={(e) => set("endAt", e.target.value)}
+                type="number"
+                label="Per-user cap"
+                value={values.eligibility.usageLimitPerUser}
+                onChange={(e) => setElig("usageLimitPerUser", e.target.value)}
               />
-            </Grid>
-
-            <Grid size={{ xs: 12 }}>
               <FormControlLabel
                 control={
                   <Checkbox
-                    checked={Boolean(values.active)}
-                    onChange={(e) => set("active", e.target.checked)}
+                    checked={Boolean(values.eligibility.firstOrderOnly)}
+                    onChange={(e) => setElig("firstOrderOnly", e.target.checked)}
                   />
                 }
-                label="Active (visible to shoppers)"
+                label="First order only"
               />
-            </Grid>
-          </Grid>
-
-          <Box sx={{ mt: 3, display: "flex", gap: 1, justifyContent: "flex-end" }}>
-            <Button type="submit" variant="contained" disabled={busy}>
-              {busy ? "Saving…" : submitLabel}
-            </Button>
+            </Box>
           </Box>
-        </form>
-      </CardBody>
-    </Card>
+        </Box>
+
+        <TextField
+          fullWidth
+          type="number"
+          label="Total usage limit"
+          value={values.usageLimit}
+          onChange={(e) => set("usageLimit", e.target.value)}
+          helperText="Empty = unlimited"
+        />
+        <TextField
+          fullWidth
+          type="datetime-local"
+          label="Starts at"
+          InputLabelProps={{ shrink: true }}
+          value={values.startAt}
+          onChange={(e) => set("startAt", e.target.value)}
+        />
+
+        <Box sx={{ gridColumn: "1 / -1" }}>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
+              gap: "16px",
+            }}
+          >
+            <TextField
+              fullWidth
+              type="datetime-local"
+              label="Ends at"
+              InputLabelProps={{ shrink: true }}
+              value={values.endAt}
+              onChange={(e) => set("endAt", e.target.value)}
+            />
+            <FormControlLabel
+              sx={{ alignSelf: "center" }}
+              control={
+                <Checkbox
+                  checked={Boolean(values.active)}
+                  onChange={(e) => set("active", e.target.checked)}
+                />
+              }
+              label="Active (visible to shoppers)"
+            />
+          </Box>
+        </Box>
+      </Box>
+
+      <Box sx={{ marginTop: "24px", display: "flex", gap: "12px", justifyContent: "flex-end" }}>
+        <Button type="submit" variant="contained" disabled={busy} sx={{ paddingInline: "24px" }}>
+          {busy ? "Saving…" : submitLabel}
+        </Button>
+      </Box>
+    </form>
   );
 }
 
