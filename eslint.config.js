@@ -25,6 +25,9 @@ module.exports = [
         // Node 18+ globals used by external-service clients
         fetch: "readonly",
         AbortController: "readonly",
+        // WHATWG URL globals (Node 10+). Used by the Gmail OAuth flow.
+        URL: "readonly",
+        URLSearchParams: "readonly",
       },
     },
     rules: {

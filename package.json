@@ -9,6 +9,7 @@
   },
   "scripts": {
     "test": "jest --runInBand --forceExit",
+    "lint": "eslint \"backend/**/*.js\"",
     "start": "node backend/server.js",
     "predev": "lsof -ti :5001 | xargs kill -9 || true",
     "dev": "nodemon backend/server.js",
