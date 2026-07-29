@@ -77,7 +77,7 @@ export const getAllOrders = () => async (dispatch) => {
   try {
     dispatch({ type: "AllOrdersRequest" });
 
-    const { data } = await axios.get("/api/v1/admin/orders");
+    const { data } = await axios.get("/api/v1/admin/orders", { params: { limit: 100 } });
 
     // Pass the entire response object so the reducer can store
     // orders, orderCount, and totalAmount all at once.

@@ -189,7 +189,7 @@ export const resetUserPassword = (token, password) => async (dispatch) => {
 export const getAllUsers = () => async (dispatch) => {
   try {
     dispatch({ type: "AllUsersRequest" });
-    const { data } = await axios.get(`/api/v1/admin/users`);
+    const { data } = await axios.get(`/api/v1/admin/users`, { params: { limit: 100 } });
 
     dispatch({ type: "AllUsersSuccess", payload: data });
   } catch (error) {

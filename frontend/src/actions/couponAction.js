@@ -47,7 +47,7 @@ export const getBestDeal =
 export const getAdminCoupons = () => async (dispatch) => {
   try {
     dispatch({ type: "AdminCouponsRequest" });
-    const { data } = await axios.get("/api/v1/admin/coupons");
+    const { data } = await axios.get("/api/v1/admin/coupons", { params: { limit: 100 } });
     dispatch({ type: "AdminCouponsSuccess", payload: data.coupons || [] });
   } catch (error) {
     dispatch({

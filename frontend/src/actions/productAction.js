@@ -113,7 +113,7 @@ export const deleteReview = (reviewId, productId) => async (dispatch) => {
 export const getAdminProducts = () => async (dispatch) => {
   try {
     dispatch({ type: "AdminProductRequest" });
-    const { data } = await axios.get("/api/v1/admin/products");
+    const { data } = await axios.get("/api/v1/admin/products", { params: { limit: 100 } });
     dispatch({ type: "AdminProductSuccess", payload: data.products });
   } catch (error) {
     dispatch({ type: "AdminProductFailure", payload: error.response.data.message });
