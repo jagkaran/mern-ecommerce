@@ -7,7 +7,8 @@ import {
   Rating,
   TextField,
 } from "@mui/material";
-import React from "react";
+import React, { useEffect } from "react";
+import { useLenisStop } from "../../../utils/lenis";
 
 function SubmitReviewDialog({
   open,
@@ -18,6 +19,8 @@ function SubmitReviewDialog({
   setComment,
   reviewSubmitHandler,
 }) {
+  // Pause Lenis while the dialog is open so the page behind doesn't scroll.
+  useLenisStop(open);
   return (
     <Dialog open={open} onClose={handleClose}>
       <DialogTitle>Submit a Review</DialogTitle>

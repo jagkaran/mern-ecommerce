@@ -8,6 +8,7 @@ import {
 import { ThemeProvider } from "@mui/material";
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
+import { ReactLenis } from "lenis/react";
 import { TokenCSS } from "./design/tokens-css.jsx";
 import theme from "./design/theme";
 import { useDispatch, useSelector } from "react-redux";
@@ -21,6 +22,7 @@ import AdminSubNav from "./components/Admin/AdminSubNav";
 import useCsrfToken from "./hooks/useCsrfToken";
 import ToastHost from "./components/ToastHost";
 import CurrencyProvider from "./utils/currencyContext.jsx";
+import { useLenisOptions, useScrollResetOnRouteChange } from "./utils/lenis.js";
 import Home from "./components/Home/Home";
 
 const PageLoader = () => (
@@ -135,21 +137,31 @@ const router = createBrowserRouter([
 // Root layout — wraps every route. Hosts the app shell and the Suspense
 // boundary for lazy chunks. Children render via <Outlet />.
 function RootLayout() {
+  const lenisOptions = useLenisOptions();
+  useScrollResetOnRouteChange();
   return (
     <CurrencyProvider>
       <div className="bg-white min-h-screen">
         <ThemeProvider theme={theme}>
           <TokenCSS />
           <Header />
-          <main
-            id="main"
-            tabIndex={-1}
-            style={{ paddingTop: "var(--t-headerHeight)", outline: "none" }}
-          >
-            <Suspense fallback={<PageLoader />}>
-              <Outlet />
-            </Suspense>
-          </main>
+          {/* `root` registers Lenis on the global store so `useLenis()`
+              works anywhere without prop drilling, AND renders children
+              directly (no wrapper div) so Lenis uses the default
+              wrapper=window. Lenis drives window.scrollY natively, so
+              existing window.scrollY listeners (useHeaderScroll) keep
+              working. */}
+          <ReactLenis root options={lenisOptions}>
+            <main
+              id="main"
+              tabIndex={-1}
+              style={{ paddingTop: "var(--t-headerHeight)", outline: "none" }}
+            >
+              <Suspense fallback={<PageLoader />}>
+                <Outlet />
+              </Suspense>
+            </main>
+          </ReactLenis>
           <Footer />
           <ToastHost />
         </ThemeProvider>

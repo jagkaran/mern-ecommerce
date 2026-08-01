@@ -1,4 +1,5 @@
 import React from "react";
+import "lenis/dist/lenis.css";
 import tokens from "./tokens";
 
 const flat = (obj, prefix = "--t") => {
@@ -22,7 +23,8 @@ export const TokenCSS = () => (
       --t-neutral-700: #3D3D3D;
     }
     *, *::before, *::after { box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
+    /* Lenis owns smooth scrolling; native CSS smooth disabled to avoid double-anim. */
+    html { scroll-behavior: auto; }
 
     /* Reveal animation */
     @keyframes hverdagReveal {

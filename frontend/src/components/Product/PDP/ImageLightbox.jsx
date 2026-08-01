@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { cld } from "../../../utils/cloudinary";
+import { useLenisStop } from "../../../utils/lenis";
 
 const css = `
 .pdp__lightbox {
@@ -56,6 +57,8 @@ const css = `
 const clampIndex = (index, length) => Math.max(0, Math.min(index, length - 1));
 
 function ImageLightbox({ images = [], open, onClose, initialIndex = 0, alt = "" }) {
+  // Pause Lenis while the lightbox is open so the page behind doesn't scroll.
+  useLenisStop(open);
   const dialogRef = useRef(null);
   const openerRef = useRef(null);
   const touchStartXRef = useRef(null);

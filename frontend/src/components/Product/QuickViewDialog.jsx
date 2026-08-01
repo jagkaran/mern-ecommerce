@@ -13,6 +13,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
 import { useCurrency } from '../../utils/currencyContext';
 import { useToast } from '../../hooks/useToast';
+import { useLenisStop } from '../../utils/lenis';
 import { cld, srcset } from '../../utils/cloudinary';
 import {
   clearErrors,
@@ -33,6 +34,8 @@ import {
 // Add to Cart, View Full Details link. Reuses /api/v1/product/:id so the
 // response is served from the same cache as the PDP route.
 function QuickViewDialog({ open, productId, onClose }) {
+  // Pause Lenis while the dialog is open so the page behind doesn't scroll.
+  useLenisStop(open);
   const dispatch = useDispatch();
   const toast = useToast();
   const { fmt } = useCurrency();

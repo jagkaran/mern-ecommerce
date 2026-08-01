@@ -3,7 +3,7 @@
 // badge counts — every nav target uses history() navigation so the link
 // list stays short and declarative.
 
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Box,
@@ -33,6 +33,7 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { avatarUrl } from "../../../utils/avatar";
+import { useLenisStop } from "../../../utils/lenis";
 
 export default function MobileDrawer({
   pathname,
@@ -50,6 +51,8 @@ export default function MobileDrawer({
   const history = useNavigate();
   const [drawerState, setDrawerState] = useState({ right: false });
   const [accountOpen, setAccountOpen] = useState(false);
+  // Pause Lenis while the drawer is open so the page behind doesn't scroll.
+  useLenisStop(drawerState.right);
 
   const toggleDrawer = (anchor, open) => (event) => {
     if (event && event.type === "keydown" && (event.key === "Tab" || event.key === "Shift")) {
