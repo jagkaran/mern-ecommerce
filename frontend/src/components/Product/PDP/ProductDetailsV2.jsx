@@ -4,7 +4,7 @@ import ImageLightbox from "./ImageLightbox";
 import MainImage from "./MainImage";
 import ProductInfo from "./ProductInfo";
 import StickyATC from "./StickyATC";
-import { Grid2 as Grid, Typography, Box, Container } from "@mui/material";
+import { Grid2 as Grid, Typography, Box, Button, Container } from "@mui/material";
 import Seo from "../../Seo";
 import JsonLd from "../../JsonLd";
 import { productJsonLd } from "../../../utils/jsonLd";
@@ -16,13 +16,17 @@ import { CircularProgress } from "@mui/material";
 import Reviewcard from "../../Reviewcard";
 import { useToast } from "../../../hooks/useToast";
 import { addItemsToCart } from "../../../actions/cartAction";
-import { Disclosure, Overline, Headline, Breadcrumb } from "../../../design/primitives";
+import { Disclosure, MotionDisclosure, Overline, Headline, Breadcrumb } from "../../../design/primitives";
 import ProductGrid from "../ProductGrid";
 import { getProduct } from "../../../actions/productAction";
+import { useScrollToAnchor } from "../../../utils/lenis";
+import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
+import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 
 function ProductDetailsV2() {
   const [selectedImage, setSelectedImage] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const scrollToAnchor = useScrollToAnchor();
   const openLightbox = React.useCallback(() => setLightboxOpen(true), []);
   const dispatch = useDispatch();
   const toast = useToast();
@@ -258,29 +262,45 @@ function ProductDetailsV2() {
           visible={stickyVisible}
         />
 
-        <Box sx={{ maxWidth: 720, mx: "auto", mt: { xs: 6, md: 10 } }}>
-          <Overline sx={{ display: "block", mb: 3, color: "var(--t-neutral-500)" }}>
-            The details
-          </Overline>
-          <Disclosure title="Materials" defaultOpen>
+        <Box id="pdp-details" sx={{ maxWidth: 720, mx: "auto", mt: { xs: 6, md: 10 } }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3, gap: 2 }}>
+            <Overline sx={{ color: "var(--t-neutral-500)" }}>The details</Overline>
+            <Button
+              size="small"
+              variant="text"
+              onClick={() => scrollToAnchor("#pdp-reviews")}
+              endIcon={<ArrowDownwardIcon fontSize="small" />}
+              sx={{
+                color: "var(--t-primary-700)",
+                textTransform: "none",
+                fontFamily: "var(--t-fontFamily-body)",
+                fontWeight: 500,
+                letterSpacing: "0.02em",
+                "&:hover": { backgroundColor: "var(--t-primary-50)" },
+              }}
+            >
+              Jump to reviews
+            </Button>
+          </Box>
+          <MotionDisclosure title="Materials" defaultOpen>
             <p>
               Each piece is made from natural materials selected for the way they age. Wood is
               seasoned, ceramic is fired, linen is woven — never laminated, never plastic-coated.
             </p>
-          </Disclosure>
-          <Disclosure title="Care & mending">
+          </MotionDisclosure>
+          <MotionDisclosure title="Care & mending">
             <p>
               We mend what we sell. Wood can be re-oiled, ceramic re-glazed, linen re-stitched. When
               something shows wear, send it back and we'll make it whole again — no questions, no
               charge, for as long as the piece is in your keeping.
             </p>
-          </Disclosure>
-          <Disclosure title="Shipping">
+          </MotionDisclosure>
+          <MotionDisclosure title="Shipping">
             <p>
               Sent in plastic-free packaging, with a handwritten note. Domestic orders arrive in 3–5
               days. International takes a little longer — usually 7–14. Returns are quiet and easy.
             </p>
-          </Disclosure>
+          </MotionDisclosure>
         </Box>
       </Container>
 
@@ -306,6 +326,7 @@ function ProductDetailsV2() {
       )}
 
       <Container
+        id="pdp-reviews"
         maxWidth={false}
         sx={{
           maxWidth: 800,
@@ -314,9 +335,25 @@ function ProductDetailsV2() {
           borderTop: "1px solid var(--t-neutral-200)",
         }}
       >
-        <Overline sx={{ display: "block", mb: 2, color: "var(--t-neutral-500)" }}>
-          Kept notes
-        </Overline>
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2, gap: 2 }}>
+          <Overline sx={{ color: "var(--t-neutral-500)" }}>Kept notes</Overline>
+          <Button
+            size="small"
+            variant="text"
+            onClick={() => scrollToAnchor("#pdp-details")}
+            startIcon={<ArrowUpwardIcon fontSize="small" />}
+            sx={{
+              color: "var(--t-primary-700)",
+              textTransform: "none",
+              fontFamily: "var(--t-fontFamily-body)",
+              fontWeight: 500,
+              letterSpacing: "0.02em",
+              "&:hover": { backgroundColor: "var(--t-primary-50)" },
+            }}
+          >
+            Jump to details
+          </Button>
+        </Box>
         <Headline level="2xl" sx={{ mb: 4 }}>
           Reviews
         </Headline>

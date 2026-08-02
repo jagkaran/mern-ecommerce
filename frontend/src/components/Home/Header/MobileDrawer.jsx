@@ -47,6 +47,7 @@ export default function MobileDrawer({
   setCurrency,
   user,
   onLogout,
+  onCartClick,
 }) {
   const history = useNavigate();
   const [drawerState, setDrawerState] = useState({ right: false });
@@ -72,8 +73,15 @@ export default function MobileDrawer({
   const products = go("/products");
   const search = go("/search");
   const wishlist = go("/wishlist");
-  const cart = go("/cart");
   const signin = go("/signin");
+
+  // Cart row in the mobile drawer closes the drawer first, then opens
+  // the mini-cart drawer. Two drawers can't be open at once.
+  const cart = () => {
+    setDrawerState({ right: false });
+    setAccountOpen(false);
+    onCartClick?.();
+  };
 
   const handleAccountClick = (e) => {
     if (isAuthenticated) {

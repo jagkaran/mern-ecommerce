@@ -1,7 +1,13 @@
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { useLocation } from "react-router-dom";
 import { useMediaQuery } from "@mui/material";
 import { useLenis } from "lenis/react";
+import tokens from "../design/tokens.js";
+
+// Matches <main> padding-top + the sticky header height. Negative because
+// lenis.scrollTo offsets the target DOWNWARD when positive; we want the
+// section heading to land just below the header, so we shift the target UP.
+const HEADER_OFFSET = -parseInt(tokens.headerHeight, 10) || -56;
 
 /**
  * Lenis options tuned for prefers-reduced-motion.
@@ -47,4 +53,20 @@ export function useScrollResetOnRouteChange() {
   useEffect(() => {
     lenis?.scrollTo(0, { immediate: true });
   }, [pathname, lenis]);
+}
+
+/**
+ * Returns a stable callback that smooth-scrolls to a target (CSS selector,
+ * HTMLElement, or pixel number) with the app header height subtracted as
+ * offset, so the target lands below the sticky header instead of under it.
+ *
+ * Use: `const scrollToAnchor = useScrollToAnchor()` then
+ *      `scrollToAnchor('#pdp-reviews')` on click.
+ */
+export function useScrollToAnchor() {
+  const lenis = useLenis();
+  return useCallback(
+    (target) => lenis?.scrollTo(target, { offset: HEADER_OFFSET }),
+    [lenis]
+  );
 }

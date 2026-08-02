@@ -10,6 +10,7 @@ export { PrimaryBtn, SecondaryBtn, GhostBtn } from "./Button";
 
 // Hverdag primitives (Phase 1+)
 export { Disclosure } from "./Disclosure";
+export { MotionDisclosure } from "./MotionDisclosure";
 export { Field } from "./Field";
 export { FieldRow } from "./FieldRow";
 export { StepIndicator } from "./StepIndicator";

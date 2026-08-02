@@ -51,6 +51,7 @@ export default function DesktopNav({
   setCurrency,
   onAccountClick,
   onSigninClick,
+  onCartClick,
 }) {
   const isActive = (to) => pathname === to;
 
@@ -90,8 +91,7 @@ export default function DesktopNav({
 
       <IconButton
         size="small"
-        component={Link}
-        to="/cart"
+        onClick={onCartClick}
         aria-label="Cart"
         sx={{ ...iconSx, ml: 0.5 }}
       >

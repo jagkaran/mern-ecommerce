@@ -21,8 +21,11 @@ import AdminRoute from "./components/AdminRoute.jsx";
 import AdminSubNav from "./components/Admin/AdminSubNav";
 import useCsrfToken from "./hooks/useCsrfToken";
 import ToastHost from "./components/ToastHost";
+import ScrollToTopButton from "./components/ScrollToTopButton.jsx";
 import CurrencyProvider from "./utils/currencyContext.jsx";
 import { useLenisOptions, useScrollResetOnRouteChange } from "./utils/lenis.js";
+import { MiniCartProvider } from "./utils/miniCartContext.jsx";
+import MiniCartDrawer from "./components/MiniCartDrawer.jsx";
 import Home from "./components/Home/Home";
 
 const PageLoader = () => (
@@ -140,11 +143,12 @@ function RootLayout() {
   const lenisOptions = useLenisOptions();
   useScrollResetOnRouteChange();
   return (
-    <CurrencyProvider>
-      <div className="bg-white min-h-screen">
-        <ThemeProvider theme={theme}>
-          <TokenCSS />
-          <Header />
+    <MiniCartProvider>
+      <CurrencyProvider>
+        <div className="bg-white min-h-screen">
+          <ThemeProvider theme={theme}>
+            <TokenCSS />
+            <Header />
           {/* `root` registers Lenis on the global store so `useLenis()`
               works anywhere without prop drilling, AND renders children
               directly (no wrapper div) so Lenis uses the default
@@ -164,9 +168,12 @@ function RootLayout() {
           </ReactLenis>
           <Footer />
           <ToastHost />
+          <ScrollToTopButton />
+          <MiniCartDrawer />
         </ThemeProvider>
       </div>
     </CurrencyProvider>
+    </MiniCartProvider>
   );
 }
 

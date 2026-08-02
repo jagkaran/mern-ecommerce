@@ -10,6 +10,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useToast } from "../../../hooks/useToast";
 import { logoutUser } from "../../../actions/userAction";
 import { useCurrency } from "../../../utils/currencyContext";
+import { useMiniCart } from "../../../utils/miniCartContext";
 import useHeaderScroll from "./useHeaderScroll";
 import useCurrencyLock from "./useCurrencyLock";
 import DesktopNav from "./DesktopNav";
@@ -78,6 +79,8 @@ function Header() {
     toast.success("Logout Successfully");
   };
 
+  const { openCart: openMiniCart } = useMiniCart();
+
   return (
     <header
       style={{
@@ -141,6 +144,7 @@ function Header() {
           setCurrency={setCurrency}
           onAccountClick={handleAccountClick}
           onSigninClick={() => navigate("/signin", { replace: true })}
+          onCartClick={openMiniCart}
         />
 
         <MobileDrawer
@@ -155,6 +159,7 @@ function Header() {
           setCurrency={setCurrency}
           user={user}
           onLogout={handleLogout}
+          onCartClick={openMiniCart}
         />
       </div>
 

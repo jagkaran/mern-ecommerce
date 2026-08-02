@@ -1,7 +1,23 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Box } from "@mui/material";
+import { motion } from "motion/react";
 import { PrimaryBtn, GhostBtn } from "../../design/primitives";
+
+// Stagger entry on mount — eyebrow → headline → paragraph → buttons → stats.
+// motion auto-honors prefers-reduced-motion (drops duration to ~0).
+const STAGGER = 0.08;
+const DURATION = 0.6;
+const EASE = [0.22, 1, 0.36, 1];
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 12 },
+  visible: (i) => ({
+    opacity: 1,
+    y: 0,
+    transition: { duration: DURATION, delay: i * STAGGER, ease: EASE },
+  }),
+};
 
 /**
  * Hero — calm welcome. Text-led, centered, no visual noise.
@@ -26,6 +42,11 @@ export default function Hero() {
         }}
       >
         <Box
+          component={motion.div}
+          custom={0}
+          initial="hidden"
+          animate="visible"
+          variants={fadeUp}
           sx={{
             fontSize: "var(--t-fontSize-xs)",
             fontWeight: 500,
@@ -37,7 +58,11 @@ export default function Hero() {
         >
           The everyday, kept well
         </Box>
-        <h1
+        <motion.h1
+          custom={1}
+          initial="hidden"
+          animate="visible"
+          variants={fadeUp}
           style={{
             fontFamily: "var(--t-fontFamily-display)",
             fontSize: "clamp(2.5rem, 5vw, 3.75rem)",
@@ -50,8 +75,12 @@ export default function Hero() {
         >
           Things that age with you,{" "}
           <span style={{ fontStyle: "italic", color: "var(--t-primary-600)" }}>gently.</span>
-        </h1>
-        <p
+        </motion.h1>
+        <motion.p
+          custom={2}
+          initial="hidden"
+          animate="visible"
+          variants={fadeUp}
           style={{
             color: "var(--t-neutral-600)",
             marginBottom: "2.5rem",
@@ -61,8 +90,20 @@ export default function Hero() {
         >
           Objects that wear in, not out. Sourced with care, mended when worn, and made to be passed
           on rather than replaced.
-        </p>
-        <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap", justifyContent: "center" }}>
+        </motion.p>
+        <Box
+          component={motion.div}
+          custom={3}
+          initial="hidden"
+          animate="visible"
+          variants={fadeUp}
+          sx={{
+            display: "flex",
+            gap: 1.5,
+            flexWrap: "wrap",
+            justifyContent: "center",
+          }}
+        >
           <PrimaryBtn component={Link} to="/products">
             Browse the collection
           </PrimaryBtn>
@@ -71,6 +112,11 @@ export default function Hero() {
           </GhostBtn>
         </Box>
         <Box
+          component={motion.div}
+          custom={4}
+          initial="hidden"
+          animate="visible"
+          variants={fadeUp}
           sx={{
             mt: { xs: 5, md: 7 },
             pt: { xs: 4, md: 5 },
