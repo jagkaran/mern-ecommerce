@@ -20,6 +20,7 @@ import { Disclosure, MotionDisclosure, Overline, Headline, Breadcrumb } from "..
 import ProductGrid from "../ProductGrid";
 import { getProduct } from "../../../actions/productAction";
 import { useScrollToAnchor } from "../../../utils/lenis";
+import { useMiniCart } from "../../../utils/miniCartContext";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 
@@ -27,6 +28,7 @@ function ProductDetailsV2() {
   const [selectedImage, setSelectedImage] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const scrollToAnchor = useScrollToAnchor();
+  const { openCart } = useMiniCart();
   const openLightbox = React.useCallback(() => setLightboxOpen(true), []);
   const dispatch = useDispatch();
   const toast = useToast();
@@ -94,6 +96,7 @@ function ProductDetailsV2() {
   const addToCartHandler = (quantity) => {
     dispatch(addItemsToCart(id, quantity));
     toast.success(`${product?.name || "Product"} Added to Cart`);
+    openCart();
   };
 
   const handleClickOpen = () => setOpen(true);

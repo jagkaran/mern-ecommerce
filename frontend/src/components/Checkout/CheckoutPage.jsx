@@ -17,6 +17,7 @@ import { useToast } from "../../hooks/useToast";
 import { createOrder, clearErrors } from "../../actions/orderAction";
 import { clearCart } from "../../actions/cartAction";
 import { useCurrency } from "../../utils/currencyContext";
+import { useScrollToAnchor } from "../../utils/lenis";
 
 /**
  * CheckoutPage — public-or-auth orchestrator that composes the new checkout
@@ -140,10 +141,15 @@ export default function CheckoutPage() {
     return () => obs.disconnect();
   }, [contactRef, shippingRef, paymentRef]);
 
+  // -126 = headerHeight (56) + stepper (~70). Keeps step content visible
+  // below the sticky stepper. Lenis handles the smooth scroll; explicit
+  // offset replaces the old `scrollMarginTop` CSS hack.
+  const scrollToStep = useScrollToAnchor(-126);
+
   const goToStep = (idx) => {
     const ref = [contactRef, shippingRef, paymentRef][idx];
     if (!ref?.current) return;
-    ref.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    scrollToStep(ref.current);
     setActiveStep(idx);
   };
 
@@ -375,25 +381,13 @@ export default function CheckoutPage() {
 
         <Box className="checkout-grid">
           <Stack spacing={3} sx={{ minWidth: 0 }}>
-            <Box
-              ref={contactRef}
-              data-step={0}
-              sx={{ scrollMarginTop: "calc(var(--t-headerHeight, 56px) + 70px)" }}
-            >
+            <Box ref={contactRef} data-step={0}>
               <ContactBlock signedIn={!!user} />
             </Box>
-            <Box
-              ref={shippingRef}
-              data-step={1}
-              sx={{ scrollMarginTop: "calc(var(--t-headerHeight, 56px) + 70px)" }}
-            >
+            <Box ref={shippingRef} data-step={1}>
               <ShippingBlock />
             </Box>
-            <Box
-              ref={paymentRef}
-              data-step={2}
-              sx={{ scrollMarginTop: "calc(var(--t-headerHeight, 56px) + 70px)" }}
-            >
+            <Box ref={paymentRef} data-step={2}>
               <PaymentForm />
             </Box>
           </Stack>

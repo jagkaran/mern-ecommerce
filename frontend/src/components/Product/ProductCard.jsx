@@ -9,8 +9,9 @@ import { useCurrency } from '../../utils/currencyContext';
 import { useWishlist } from '../../hooks/useWishlist';
 import { Badge } from '../../design/primitives';
 import { cld, srcset } from '../../utils/cloudinary';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useToast } from '../../hooks/useToast';
+import { useMiniCart } from '../../utils/miniCartContext';
 import { addItemsToCart } from '../../actions/cartAction';
 
 /**
@@ -46,6 +47,13 @@ function ProductCard({
   const [added, setAdded] = useState(false);
   const dispatch = useDispatch();
   const toast = useToast();
+  const { openCart } = useMiniCart();
+  // Read current qty so AddToCart dispatches the NEW total (reducer
+  // replaces, not increments). Without this, repeat clicks overwrite
+  // qty back to 1 and the cart badge stays frozen.
+  const existing = useSelector((s) =>
+    s.cart.cartItems.find((i) => i.product === productId)
+  );
 
   const primary = images?.[0]?.url;
   const secondary = images?.[1]?.url;
@@ -68,8 +76,10 @@ function ProductCard({
     e.preventDefault();
     e.stopPropagation();
     if (oos) return;
-    dispatch(addItemsToCart(productId, 1));
+    const nextQty = (existing?.quantity || 0) + 1;
+    dispatch(addItemsToCart(productId, nextQty));
     toast.success('Added to cart');
+    openCart();
     setAdded(true);
     setTimeout(() => setAdded(false), 1200);
   };

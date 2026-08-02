@@ -26,6 +26,7 @@ import CurrencyProvider from "./utils/currencyContext.jsx";
 import { useLenisOptions, useScrollResetOnRouteChange } from "./utils/lenis.js";
 import { MiniCartProvider } from "./utils/miniCartContext.jsx";
 import MiniCartDrawer from "./components/MiniCartDrawer.jsx";
+import ScrollProgress from "./components/ScrollProgress.jsx";
 import Home from "./components/Home/Home";
 
 const PageLoader = () => (
@@ -168,6 +169,7 @@ function RootLayout() {
           </ReactLenis>
           <Footer />
           <ToastHost />
+          <ScrollProgress />
           <ScrollToTopButton />
           <MiniCartDrawer />
         </ThemeProvider>

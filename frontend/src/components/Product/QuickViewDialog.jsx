@@ -12,6 +12,7 @@ import {
 import CloseIcon from '@mui/icons-material/Close';
 import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
 import { useCurrency } from '../../utils/currencyContext';
+import { useMiniCart } from '../../utils/miniCartContext';
 import { useToast } from '../../hooks/useToast';
 import { useLenisStop } from '../../utils/lenis';
 import { cld, srcset } from '../../utils/cloudinary';
@@ -39,6 +40,7 @@ function QuickViewDialog({ open, productId, onClose }) {
   const dispatch = useDispatch();
   const toast = useToast();
   const { fmt } = useCurrency();
+  const { openCart } = useMiniCart();
   const [quantity, setQuantity] = useState(1);
   const [imgIdx, setImgIdx] = useState(0);
 
@@ -64,6 +66,7 @@ function QuickViewDialog({ open, productId, onClose }) {
     dispatch(addItemsToCart(product._id, quantity));
     toast.success(`${product.name} Added to Cart`);
     onClose();
+    openCart();
   };
 
   const images = product?.images || [];

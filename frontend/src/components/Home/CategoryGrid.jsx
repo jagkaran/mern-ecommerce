@@ -1,6 +1,20 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Tile, TileMedia, TileBody, Reveal } from "../../design/primitives";
+import { Tile, TileMedia, TileBody } from "../../design/primitives";
+import { motion } from "motion/react";
+
+const grid = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.08, delayChildren: 0.05 } },
+};
+const tile = {
+  hidden: { opacity: 0, y: 12 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] },
+  },
+};
 
 /**
  * CategoryGrid — auto-fits columns to category count.
@@ -78,18 +92,22 @@ export default function CategoryGrid({ products }) {
           </Link>
         </div>
 
-        <div
+        <motion.div
+          variants={grid}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, margin: "-10% 0px" }}
           style={{
             display: "grid",
             gridTemplateColumns: `repeat(${cols}, 1fr)`,
             gap: "var(--t-grid-gutter)",
           }}
         >
-          {cats.map((cat, i) => {
+          {cats.map((cat) => {
             const img = products.find((p) => p.category === cat)?.images?.[0]?.url;
             const count = products.filter((p) => p.category === cat).length;
             return (
-              <Reveal key={cat} delay={i * 80}>
+              <motion.div key={cat} variants={tile}>
                 <Tile to={`/products?category=${encodeURIComponent(cat)}`}>
                   <TileMedia ratio={cols === 1 ? "21/9" : "4/5"}>
                     {img ? (
@@ -147,10 +165,10 @@ export default function CategoryGrid({ products }) {
                     </span>
                   </TileBody>
                 </Tile>
-              </Reveal>
+              </motion.div>
             );
           })}
-        </div>
+        </motion.div>
       </div>
     </section>
   );

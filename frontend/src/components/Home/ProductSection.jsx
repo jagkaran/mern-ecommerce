@@ -1,6 +1,20 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { motion } from "motion/react";
 import ProductCard from "../Product/ProductCard";
+
+const grid = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.08, delayChildren: 0.05 } },
+};
+const card = {
+  hidden: { opacity: 0, y: 12 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] },
+  },
+};
 
 export default function ProductSection({ title, overline, products, linkTo, linkLabel }) {
   const items = products.slice(0, 8);
@@ -64,11 +78,20 @@ export default function ProductSection({ title, overline, products, linkTo, link
           )}
         </div>
 
-        <div className="prod-grid" style={{ display: "grid", gap: "24px" }}>
+        <motion.div
+          variants={grid}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, margin: "-10% 0px" }}
+          className="prod-grid"
+          style={{ display: "grid", gap: "24px" }}
+        >
           {items.map((p, i) => (
-            <ProductCard key={p._id} {...p} isNew={i < 3} />
+            <motion.div key={p._id} variants={card}>
+              <ProductCard {...p} isNew={i < 3} />
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   );

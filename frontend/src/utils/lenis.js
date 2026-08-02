@@ -60,13 +60,16 @@ export function useScrollResetOnRouteChange() {
  * HTMLElement, or pixel number) with the app header height subtracted as
  * offset, so the target lands below the sticky header instead of under it.
  *
+ * Pass a custom `offset` for surfaces with extra sticky chrome (e.g. the
+ * checkout stepper sits above the header and needs a larger negative offset).
+ *
  * Use: `const scrollToAnchor = useScrollToAnchor()` then
  *      `scrollToAnchor('#pdp-reviews')` on click.
  */
-export function useScrollToAnchor() {
+export function useScrollToAnchor(offset) {
   const lenis = useLenis();
   return useCallback(
-    (target) => lenis?.scrollTo(target, { offset: HEADER_OFFSET }),
-    [lenis]
+    (target) => lenis?.scrollTo(target, { offset: offset ?? HEADER_OFFSET }),
+    [lenis, offset]
   );
 }
