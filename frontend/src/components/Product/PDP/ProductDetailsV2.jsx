@@ -4,7 +4,7 @@ import ImageLightbox from "./ImageLightbox";
 import MainImage from "./MainImage";
 import ProductInfo from "./ProductInfo";
 import StickyATC from "./StickyATC";
-import { Grid2 as Grid, Typography, Box, Button, Container } from "@mui/material";
+import { Grid2 as Grid, Typography, Box, Button, Container, Skeleton } from "@mui/material";
 import Seo from "../../Seo";
 import JsonLd from "../../JsonLd";
 import { productJsonLd } from "../../../utils/jsonLd";
@@ -147,9 +147,58 @@ function ProductDetailsV2() {
 
   if (loading) {
     return (
-      <div className="grid place-items-center h-screen">
-        <CircularProgress sx={{ color: "var(--t-primary-600)" }} />
-      </div>
+      <Container
+        maxWidth={false}
+        sx={{
+          maxWidth: "var(--t-grid-containerMax)",
+          px: "var(--t-grid-containerPad)",
+          pt: { xs: 2, md: 3 },
+          pb: { xs: 4, md: 6 },
+        }}
+      >
+        <Grid container spacing={{ xs: 2, md: 4 }} className="pdp__gallery-row">
+          {/* Gallery skeleton — 4:5 image + 3 dots */}
+          <Grid size={{ xs: 12, md: 12, lg: 7 }}>
+            <Skeleton
+              variant="rectangular"
+              sx={{
+                width: "100%",
+                aspectRatio: { xs: "4/5", md: "4/5" },
+                borderRadius: "var(--t-border-radius-base)",
+                bgcolor: "var(--t-neutral-100)",
+              }}
+            />
+            <Box sx={{ display: "flex", gap: 1, mt: 2, justifyContent: "center" }}>
+              {[0, 1, 2].map((i) => (
+                <Skeleton
+                  key={i}
+                  variant="circular"
+                  width={10}
+                  height={10}
+                  sx={{ bgcolor: "var(--t-neutral-200)" }}
+                />
+              ))}
+            </Box>
+          </Grid>
+          {/* Info skeleton — eyebrow, name, rating, description, qty+price, ATC */}
+          <Grid size={{ xs: 12, md: 12, lg: 5 }}>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <Skeleton variant="text" width={80} height={16} sx={{ bgcolor: "var(--t-neutral-100)" }} />
+              <Skeleton variant="text" width="90%" height={48} sx={{ bgcolor: "var(--t-neutral-100)" }} />
+              <Skeleton variant="text" width="60%" height={24} sx={{ bgcolor: "var(--t-neutral-100)" }} />
+              <Skeleton variant="text" width="100%" height={20} sx={{ bgcolor: "var(--t-neutral-100)" }} />
+              <Skeleton variant="text" width="95%" height={20} sx={{ bgcolor: "var(--t-neutral-100)" }} />
+              <Skeleton variant="text" width="70%" height={20} sx={{ bgcolor: "var(--t-neutral-100)" }} />
+              <Box sx={{ display: "flex", gap: 2, mt: 2 }}>
+                <Skeleton variant="rounded" width={120} height={40} sx={{ bgcolor: "var(--t-neutral-100)" }} />
+                <Skeleton variant="text" width="40%" height={40} sx={{ bgcolor: "var(--t-neutral-100)", ml: "auto" }} />
+              </Box>
+              <Skeleton variant="rounded" width="100%" height={48} sx={{ bgcolor: "var(--t-neutral-100)", mt: 1 }} />
+              <Skeleton variant="rounded" width="100%" height={48} sx={{ bgcolor: "var(--t-neutral-100)" }} />
+            </Box>
+          </Grid>
+        </Grid>
+      </Container>
     );
   }
 

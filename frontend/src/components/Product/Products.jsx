@@ -1,13 +1,17 @@
 import {
-  CircularProgress,
   Pagination,
-  Slider,
   Typography,
   Box,
   MenuItem,
   TextField,
   Chip,
+  Skeleton,
+  Button,
+  Drawer,
+  IconButton,
 } from "@mui/material";
+import TuneIcon from "@mui/icons-material/Tune";
+import CloseIcon from "@mui/icons-material/Close";
 import React, { useEffect, useState } from "react";
 import { useToast } from "../../hooks/useToast";
 import { useCurrency } from "../../utils/currencyContext";
@@ -17,16 +21,15 @@ import { getProduct, getActiveCategories } from "../../actions/productAction";
 import ProductGrid from "./ProductGrid";
 import Seo from "../Seo";
 import {
-  QuietFilter,
-  FilterGroup,
-  FilterOption,
   Overline,
   Headline,
   BodyText,
   GhostBtn,
   Breadcrumb,
-  Disclosure,
+  PrimaryBtn,
 } from "../../design/primitives";
+import PlpFilterContent from "./PlpFilterContent";
+import { useLenisStop } from "../../utils/lenis";
 
 const ratingLabels = { 0: "Any", 1: "1+", 2: "2+", 3: "3+", 4: "4+", 5: "5 only" };
 
@@ -43,6 +46,9 @@ function Products() {
   const [ratingValue, setRatingValue] = useState(0);
   const urlSort = searchParams.get("sort") || "newest";
   const [sort, setSort] = useState(urlSort);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  // Pause Lenis while the mobile filter drawer is open.
+  useLenisStop(mobileFiltersOpen);
 
   const { loading, error, products, productsCount, resultPerPage, filteredProductsCount } =
     useSelector((state) => state.product);
@@ -60,6 +66,34 @@ function Products() {
     ratingValue > 0 ||
     priceRange[0] > (dbPriceRange?.min ?? 0) ||
     priceRange[1] < (dbPriceRange?.max ?? 5000);
+
+  // Shared filter props — desktop sidebar AND mobile drawer render the same
+  // <PlpFilterContent> with this prop bag. Declared after all useSelector
+  // calls so `categories` is in scope.
+  const filterProps = {
+    categories,
+    categoryCounts,
+    category,
+    productsCount,
+    setSearchParams,
+    setCurrentPage,
+    price,
+    setPrice,
+    priceRange,
+    setPriceRange,
+    dbPriceRange,
+    ratingValue,
+    setRatingValue,
+  };
+
+  // Count of active filters (drives button badge + drawer title)
+  const activeFilterCount =
+    (category ? 1 : 0) +
+    (ratingValue > 0 ? 1 : 0) +
+    (priceRange[0] > (dbPriceRange?.min ?? 0) ||
+    priceRange[1] < (dbPriceRange?.max ?? 5000)
+      ? 1
+      : 0);
 
   const numberOfPages = Math.floor((filteredProductsCount + resultPerPage - 1) / resultPerPage);
 
@@ -141,8 +175,74 @@ function Products() {
       </Box>
 
       {loading ? (
-        <Box sx={{ display: "grid", placeItems: "center", py: 12 }}>
-          <CircularProgress sx={{ color: "var(--t-primary-600)" }} />
+        <Box
+          sx={{
+            maxWidth: "var(--t-grid-containerMax)",
+            mx: "auto",
+            px: "var(--t-grid-containerPad)",
+            py: { xs: 4, md: 6 },
+          }}
+        >
+          <Box className="filter-grid" sx={{ alignItems: "start" }}>
+            {/* Filter rail skeleton (desktop only — matches real layout) */}
+            <Box sx={{ display: { xs: "none", md: "block" } }}>
+              <Skeleton
+                variant="text"
+                width={120}
+                height={20}
+                sx={{ bgcolor: "var(--t-neutral-100)", mb: 2 }}
+              />
+              {[0, 1, 2].map((i) => (
+                <Skeleton
+                  key={i}
+                  variant="text"
+                  width={`${70 + i * 10}%`}
+                  height={18}
+                  sx={{ bgcolor: "var(--t-neutral-100)", mb: 1.5 }}
+                />
+              ))}
+              <Skeleton
+                variant="rounded"
+                width="100%"
+                height={80}
+                sx={{ bgcolor: "var(--t-neutral-100)", mt: 3 }}
+              />
+            </Box>
+            {/* Card grid skeleton — 8 cards matching prod-grid */}
+            <Box className="prod-grid" sx={{ display: "grid", gap: "24px" }}>
+              {Array.from({ length: 8 }).map((_, i) => (
+                <Box key={i}>
+                  <Skeleton
+                    variant="rectangular"
+                    sx={{
+                      width: "100%",
+                      aspectRatio: "4/5",
+                      borderRadius: "var(--t-border-radius-base)",
+                      bgcolor: "var(--t-neutral-100)",
+                    }}
+                  />
+                  <Skeleton
+                    variant="text"
+                    width="40%"
+                    height={14}
+                    sx={{ bgcolor: "var(--t-neutral-100)", mt: 1.5 }}
+                  />
+                  <Skeleton
+                    variant="text"
+                    width="85%"
+                    height={22}
+                    sx={{ bgcolor: "var(--t-neutral-100)", mt: 0.5 }}
+                  />
+                  <Skeleton
+                    variant="text"
+                    width="50%"
+                    height={18}
+                    sx={{ bgcolor: "var(--t-neutral-100)", mt: 0.5 }}
+                  />
+                </Box>
+              ))}
+            </Box>
+          </Box>
         </Box>
       ) : (
         <Box
@@ -154,209 +254,32 @@ function Products() {
           }}
         >
           <Box className="filter-grid" sx={{ alignItems: "start" }}>
-            {/* Mobile filters — collapsible disclosure below 1024px */}
+            {/* Mobile: filter button opens bottom-sheet drawer */}
             <Box sx={{ display: { xs: "block", md: "none" }, mb: 2 }}>
-              <Disclosure
-                title={
-                  hasActiveFilters
-                    ? `Filters · ${
-                        (category ? 1 : 0) +
-                        (ratingValue > 0 ? 1 : 0) +
-                        (priceRange[0] > (dbPriceRange?.min ?? 0) ||
-                        priceRange[1] < (dbPriceRange?.max ?? 5000)
-                          ? 1
-                          : 0)
-                      } active`
-                    : "Filters"
-                }
-                defaultOpen={false}
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => setMobileFiltersOpen(true)}
+                startIcon={<TuneIcon fontSize="small" />}
+                sx={{
+                  borderColor: "var(--t-neutral-300)",
+                  color: "var(--t-neutral-900)",
+                  textTransform: "none",
+                  fontWeight: 500,
+                  letterSpacing: "0.02em",
+                  "&:hover": {
+                    borderColor: "var(--t-primary-700)",
+                    backgroundColor: "var(--t-primary-50)",
+                  },
+                }}
               >
-                <QuietFilter title="Browse">
-                  <FilterGroup label="Category">
-                    <FilterOption
-                      label="All"
-                      count={productsCount}
-                      active={!category}
-                      onClick={() => {
-                        setSearchParams({});
-                        setCurrentPage(1);
-                      }}
-                    />
-                    {categories.map((cat) => (
-                      <FilterOption
-                        key={cat}
-                        label={cat}
-                        count={categoryCounts ? categoryCounts[cat] : undefined}
-                        active={category === cat}
-                        onClick={() => {
-                          setSearchParams({ category: cat });
-                          setCurrentPage(1);
-                        }}
-                      />
-                    ))}
-                  </FilterGroup>
-
-                  <FilterGroup label="Price">
-                    <Slider
-                      value={price}
-                      onChange={(_, v) => setPrice(v)}
-                      onChangeCommitted={(_, v) => setPriceRange(v)}
-                      valueLabelDisplay="auto"
-                      min={dbPriceRange?.min ?? 0}
-                      max={dbPriceRange?.max ?? 5000}
-                      step={Math.max(
-                        1,
-                        Math.round(((dbPriceRange?.max ?? 5000) - (dbPriceRange?.min ?? 0)) / 100)
-                      )}
-                      sx={{
-                        color: "var(--t-primary-600)",
-                        mt: 1,
-                        "& .MuiSlider-thumb": {
-                          transition:
-                            "all var(--t-motion-duration-fast) var(--t-motion-easing-out)",
-                        },
-                      }}
-                    />
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        fontSize: "var(--t-fontSize-sm)",
-                        color: "var(--t-neutral-500)",
-                        fontVariantNumeric: "tabular-nums",
-                      }}
-                    >
-                      <span>{price[0]}</span>
-                      <span>{price[1]}</span>
-                    </Box>
-                  </FilterGroup>
-
-                  <FilterGroup label="Rating">
-                    <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-                      {[0, 1, 2, 3, 4, 5].map((r) => (
-                        <FilterOption
-                          key={r}
-                          label={ratingLabels[r]}
-                          active={ratingValue === r}
-                          onClick={() => {
-                            setRatingValue(r);
-                            setCurrentPage(1);
-                          }}
-                        />
-                      ))}
-                    </Box>
-                  </FilterGroup>
-
-                  {(category || priceRange[0] > 0 || priceRange[1] < 5000 || ratingValue > 0) && (
-                    <GhostBtn
-                      onClick={() => {
-                        setSearchParams({});
-                        setPrice([0, 5000]);
-                        setPriceRange([0, 5000]);
-                        setRatingValue(0);
-                        setCurrentPage(1);
-                      }}
-                      sx={{ alignSelf: "flex-start", mt: 1 }}
-                    >
-                      Clear filters
-                    </GhostBtn>
-                  )}
-                </QuietFilter>
-              </Disclosure>
+                Filters {hasActiveFilters && `· ${activeFilterCount}`}
+              </Button>
             </Box>
 
-            {/* Desktop filters — sidebar at 1024px+ */}
+            {/* Desktop: filter sidebar */}
             <Box sx={{ display: { xs: "none", md: "block" } }}>
-              <QuietFilter title="Browse">
-                <FilterGroup label="Category">
-                  <FilterOption
-                    label="All"
-                    count={productsCount}
-                    active={!category}
-                    onClick={() => {
-                      setSearchParams({});
-                      setCurrentPage(1);
-                    }}
-                  />
-                  {categories.map((cat) => (
-                    <FilterOption
-                      key={cat}
-                      label={cat}
-                      count={categoryCounts ? categoryCounts[cat] : undefined}
-                      active={category === cat}
-                      onClick={() => {
-                        setSearchParams({ category: cat });
-                        setCurrentPage(1);
-                      }}
-                    />
-                  ))}
-                </FilterGroup>
-
-                <FilterGroup label="Price">
-                  <Slider
-                    value={price}
-                    onChange={(_, v) => setPrice(v)}
-                    onChangeCommitted={(_, v) => setPriceRange(v)}
-                    valueLabelDisplay="auto"
-                    min={dbPriceRange?.min ?? 0}
-                    max={dbPriceRange?.max ?? 5000}
-                    step={Math.max(
-                      1,
-                      Math.round(((dbPriceRange?.max ?? 5000) - (dbPriceRange?.min ?? 0)) / 100)
-                    )}
-                    sx={{
-                      color: "var(--t-primary-600)",
-                      mt: 1,
-                      "& .MuiSlider-thumb": {
-                        transition: "all var(--t-motion-duration-fast) var(--t-motion-easing-out)",
-                      },
-                    }}
-                  />
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      fontSize: "var(--t-fontSize-sm)",
-                      color: "var(--t-neutral-500)",
-                      fontVariantNumeric: "tabular-nums",
-                    }}
-                  >
-                    <span>{price[0]}</span>
-                    <span>{price[1]}</span>
-                  </Box>
-                </FilterGroup>
-
-                <FilterGroup label="Rating">
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-                    {[0, 1, 2, 3, 4, 5].map((r) => (
-                      <FilterOption
-                        key={r}
-                        label={ratingLabels[r]}
-                        active={ratingValue === r}
-                        onClick={() => {
-                          setRatingValue(r);
-                          setCurrentPage(1);
-                        }}
-                      />
-                    ))}
-                  </Box>
-                </FilterGroup>
-
-                {(category || priceRange[0] > 0 || priceRange[1] < 5000 || ratingValue > 0) && (
-                  <GhostBtn
-                    onClick={() => {
-                      setSearchParams({});
-                      setPrice([0, 5000]);
-                      setPriceRange([0, 5000]);
-                      setRatingValue(0);
-                      setCurrentPage(1);
-                    }}
-                    sx={{ alignSelf: "flex-start", mt: 1 }}
-                  >
-                    Clear filters
-                  </GhostBtn>
-                )}
-              </QuietFilter>
+              <PlpFilterContent {...filterProps} />
             </Box>
 
             {/* Grid + sort + pagination */}
@@ -496,6 +419,80 @@ function Products() {
               )}
             </Box>
           </Box>
+
+          {/* Mobile filter drawer — bottom-sheet, full filter body, sticky
+              Show results CTA. useLenisStop (declared at top of component)
+              pauses page scroll while open. Plain Drawer (not SwipeableDrawer)
+              because the swipe variant intercepts touch events and blocks the
+              scrollable body — swipe-to-close is sacrificed for scrollability. */}
+          <Drawer
+            anchor="bottom"
+            open={mobileFiltersOpen}
+            onClose={() => setMobileFiltersOpen(false)}
+            aria-label="Filter products"
+            slotProps={{
+              paper: {
+                sx: {
+                  maxHeight: "92vh",
+                  borderTopLeftRadius: "var(--t-border-radius-lg)",
+                  borderTopRightRadius: "var(--t-border-radius-lg)",
+                  backgroundColor: "var(--t-neutral-50)",
+                },
+              },
+            }}
+          >
+            <Box sx={{ maxHeight: "92vh", overflowY: "auto" }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  px: 3,
+                  py: 2,
+                  borderBottom: "1px solid var(--t-neutral-200)",
+                  position: "sticky",
+                  top: 0,
+                  zIndex: 1,
+                  backgroundColor: "var(--t-neutral-50)",
+                }}
+              >
+                <Headline
+                  level="2xl"
+                  sx={{ fontFamily: "var(--t-fontFamily-display)", fontSize: "1.5rem" }}
+                >
+                  Filters
+                </Headline>
+                <IconButton
+                  onClick={() => setMobileFiltersOpen(false)}
+                  aria-label="Close filters"
+                  size="small"
+                >
+                  <CloseIcon fontSize="small" />
+                </IconButton>
+              </Box>
+              <Box sx={{ px: 3, py: 2 }}>
+                <PlpFilterContent {...filterProps} />
+              </Box>
+              <Box
+                sx={{
+                  px: 3,
+                  py: 2,
+                  borderTop: "1px solid var(--t-neutral-200)",
+                  position: "sticky",
+                  bottom: 0,
+                  zIndex: 1,
+                  backgroundColor: "var(--t-neutral-50)",
+                }}
+              >
+                <PrimaryBtn
+                  fullWidth
+                  onClick={() => setMobileFiltersOpen(false)}
+                >
+                  Show results
+                </PrimaryBtn>
+              </Box>
+            </Box>
+          </Drawer>
         </Box>
       )}
     </>
