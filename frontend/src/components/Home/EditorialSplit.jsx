@@ -83,6 +83,7 @@ export default function EditorialSplit({
               <img
                 src={imageSrc}
                 alt={imageAlt}
+                loading="lazy"
                 style={{
                   width: "100%",
                   height: "100%",

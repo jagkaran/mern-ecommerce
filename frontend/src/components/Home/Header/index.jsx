@@ -11,6 +11,7 @@ import { useToast } from "../../../hooks/useToast";
 import { logoutUser } from "../../../actions/userAction";
 import { useCurrency } from "../../../utils/currencyContext";
 import { useMiniCart } from "../../../utils/miniCartContext";
+import { useSearchOverlay } from "../../../utils/searchOverlayContext";
 import useHeaderScroll from "./useHeaderScroll";
 import useCurrencyLock from "./useCurrencyLock";
 import DesktopNav from "./DesktopNav";
@@ -80,6 +81,7 @@ function Header() {
   };
 
   const { openCart: openMiniCart } = useMiniCart();
+  const { openOverlay: openSearch } = useSearchOverlay();
 
   return (
     <header
@@ -145,6 +147,7 @@ function Header() {
           onAccountClick={handleAccountClick}
           onSigninClick={() => navigate("/signin", { replace: true })}
           onCartClick={openMiniCart}
+          onSearchClick={openSearch}
         />
 
         <MobileDrawer
@@ -160,6 +163,7 @@ function Header() {
           user={user}
           onLogout={handleLogout}
           onCartClick={openMiniCart}
+          onSearchClick={openSearch}
         />
       </div>
 

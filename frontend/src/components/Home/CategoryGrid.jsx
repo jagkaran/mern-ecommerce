@@ -114,6 +114,7 @@ export default function CategoryGrid({ products }) {
                       <img
                         src={img}
                         alt={cat}
+                        loading="lazy"
                         style={{
                           width: "100%",
                           height: "100%",

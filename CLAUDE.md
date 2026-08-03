@@ -8,13 +8,14 @@ A full-stack e-commerce platform built with MongoDB, Express, React, and Node.js
 
 ### Tech Stack
 
-- **Frontend**: React 17, Redux Toolkit, Material UI, Tailwind CSS
+- **Frontend**: React 18, Redux Toolkit 2, Material UI 6, Tailwind CSS v4, RR v7 (data router), Vite 8
+- **Frontend UX**: Lenis (smooth scroll, ~10KB gz), motion ^12 (formerly framer-motion, ~50KB gz)
 - **Backend**: Node.js v20+, Express 4, Mongoose 8
 - **Database**: MongoDB Atlas
 - **Authentication**: JWT (httpOnly + secure + sameSite=strict cookie)
 - **Storage**: Cloudinary
 - **Payments**: Stripe
-- **Testing**: Jest + Supertest + mongodb-memory-server (unit/integration), Playwright (E2E)
+- **Testing**: Jest + Supertest + mongodb-memory-server (backend), Vitest + RTL + jsdom (frontend), Playwright (E2E)
 - **CI/CD**: GitHub Actions → Render
 
 ## Project Structure
@@ -29,13 +30,19 @@ mern-ecommerce/
 │   ├── utils/                # Helpers (JWT, email, logger, transaction)
 │   ├── config/               # Database configuration
 │   └── __tests__/            # Jest tests
-├── frontend/                  # React frontend
+├── frontend/                  # React frontend (Vite + plain src/, no pages/ dir)
 │   ├── src/
-│   │   ├── components/       # React components
-│   │   ├── pages/            # Page components
-│   │   ├── store/            # Redux store
-│   │   └── utils/            # Frontend utilities
-│   └── public/
+│   │   ├── components/       # All React components (page components live under
+│   │   │                     #   components/ in role-named subdirs, e.g. Product/PDP/)
+│   │   ├── design/           # Design tokens + primitives (Section, Container,
+│   │   │                     #   Grid, Button, Disclosure, MotionDisclosure, etc.)
+│   │   ├── hooks/            # useToast, useWishlist, useCurrency, useCsrfToken
+│   │   ├── actions/          # Redux Toolkit thunks
+│   │   ├── reducers/         # Redux slices (User, Cart, Product, Order, etc.)
+│   │   ├── store/            # Redux store config
+│   │   └── utils/            # Frontend utilities (lenis, debounce, contexts)
+│   ├── public/
+│   └── index.html            # Includes preconnect to fonts + Cloudinary
 ├── docs/                      # Documentation
 │   ├── reports/              # Analysis and implementation reports
 │   └── guides/               # Quick reference and guides
@@ -126,7 +133,16 @@ npm run e2e:ui
 
 - Use Redux Toolkit for state management
 - Use Material UI components
-- Use Tailwind CSS for styling
+- Use Tailwind CSS for styling (v4 — `@theme` directive in CSS, no `tailwind.config.js`)
+- Use design tokens (`design/tokens.js` + `tokens-css.jsx` for CSS vars) — colors, typography, motion durations/easings
+- Use design primitives (`design/primitives/`) — Container, Section, Grid, Headline, BodyText, Overline, PrimaryBtn/SecondaryBtn/GhostBtn, Disclosure, MotionDisclosure, Tile, Surface, Badge, QtyStepper, Reveal, etc.
+- Use Lenis hooks (`utils/lenis.js`) for all scroll behavior — never `window.scrollTo` directly
+- Use motion (`motion/react`) for animation — never CSS keyframes for component entry/exit
+- New overlays/dialogs/drawers: wrap with `useLenisStop(open)` to pause page scroll during open
+- All overlays need `aria-label` on the paper/container
+- Mini-cart and search overlay: open via context (`useMiniCart`, `useSearchOverlay`), not local state passed through props
+- Redux cart state is the source of truth — `MiniCartDrawer` and `ProductCard` both read/write it; no duplicate state
+- Mobile filter UI uses plain `Drawer` (not `SwipeableDrawer`) — swipe variant intercepts touch events and blocks scrollable body
 - Follow React best practices
 
 ### Database
@@ -285,7 +301,8 @@ STRIPE_WEBHOOK_SECRET=whsec_...
 # is 403'd in production.
 CSRF_SECRET=
 
-# SMTP (for password reset)
+# SMTP (for password reset — current SMTP path uses OAuth refresh tokens only;
+# this block is for legacy app-password fallback, NOT used by sendEmail.js)
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_SERVICE=gmail
@@ -373,3 +390,53 @@ All models have indexes for frequently queried fields:
 - Rate limiting is configured on multiple endpoints
 - Caching is implemented for frequently accessed data
 - Input validation is implemented on all endpoints
+
+## UX Features Shipped (2026-07-30 → 2026-08-03)
+
+### Smooth scroll UX (Lenis)
+- App-wide smooth scroll via `<ReactLenis root>` in `App.jsx` RootLayout
+- 1.2s exponential easing, `lerp: 0` under `prefers-reduced-motion`
+- Page scroll resets to top on every route change (`useScrollResetOnRouteChange`)
+- Lenis pauses while any overlay is open (`useLenisStop`, used by all dialogs/drawers)
+- Anchor links (`useScrollToAnchor`) account for sticky header height (+ CheckoutPage uses `-126` for sticky stepper)
+
+### Drawers / overlays
+- `MiniCartDrawer` — opens from header cart icon (desktop + mobile drawer) and on add-to-cart from PLP/PDP/QuickView
+- `SearchOverlay` — fullscreen overlay, 250ms debounced typeahead against `/api/v1/products?keyword=`, top 6 results
+- Mobile PLP filter drawer — bottom-sheet, plain `Drawer` (NOT `SwipeableDrawer` — touch-event interception blocks scroll)
+- `ScrollTopButton` — fading Fab at bottom-right past 600px; `ScrollProgress` — 2px top bar driven by `lenis.progress`
+
+### Animations (motion)
+- Hero — 5-element staggered entry on mount
+- CategoryGrid + ProductSection — `whileInView` stagger via `staggerChildren` + child variants
+- `MotionDisclosure` primitive — drop-in for `Disclosure` with `AnimatePresence` height animation; used on PDP for Materials/Care/Shipping
+- `motion` auto-honors `prefers-reduced-motion`
+
+### Loading / skeleton
+- PDP — full skeleton layout mirroring image/info columns (no CLS)
+- PLP — 8-card grid skeleton + filter rail skeleton
+
+### A11y
+- All overlay `paper` props carry `aria-label`
+- Filter button: descriptive text content
+- Dialog/drawer focus handled by MUI `Modal` (no manual focus trap needed)
+- `ScrollProgress` is `aria-hidden`; `ScrollToTopButton` toggles `tabIndex` based on visibility
+
+### Behavioral fixes
+- `ProductCard` add-to-cart: now reads existing qty and dispatches `existingQty + 1` (previously always sent `1`, so repeat clicks overwrote instead of incrementing)
+- `CheckoutPage` step scroll: `scrollIntoView` → `useScrollToAnchor(-126)` (Lenis + stepper offset)
+- `lenis/react` `root="asChild"` is WRONG — `root={true}` (bare boolean) is the no-wrapper variant (docs/source mismatch)
+
+### E2E coverage
+- `e2e/newFeatures.spec.js` — covers mini-cart, scroll-to-top, scroll progress, PDP jump pills, mobile filter drawer, loading skeletons
+
+### Frontend hooks inventory (utils/)
+- `lenis.js` — `useLenisOptions`, `useLenisStop`, `useScrollResetOnRouteChange`, `useScrollToAnchor`
+- `useDebounce.js` — generic debounce
+- `miniCartContext.jsx` — `useMiniCart`, `MiniCartProvider`
+- `searchOverlayContext.jsx` — `useSearchOverlay`, `SearchOverlayProvider`
+
+### Performance
+- Cloudinary preconnect in `index.html`
+- All below-fold images have `loading="lazy"`; PDP main image is `loading="eager"` (intentional)
+- Routes lazy-loaded via RR v7 `lazy:`; admin Chart.js bundle is its own chunk

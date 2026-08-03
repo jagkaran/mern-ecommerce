@@ -48,6 +48,7 @@ export default function MobileDrawer({
   user,
   onLogout,
   onCartClick,
+  onSearchClick,
 }) {
   const history = useNavigate();
   const [drawerState, setDrawerState] = useState({ right: false });
@@ -71,9 +72,16 @@ export default function MobileDrawer({
 
   const aboutus = go("/aboutus");
   const products = go("/products");
-  const search = go("/search");
   const wishlist = go("/wishlist");
   const signin = go("/signin");
+
+  // Search row in the mobile drawer closes the drawer first, then opens
+  // the search overlay.
+  const search = () => {
+    setDrawerState({ right: false });
+    setAccountOpen(false);
+    onSearchClick?.();
+  };
 
   // Cart row in the mobile drawer closes the drawer first, then opens
   // the mini-cart drawer. Two drawers can't be open at once.

@@ -35,6 +35,7 @@ function OrderItemGrid({ id, name, quantity, price, image, currency = "USD", rat
                 <img
                   src={image}
                   alt={name}
+                  loading="lazy"
                   style={{
                     width: "100%",
                     height: "100%",

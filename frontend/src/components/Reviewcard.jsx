@@ -52,6 +52,7 @@ export default function Reviewcard({ name, rating, comment, profileImg, createdA
         <img
           alt={name}
           src={avatarSrc}
+          loading="lazy"
           style={{
             width: 44,
             height: 44,

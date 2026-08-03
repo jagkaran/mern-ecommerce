@@ -25,7 +25,9 @@ import ScrollToTopButton from "./components/ScrollToTopButton.jsx";
 import CurrencyProvider from "./utils/currencyContext.jsx";
 import { useLenisOptions, useScrollResetOnRouteChange } from "./utils/lenis.js";
 import { MiniCartProvider } from "./utils/miniCartContext.jsx";
+import { SearchOverlayProvider } from "./utils/searchOverlayContext.jsx";
 import MiniCartDrawer from "./components/MiniCartDrawer.jsx";
+import SearchOverlay from "./components/SearchOverlay.jsx";
 import ScrollProgress from "./components/ScrollProgress.jsx";
 import Home from "./components/Home/Home";
 
@@ -145,11 +147,12 @@ function RootLayout() {
   useScrollResetOnRouteChange();
   return (
     <MiniCartProvider>
-      <CurrencyProvider>
-        <div className="bg-white min-h-screen">
-          <ThemeProvider theme={theme}>
-            <TokenCSS />
-            <Header />
+      <SearchOverlayProvider>
+        <CurrencyProvider>
+          <div className="bg-white min-h-screen">
+            <ThemeProvider theme={theme}>
+              <TokenCSS />
+              <Header />
           {/* `root` registers Lenis on the global store so `useLenis()`
               works anywhere without prop drilling, AND renders children
               directly (no wrapper div) so Lenis uses the default
@@ -172,9 +175,11 @@ function RootLayout() {
           <ScrollProgress />
           <ScrollToTopButton />
           <MiniCartDrawer />
+          <SearchOverlay />
         </ThemeProvider>
       </div>
     </CurrencyProvider>
+    </SearchOverlayProvider>
     </MiniCartProvider>
   );
 }

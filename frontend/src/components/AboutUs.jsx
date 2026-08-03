@@ -27,13 +27,15 @@ const PILLARS = [
 const STACK = [
   {
     area: "Frontend",
-    detail: "React 17, Redux Toolkit, Material UI v5, Framer-style organic motion",
+    detail:
+      "React 18, Redux Toolkit 2, Material UI 6, Tailwind v4, Lenis smooth scroll, motion (formerly framer-motion)",
   },
+  { area: "Build", detail: "Vite 8, React Router v7 data router, lazy routes per page" },
   { area: "Backend", detail: "Node.js 20, Express 4, Mongoose 8" },
   { area: "Database", detail: "MongoDB Atlas" },
   { area: "Auth", detail: "JWT in httpOnly cookie + double-submit CSRF token" },
   { area: "Payments", detail: "Stripe Elements + webhook HMAC verification" },
-  { area: "Storage", detail: "Cloudinary" },
+  { area: "Storage", detail: "Cloudinary (srcset + lazy)" },
 ];
 
 export default function AboutUs() {

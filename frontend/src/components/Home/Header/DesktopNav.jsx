@@ -52,6 +52,7 @@ export default function DesktopNav({
   onAccountClick,
   onSigninClick,
   onCartClick,
+  onSearchClick,
 }) {
   const isActive = (to) => pathname === to;
 
@@ -69,7 +70,7 @@ export default function DesktopNav({
       </Link>
       <MegaMenu />
 
-      <IconButton size="small" component={Link} to="/search" aria-label="Search" sx={iconSx}>
+      <IconButton size="small" onClick={onSearchClick} aria-label="Search" sx={iconSx}>
         <SearchIcon fontSize="small" />
       </IconButton>
 

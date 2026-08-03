@@ -187,6 +187,7 @@ function QuickViewDialog({ open, productId, onClose }) {
                     <img
                       src={img.url}
                       alt=""
+                      loading="lazy"
                       style={{
                         width: '100%',
                         height: '100%',

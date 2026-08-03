@@ -82,6 +82,7 @@ function ReviewOrder({ reviewData, handleReviewDataChange }) {
                   <img
                     src={item.image}
                     alt={item.name}
+                    loading="lazy"
                     style={{
                       maxWidth: "100%",
                       maxHeight: "100%",
