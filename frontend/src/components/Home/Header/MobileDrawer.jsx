@@ -146,6 +146,7 @@ export default function MobileDrawer({
           <IconButton
             onClick={toggleDrawer(anchor, true)}
             size="small"
+            aria-label="Open navigation menu"
             sx={{
               color: "var(--t-neutral-600)",
               transition: "color 150ms cubic-bezier(0, 0, 0.2, 1)",
@@ -156,6 +157,7 @@ export default function MobileDrawer({
           </IconButton>
           <SwipeableDrawer
             anchor={anchor}
+            aria-label="Mobile navigation"
             open={drawerState[anchor]}
             onClose={toggleDrawer(anchor, false)}
             onOpen={toggleDrawer(anchor, true)}

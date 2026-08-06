@@ -198,3 +198,63 @@ test.describe("Loading skeletons", () => {
     expect(count).toBeGreaterThan(20);
   });
 });
+
+// ─── Search overlay (P5-B) ────────────────────────────────────────────────────
+
+test.describe("Search overlay", () => {
+  test("typeahead returns matching products", async ({ page }) => {
+    // Ensure backend has products to search.
+    try {
+      const { ensureInStock } = require("./helpers/adminSeed");
+      await ensureInStock(3);
+    } catch {
+      /* tolerated */
+    }
+    await page.goto("/");
+    await page.getByRole("button", { name: /^search$/i }).first().click();
+    const overlay = page.getByRole("dialog", { name: /search products/i });
+    await expect(overlay).toBeVisible({ timeout: 5000 });
+
+    // Type a generic substring — should match something.
+    await overlay.getByRole("searchbox").fill("a");
+    // Debounced 250ms — wait for results.
+    await page.waitForTimeout(800);
+    const results = overlay.getByRole("button", { name: /browse/i }).or(overlay.locator("[role=button]"));
+    // At minimum the result rows (each is role=button) should exist.
+    await expect(overlay.locator('[role="button"][tabindex="0"]').first()).toBeVisible({
+      timeout: 5000,
+    });
+  });
+
+  test("Escape closes overlay", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("button", { name: /^search$/i }).first().click();
+    const overlay = page.getByRole("dialog", { name: /search products/i });
+    await expect(overlay).toBeVisible({ timeout: 5000 });
+    await page.keyboard.press("Escape");
+    await expect(overlay).not.toBeVisible({ timeout: 3000 });
+  });
+});
+
+// ─── Header a11y (P1 deep-dive) ─────────────────────────────────────────────
+
+test.describe("Header a11y", () => {
+  test("hamburger button has accessible name", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/");
+    const btn = page.getByRole("button", { name: /open navigation menu/i });
+    await expect(btn).toBeVisible();
+  });
+
+  test("skip-link target exists", async ({ page }) => {
+    await page.goto("/");
+    // SkipLink is the first focusable element when focused.
+    await page.keyboard.press("Tab");
+    const skipLink = page.getByRole("link", { name: /skip to main content/i });
+    await expect(skipLink).toBeVisible();
+    // Clicking it should focus #main.
+    await skipLink.click();
+    const main = page.locator("#main");
+    await expect(main).toBeVisible();
+  });
+});

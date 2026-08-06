@@ -33,5 +33,6 @@ module.exports = (err, req, res, _next) => {
   res.status(err.statusCode).json({
     success: false,
     message: err.message,
+    reqId: req.id,
   });
 };

@@ -1,5 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import { visualizer } from "rollup-plugin-visualizer";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -14,6 +15,18 @@ export default defineConfig({
     react({
       include: "**/*.{js,jsx,ts,tsx}",
     }),
+    // Opt-in bundle analyser — `npm run build:analyze` writes build/stats.html.
+    // Kept conditional so regular builds stay fast and ship no analyser code.
+    ...(process.env.ANALYZE
+      ? [
+          visualizer({
+            filename: "build/stats.html",
+            open: false,
+            gzipSize: true,
+            brotliSize: true,
+          }),
+        ]
+      : []),
   ],
   esbuild: {
     jsx: "automatic",

@@ -67,6 +67,12 @@ app.use(
 // Gzip compression
 app.use(compression());
 
+// Request ID + structured access log (echoes X-Request-Id back, stamps
+// req.id for handlers + error middleware). Before rate limiters + body
+// parsers so 413/429 still get a logged reqId.
+const requestLogger = require("./middleware/requestLogger");
+app.use(requestLogger);
+
 // ─── IP-based rate limiters (before body parsing) ────────────────────────────
 
 // Tight limit on auth endpoints — bypassed in E2E only outside production.
