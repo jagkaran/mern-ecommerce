@@ -7,7 +7,7 @@ const crypto = require("crypto");
 const storage = require("../services/storageService");
 const logger = require("../utils/logger");
 
-exports.registerUser = catchAsyncErrors(async (req, res, next) => {
+exports.registerUser = catchAsyncErrors(async (req, res, _next) => {
   const { name, email, password } = req.body;
   const user = await User.create({ name, email, password, profilePic: { public_id: "", url: "" } });
   logger.info(`New user registered: ${user._id}`);

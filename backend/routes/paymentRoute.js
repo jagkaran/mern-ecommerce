@@ -7,7 +7,7 @@ const {
 
 const router = express.Router();
 
-const { isAuthenticatedUser, optionalAuth } = require("../middleware/auth");
+const { optionalAuth } = require("../middleware/auth");
 const { validatePayment } = require("../middleware/validation");
 
 // Stripe webhook — raw body parser is mounted at app-level in app.js BEFORE

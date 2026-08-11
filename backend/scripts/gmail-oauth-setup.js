@@ -107,7 +107,7 @@ function postForm(formUrl, params) {
               );
             }
             resolve(parsed);
-          } catch (e) {
+          } catch (_e) {
             reject(new Error(`Bad JSON from ${formUrl}: ${chunks}`));
           }
         });

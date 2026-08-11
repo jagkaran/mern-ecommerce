@@ -1,5 +1,3 @@
-const mongoose = require("mongoose");
-
 /**
  * Recalculate ratings and numOfReviews from a reviews array.
  * Shared by createProductReview and deleteProductReview so the math

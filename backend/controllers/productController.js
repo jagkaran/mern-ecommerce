@@ -21,7 +21,7 @@ function pickProductFields(body) {
   }, {});
 }
 
-exports.createProduct = catchAsyncErrors(async (req, res, next) => {
+exports.createProduct = catchAsyncErrors(async (req, res, _next) => {
   let images = [];
   if (typeof req.body.images === "string") {
     images.push(req.body.images);

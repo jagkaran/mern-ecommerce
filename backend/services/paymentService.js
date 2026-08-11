@@ -1,5 +1,3 @@
-const logger = require("../utils/logger");
-
 // Lazy stripe singleton — avoids top-level crash when STRIPE_SECRET_KEY is
 // absent (e.g. in test or before dotenv loads).
 let _stripe = null;

@@ -84,7 +84,7 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
   // Guard: E2E bypass is never active in production, even if the env var
   // is accidentally set (e.g. copied from a CI .env into a live deployment).
-  skip: (req) =>
+  skip: (_req, _res) =>
     process.env.NODE_ENV?.toLowerCase() !== "production" &&
     !!process.env.E2E_BYPASS_LIMITS,
 });
@@ -101,7 +101,7 @@ const productLimiter = rateLimit({
   message: { success: false, message: "Too many requests, please try again later." },
   standardHeaders: true,
   legacyHeaders: false,
-  skip: (req) =>
+  skip: (_req, _res) =>
     process.env.NODE_ENV?.toLowerCase() !== "production" &&
     !!process.env.E2E_BYPASS_LIMITS,
 });
@@ -202,8 +202,8 @@ if (currentEnv !== "test") {
 // ─── Request logging ──────────────────────────────────────────────────────────
 // Structured timing + method + IP logging via Winston. Redacts sensitive body
 // fields. Covers every request before it hits any route.
-const requestLogger = require("./middleware/logger");
-app.use(requestLogger);
+const bodyLogger = require("./middleware/logger");
+app.use(bodyLogger);
 
 // ─── API Routes ───────────────────────────────────────────────────────────────
 const product = require("./routes/productRoute");

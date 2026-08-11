@@ -30,7 +30,7 @@ const validatePostalParams = [
 router.get(
   "/postal/:country/:code",
   validatePostalParams,
-  catchAsyncErrors(async (req, res, next) => {
+  catchAsyncErrors(async (req, res, _next) => {
     const { country, code } = req.params;
     const result = await lookupPostalCode(country, code);
     // Empty result is NOT an error — callers (AddressForm) treat null gracefully.
