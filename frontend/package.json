@@ -45,7 +45,7 @@
     "@vitejs/plugin-react": "^6.0.5",
     "ajv": "^8.20.0",
     "jsdom": "^29.1.1",
-    "rollup-plugin-visualizer": "^5.14.0",
+    "rollup-plugin-visualizer": "^7.1.1",
     "vite": "^8.2.1",
     "vitest": "^4.1.10"
   }
