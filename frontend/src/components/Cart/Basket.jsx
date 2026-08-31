@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Box, IconButton } from "@mui/material";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import { useDispatch, useSelector } from "react-redux";
 import { useToast } from "../../hooks/useToast";
 import { useCurrency } from "../../utils/currencyContext";
@@ -438,7 +438,7 @@ function Basket() {
                               },
                             }}
                           >
-                            <DeleteOutlineIcon fontSize="small" />
+                            <DeleteOutlineOutlinedIcon fontSize="small" />
                           </IconButton>
                         </Box>
                       </Box>
