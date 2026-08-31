@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Box, Container, IconButton, Rating, CircularProgress } from "@mui/material";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import { useSelector } from "react-redux";
 import { useWishlist } from "../hooks/useWishlist";
 import { useCurrency } from "../utils/currencyContext.jsx";
@@ -257,7 +257,7 @@ export default function Wishlist() {
                         "&:hover": { color: "var(--t-primary-600)" },
                       }}
                     >
-                      <DeleteOutlineIcon />
+                      <DeleteOutlineOutlinedIcon />
                     </IconButton>
                   </Box>
                 </Box>
