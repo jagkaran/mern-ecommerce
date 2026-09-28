@@ -46,6 +46,23 @@
       "!backend/server.js",
       "!backend/seeder.js"
     ],
+    "transform": {
+      "(^|/)node_modules/(?:htmlparser2|domhandler|domutils|domelementtype|dom-serializer|entities)/.+\\.js$": [
+        "babel-jest",
+        {
+          "configFile": false,
+          "babelrc": false,
+          "plugins": [
+            "@babel/plugin-transform-export-namespace-from",
+            "@babel/plugin-transform-modules-commonjs"
+          ]
+        }
+      ],
+      "^.+\\.js$": "babel-jest"
+    },
+    "transformIgnorePatterns": [
+      "/node_modules/(?!((?:htmlparser2|domhandler|domutils|domelementtype|dom-serializer|entities)/))"
+    ],
     "coverageThreshold": {
       "global": {
         "statements": 70,
@@ -83,7 +100,7 @@
   "license": "ISC",
   "overrides": {
     "brace-expansion": "^5.0.9",
-    "sanitize-html": "^2.17.5",
+    "sanitize-html": "^2.17.7",
     "test-exclude": "^8.0.0",
     "nanoid": "^3.3.17"
   },
@@ -113,8 +130,11 @@
     "winston-daily-rotate-file": "^5.0.0"
   },
   "devDependencies": {
+    "@babel/plugin-transform-export-namespace-from": "^7.29.7",
+    "@babel/plugin-transform-modules-commonjs": "^7.29.7",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.52.0",
+    "babel-jest": "^30.4.1",
     "chrome-launcher": "^1.1.2",
     "eslint": "^10.7.0",
     "form-data": "^4.0.6",
