@@ -63,7 +63,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test -- --coverage --forceExit --testTimeout=30000
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@v6
         if: always()
         with:
           name: coverage-${{ matrix.node-version }}
@@ -107,7 +107,7 @@ jobs:
       - run: npm ci --prefix frontend
       - run: npm run build --prefix frontend
       - name: Upload build output
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         if: always()
         with:
           name: fe-build
